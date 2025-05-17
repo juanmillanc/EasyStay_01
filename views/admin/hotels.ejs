@@ -1,0 +1,80 @@
+<%- include('../partials/head') %>
+<link rel="stylesheet" href="/css/admin-hotels.css">
+
+<div class="admin-hotels-container">
+    <%- include('../partials/header') %>
+    
+    <div class="hotels-dashboard">
+        <div class="dashboard-header">
+            <h1>Gestión de Hoteles</h1>
+            <button class="add-hotel-btn" onclick="window.location.href='/admin/hotels/new'" type="button">
+                <i class="fas fa-plus"></i> Agregar Nuevo Hotel
+            </button>
+        </div>
+
+        <div class="hotels-filters">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Buscar hotel...">
+            </div>
+            <div class="filter-options">
+                <select>
+                    <option value="">Todos los estados</option>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+                <select>
+                    <option value="">Todas las categorías</option>
+                    <option value="5">5 estrellas</option>
+                    <option value="4">4 estrellas</option>
+                    <option value="3">3 estrellas</option>
+                    <option value="2">2 estrellas</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="hotels-grid">
+            <% if (typeof hotels !== 'undefined' && hotels.length > 0) { %>
+                <% hotels.forEach(hotel => { %>
+                    <div class="hotel-card">
+                        <div class="hotel-image">
+                            <img src="<%= hotel.imagen_url || '/img/default-hotel.jpg' %>" alt="<%= hotel.nombre %>">
+                            <div class="hotel-status <%= hotel.estado %>">
+                                <%= hotel.estado %>
+                            </div>
+                        </div>
+                        <div class="hotel-info">
+                            <h3><%= hotel.nombre %></h3>
+                            <p class="hotel-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <%= hotel.ubicacion %>
+                            </p>
+                            <div class="hotel-rating">
+                                <% for(let i = 0; i < hotel.categoria; i++) { %>
+                                    <i class="fas fa-star"></i>
+                                <% } %>
+                            </div>
+                        </div>
+                        <div class="hotel-actions">
+                            <button class="edit-btn" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="view-btn" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="toggle-status-btn" title="Cambiar estado">
+                                <i class="fas fa-power-off"></i>
+                            </button>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="no-hotels">
+                    <i class="fas fa-hotel"></i>
+                    <p>No hay hoteles registrados</p>
+                </div>
+            <% } %> 
+        </div>
+    </div>
+</div>
+

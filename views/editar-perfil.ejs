@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Perfil - EasyStay</title>
+    <link rel="stylesheet" href="/css/search.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding-top: 80px;
+            margin: 0;
+        }
+        
+        .edit-profile-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+        
+        h1 {
+            color: #007faf;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e1e5eb;
+        }
+        
+        h2 {
+            color: #007faf;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Secciones del formulario */
+        .profile-form-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Grupos de formulario */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #007faf;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 127, 175, 0.1);
+        }
+        
+        .form-control:disabled {
+            background-color: #f5f5f5;
+            color: #777;
+        }
+        
+        small {
+            display: block;
+            margin-top: 0.5rem;
+            color: #777;
+            font-size: 0.85rem;
+        }
+        
+        /* Botones */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: #007faf;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #006090;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 127, 175, 0.2);
+        }
+        
+        /* Alertas */
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid transparent;
+        }
+        
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left-color: #2e7d32;
+        }
+        
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border-left-color: #c62828;
+        }
+        
+        /* Sección de contraseña */
+        .password-section {
+            border-top: 1px solid #eee;
+            padding-top: 2rem;
+            margin-top: 2rem;
+        }
+        
+        /* Requisitos de contraseña */
+        .password-requirements {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .password-requirements ul {
+            margin: 0.5rem 0 0 1rem;
+            padding: 0;
+        }
+        
+        .password-requirements li {
+            list-style-type: none;
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .password-requirements li:before {
+            content: "✖";
+            color: #dc3545;
+            position: absolute;
+            left: 0;
+        }
+        
+        .password-requirements li.valid:before {
+            content: "✓";
+            color: #28a745;
+        }
+        
+        .password-match {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .match {
+            color: #28a745;
+        }
+        
+        .no-match {
+            color: #dc3545;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .edit-profile-container {
+                padding: 0 1rem;
+            }
+            
+            .profile-form-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="edit-profile-container">
+        <h1>Editar Perfil</h1>
+        <a href="/" class="back-to-home">
+            <i class="fas fa-arrow-left"></i> 
+        </a>
+        
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success">
+                <%= success %>
+            </div>
+        <% } %>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <form action="/editar-perfil" method="POST" class="profile-form-section">
+            <div class="form-group">
+                <label for="nombre">Nombre completo</label>
+                <input type="text" id="nombre" name="nombre" class="form-control" 
+                       value="<%= userDetails.nombre || '' %>" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Correo electrónico</label>
+                <input type="email" id="email" class="form-control" 
+                       value="<%= userDetails.email || '' %>" disabled>
+                <small>Para cambiar tu email, por favor contacta al soporte.</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input type="tel" id="telefono" name="telefono" class="form-control" 
+                       value="<%= userDetails.telefono || '' %>">
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </form>
+        
+        <form action="/cambiar-contrasena" method="POST" class="profile-form-section">
+            <h2>Cambiar contraseña</h2>
+            
+            <% if (typeof passwordError !== 'undefined' && passwordError) { %>
+                <div class="alert alert-error">
+                    <%= passwordError %>
+                </div>
+            <% } %>
+            
+            <% if (typeof passwordSuccess !== 'undefined' && passwordSuccess) { %>
+                <div class="alert alert-success">
+                    <%= passwordSuccess %>
+                </div>
+            <% } %>
+            
+            <div class="form-group">
+                <label for="currentPassword">Contraseña actual</label>
+                <input type="password" id="currentPassword" name="currentPassword" 
+                       class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="newPassword">Nueva contraseña</label>
+                <input type="password" id="newPassword" name="newPassword" 
+                       class="form-control" required minlength="8"
+                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':\\|,.<>\/?]).{8,}$"
+                       oninput="validatePassword()">
+                <div id="passwordRequirements" class="password-requirements">
+                    <p>La contraseña debe contener:</p>
+                    <ul>
+                        <li id="reqLength">Mínimo 8 caracteres</li>
+                        <li id="reqUpper">Al menos una mayúscula</li>
+                        <li id="reqLower">Al menos una minúscula</li>
+                        <li id="reqNumber">Al menos un número</li>
+                        <li id="reqSpecial">Al menos un carácter especial</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword">Confirmar nueva contraseña</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" 
+                       class="form-control" required minlength="8">
+                <div id="passwordMatch" class="password-match"></div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Cambiar contraseña</button>
+        </form>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        function validatePassword() {
+            const password = document.getElementById('newPassword').value;
+            
+            // Validar longitud
+            const lengthValid = password.length >= 8;
+            document.getElementById('reqLength').classList.toggle('valid', lengthValid);
+            
+            // Validar mayúscula
+            const upperValid = /[A-Z]/.test(password);
+            document.getElementById('reqUpper').classList.toggle('valid', upperValid);
+            
+            // Validar minúscula
+            const lowerValid = /[a-z]/.test(password);
+            document.getElementById('reqLower').classList.toggle('valid', lowerValid);
+            
+            // Validar número
+            const numberValid = /\d/.test(password);
+            document.getElementById('reqNumber').classList.toggle('valid', numberValid);
+            
+            // Validar carácter especial
+            const specialValid = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+            document.getElementById('reqSpecial').classList.toggle('valid', specialValid);
+            
+            // Validar coincidencia de contraseñas
+            validatePasswordMatch();
+        }
+        
+        function validatePasswordMatch() {
+            const password = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const matchElement = document.getElementById('passwordMatch');
+            
+            if (confirmPassword.length === 0) {
+                matchElement.textContent = '';
+                return;
+            }
+            
+            if (password === confirmPassword) {
+                matchElement.textContent = 'Las contraseñas coinciden';
+                matchElement.className = 'password-match match';
+            } else {
+                matchElement.textContent = 'Las contraseñas no coinciden';
+                matchElement.className = 'password-match no-match';
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('newPassword').addEventListener('input', validatePassword);
+        document.getElementById('confirmPassword').addEventListener('input', validatePasswordMatch);
+        
+        // Validación al enviar el formulario
+        document.querySelector('form[action="/cambiar-contrasena"]').addEventListener('submit', function(e) {
+            const password = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Validar coincidencia
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden');
+                document.getElementById('confirmPassword').focus();
+                return;
+            }
+            
+            // Validar complejidad
+            const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+            if (!regex.test(password)) {
+                e.preventDefault();
+                alert('La contraseña no cumple con los requisitos de complejidad');
+                document.getElementById('newPassword').focus();
+            }
+        });
+    </script>
+</body>
+</html>

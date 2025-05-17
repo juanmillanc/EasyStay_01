@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Hotel - EasyStay Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <link rel="stylesheet" href="/css/admin-hotels.css">
+</head>
+<body>
+    <%- include('../../partials/head') %>
+    <div class="admin-hotels-container">
+        <%- include('../../partials/header') %>
+        <div class="hotels-dashboard">
+            <div class="dashboard-header">
+                <h1>Editar Hotel</h1>
+                <a href="/admin/hotels" class="add-hotel-btn" style="background:#eee; color:#333;"><i class="fas fa-arrow-left"></i> Volver</a>
+            </div>
+            <form action="/admin/hotels/<%= hotel.id %>/edit" method="POST" enctype="multipart/form-data" class="hotel-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombre">Nombre del hotel *</label>
+                        <input type="text" id="nombre" name="nombre" value="<%= hotel.nombre %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ciudad">Ciudad *</label>
+                        <input type="text" id="ciudad" name="ciudad" value="<%= hotel.ciudad %>" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="direccion">Dirección *</label>
+                        <input type="text" id="direccion" name="direccion" value="<%= hotel.direccion %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="estrellas">Estrellas *</label>
+                        <select id="estrellas" name="estrellas" required>
+                            <option value="">Selecciona</option>
+                            <% for(let i=1; i<=5; i++) { %>
+                                <option value="<%= i %>" <%= hotel.estrellas == i ? 'selected' : '' %>><%= i %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="precio_base">Precio base *</label>
+                        <input type="number" step="0.01" id="precio_base" name="precio_base" value="<%= hotel.precio_base %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="estado">Estado</label>
+                        <select id="estado" name="estado">
+                            <option value="activo" <%= hotel.estado === 'activo' ? 'selected' : '' %>>Activo</option>
+                            <option value="inactivo" <%= hotel.estado === 'inactivo' ? 'selected' : '' %>>Inactivo</option>
+                            <option value="en_mantenimiento" <%= hotel.estado === 'en_mantenimiento' ? 'selected' : '' %>>En mantenimiento</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="descripcion">Descripción</label>
+                    <textarea id="descripcion" name="descripcion" rows="3"><%= hotel.descripcion || '' %></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="imagen_principal">Imagen principal</label>
+                        <input type="file" id="imagen_principal" name="imagen_principal" accept="image/*">
+                        <% if (hotel.imagen_principal) { %>
+                            <div class="current-image">
+                                <p>Imagen actual:</p>
+                                <img src="<%= hotel.imagen_principal %>" alt="Imagen actual del hotel" style="max-width:200px; border-radius:4px;">
+                            </div>
+                        <% } %>
+                    </div>
+                    <div class="form-group">
+                        <label for="coordenadas_lat">Latitud</label>
+                        <input type="text" id="coordenadas_lat" name="coordenadas_lat" value="<%= hotel.coordenadas_lat || '' %>">
+                    </div>
+                    <div class="form-group">
+                        <label for="coordenadas_lng">Longitud</label>
+                        <input type="text" id="coordenadas_lng" name="coordenadas_lng" value="<%= hotel.coordenadas_lng || '' %>">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="add-hotel-btn"><i class="fas fa-save"></i> Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <%- include('../../partials/footer') %>
+    <script>
+        // Validación del formulario
+        document.querySelector('.hotel-form').addEventListener('submit', function(e) {
+            const precio = parseFloat(document.getElementById('precio_base').value);
+            if (precio <= 0) {
+                e.preventDefault();
+                alert('El precio base debe ser mayor que 0');
+            }
+        });
+    </script>
+</body>
+</html> 

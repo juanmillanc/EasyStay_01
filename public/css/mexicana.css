@@ -1,0 +1,291 @@
+/* Estilos base */
+body {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    background-color: #f9f9f9;
+}
+
+/* Header */
+.restaurante-header {
+    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                url('/img/restaurantes/header-bg.jpg') center/cover;
+    color: white;
+    padding: 2rem 0;
+    text-align: center;
+    position: relative;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+}
+
+.back-button {
+    position: absolute;
+    left: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.restaurante-header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.rating-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: #007faf;
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    margin-top: 1rem;
+    font-size: 1.2rem;
+}
+
+.rating-badge i {
+    margin-left: 0.3rem;
+    color: #ffc107;
+}
+
+/* Contenedor principal */
+.restaurante-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+/* Galería */
+.gallery-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.gallery-item {
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s;
+    height: 250px;
+}
+
+.gallery-item:hover {
+    transform: scale(1.03);
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gallery-item.main-image {
+    grid-column: span 2;
+    grid-row: span 2;
+    height: 510px;
+}
+
+/* Secciones de información */
+.info-section {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.info-card, .features-card {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.info-card h2, .features-card h2, .menu-section h2, .map-section h2, .booking-section h2 {
+    color: #007faf;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.detail-item i {
+    color: #007faf;
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+}
+
+.features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.features-list li {
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.features-list i {
+    color: #4CAF50;
+}
+
+/* Menú */
+.menu-section {
+    margin-bottom: 3rem;
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.menu-item {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.menu-item h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.menu-item .price {
+    color: #007faf;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+}
+
+.menu-item .description {
+    color: #666;
+    margin-bottom: 0;
+}
+
+/* Mapa */
+.map-section {
+    margin-bottom: 3rem;
+}
+
+.map-container {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    height: 400px;
+}
+
+/* Reservación */
+.booking-section {
+    margin-bottom: 3rem;
+}
+
+.booking-form {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.reserve-button {
+    background-color: #007faf;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.reserve-button:hover {
+    background-color: #006690;
+}
+
+/* Footer */
+.restaurante-footer {
+    text-align: center;
+    padding: 2rem;
+    background-color: #1a1a1a;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .gallery-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .gallery-item.main-image {
+        grid-column: span 1;
+        grid-row: span 1;
+        height: 250px;
+    }
+    
+    .info-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+}

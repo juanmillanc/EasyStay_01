@@ -1,20 +1,92 @@
 const express = require('express');
+const path = require('path');
+const session = require('express-session');
+const flash = require('connect-flash');
+const fileUpload = require('express-fileupload');
+const pool = require('./databases/db'); // Importa el pool configurado
+
 const app = express();
 
+// Configuración de sesión
+app.use(session({
+    secret: 'tu_secreto_aqui',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }
+}));
+
+// Configuración de flash messages
+app.use(flash());
+
+// Middleware para pasar variables a vistas
+app.use((req, res, next) => {
+    res.locals.user = req.session.user || null;
+    res.locals.messages = {
+        success: req.flash('success'),
+        error: req.flash('error')
+    };
+    next();
+});
+
+// Configuración del motor de vistas
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-app.use(express.urlencoded({extended:false}));
+// Middlewares
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-// Configuración de archivos estáticos
 app.use(express.static('public'));
 
-// Importar y usar el router de autenticación
+// Configuración de express-fileupload
+app.use(fileUpload({
+    limits: { fileSize: 50 * 1024 * 1024 }, // límite de 50MB
+    createParentPath: true
+}));
+
+// Rutas
 const authRouter = require('./router/auth');
 app.use('/', authRouter);
 
-app.listen(5000, ()=>{
+// Rutas de hoteles (ejemplo)
+app.get('/hotels/marina-resort', (req, res) => {
+    res.render('hotels/marina-resort');
+});
+
+app.get('/hotels/city-lights', (req, res) => {
+    res.render('hotels/city-lights');
+});
+
+app.get('/hotels/mountain-view', (req, res) => {
+    res.render('hotels/mountain-view');
+});
+
+// Middleware para logging
+app.use((req, res, next) => {
+    console.log('Petición a:', req.url);
+    next();
+});
+
+// Manejador de errores 404
+app.use((req, res, next) => {
+    res.status(404).render('error', {
+        message: 'Página no encontrada',
+        user: req.session.user
+    });
+});
+
+// Manejador de errores general
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).render('error', {
+        message: 'Error interno del servidor',
+        user: req.session.user
+    });
+});
+
+// Iniciar servidor
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
     console.log('\n=== SERVIDOR INICIADO ===');
-    console.log('Server corriendo en Http://localhost:5000');
-    console.log('Esperando peticiones...\n');
-});  
+    console.log(`http://localhost:${PORT}`);
+    console.log('========================\n');
+});

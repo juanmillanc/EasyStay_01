@@ -1,0 +1,149 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-utensils me-2"></i>Editar Reserva de Restaurante</h3>
+                </div>
+                <div class="card-body">
+                    <form action="/restaurante/reserva/update/<%= reserva.id %>" method="POST" id="editForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fecha" class="form-label">Fecha de la Reserva</label>
+                                <input type="date" class="form-control" id="fecha" name="fecha" 
+                                    value="<%= reserva.fecha %>" required
+                                    min="<%= new Date().toISOString().split('T')[0] %>">
+                                <div class="form-text">La fecha debe ser posterior a hoy</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="hora" class="form-label">Hora de la Reserva</label>
+                                <input type="time" class="form-control" id="hora" name="hora" 
+                                    value="<%= reserva.hora %>" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="num_personas" class="form-label">Número de Personas</label>
+                                <input type="number" class="form-control" id="num_personas" name="num_personas" 
+                                    value="<%= reserva.num_personas %>" required min="1" max="20">
+                                <div class="form-text">Máximo 20 personas por reserva</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="num_mesa" class="form-label">Número de Mesa</label>
+                                <input type="text" class="form-control" id="num_mesa" name="num_mesa" 
+                                    value="<%= reserva.num_mesa %>">
+                                <div class="form-text">Opcional - Se asignará automáticamente si se deja en blanco</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="estado" class="form-label">Estado de la Reserva</label>
+                            <select class="form-select" id="estado" name="estado" required>
+                                <option value="activa" <%= reserva.estado === 'activa' ? 'selected' : '' %>>Activa</option>
+                                <option value="inactiva" <%= reserva.estado === 'inactiva' ? 'selected' : '' %>>Inactiva</option>
+                            </select>
+                            <div class="form-text">Al inactivar la reserva, se mantendrá en el historial pero no será visible en las búsquedas activas</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notas" class="form-label">Notas Especiales</label>
+                            <textarea class="form-control" id="notas" name="notas" rows="3" 
+                                maxlength="500"><%= reserva.notas %></textarea>
+                            <div class="form-text">Máximo 500 caracteres - Ej: Alergias, preferencias especiales, etc.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div>
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                                </button>
+                                <a href="/bookings" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Volver
+                                </a>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-danger" onclick="confirmarEliminacion()">
+                                    <i class="fas fa-trash-alt me-2"></i>Eliminar Reserva
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Formulario oculto para eliminar -->
+                    <form action="/restaurante/reserva/delete/<%= reserva.id %>" method="POST" id="deleteForm" style="display: none;"></form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarEliminacion() {
+    Swal.fire({
+        title: '¿Estás seguro de eliminar esta reserva?',
+        text: "Esta acción no se puede deshacer y eliminará permanentemente la reserva",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar permanentemente',
+        cancelButtonText: 'Cancelar',
+        showDenyButton: true,
+        denyButtonText: 'Inactivar en su lugar',
+        denyButtonColor: '#6c757d'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('deleteForm').submit();
+        } else if (result.isDenied) {
+            document.getElementById('estado').value = 'inactiva';
+            document.getElementById('editForm').submit();
+        }
+    });
+}
+
+// Validación de fecha
+document.getElementById('fecha').addEventListener('change', function() {
+    const fecha = new Date(this.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (fecha < today) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error en la fecha',
+            text: 'La fecha debe ser posterior a hoy'
+        });
+        this.value = '';
+    }
+});
+
+// Validación del número de personas
+document.getElementById('num_personas').addEventListener('change', function() {
+    const numPersonas = parseInt(this.value);
+    if (numPersonas < 1 || numPersonas > 20) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error en el número de personas',
+            text: 'El número de personas debe estar entre 1 y 20'
+        });
+        this.value = '';
+    }
+});
+
+// Validación de notas
+document.getElementById('notas').addEventListener('input', function() {
+    if (this.value.length > 500) {
+        this.value = this.value.substring(0, 500);
+        Swal.fire({
+            icon: 'warning',
+            title: 'Límite de caracteres alcanzado',
+            text: 'Las notas no pueden exceder los 500 caracteres'
+        });
+    }
+});
+</script>
+
+<%- include('../partials/footer') %> 

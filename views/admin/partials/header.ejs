@@ -1,0 +1,29 @@
+<header class="admin-header">
+    <div class="logo">
+        <a href="/admin/dashboard">
+            <img src="/img/6.png" alt="EasyStay" />
+            <span>Admin</span>
+        </a>
+    </div>
+    <nav class="admin-nav">
+        <a href="/admin/dashboard" class="<%= locals.path === '/admin/dashboard' ? 'active' : '' %>">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a>
+        <a href="/admin/hotels" class="<%= locals.path === '/admin/hotels' ? 'active' : '' %>">
+            <i class="fas fa-hotel"></i> Hoteles
+        </a>
+        <a href="/admin/users" class="<%= locals.path === '/admin/users' ? 'active' : '' %>">
+            <i class="fas fa-users"></i> Usuarios
+        </a>
+        <a href="/admin/restaurants" class="<%= locals.path === '/admin/restaurants' ? 'active' : '' %>">
+            <i class="fas fa-utensils"></i> Restaurantes
+        </a>
+    </nav>
+    <div class="admin-user">
+        <i class="fas fa-user-shield"></i>
+        <span><%= locals.user ? locals.user.nombre : '' %> <small>(<%= locals.user ? locals.user.rol : '' %>)</small></span>
+        <a href="/logout" class="logout-btn" title="Cerrar sesión">
+            <i class="fas fa-sign-out-alt"></i>
+        </a>
+    </div>
+</header> 

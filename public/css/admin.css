@@ -1,0 +1,124 @@
+/* Estilos generales del panel de administración */
+.admin-container {
+    padding: 2rem;
+}
+
+/* Header del panel de administración */
+.admin-header {
+    background: linear-gradient(90deg, #ffe082 0%, #ffb300 100%);
+    padding: 1rem 2rem;
+    margin-bottom: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(255,179,0,0.1);
+}
+
+.admin-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+}
+
+.admin-header .logo img {
+    height: 40px;
+}
+
+.admin-header .logo span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+}
+
+/* Navegación */
+.admin-nav {
+    display: flex;
+    gap: 2rem;
+    margin: 1rem 0;
+}
+
+.admin-nav a {
+    color: #333;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-nav a:hover,
+.admin-nav a.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.admin-nav a i {
+    font-size: 1.1rem;
+}
+
+/* Contenedor principal */
+.main-content {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Cards y elementos de dashboard */
+.dashboard-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.dashboard-card h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+.dashboard-card p {
+    margin: 0.5rem 0 0 0;
+    color: #666;
+}
+
+/* Botones y acciones */
+.btn-admin {
+    background: #ffb300;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.3s;
+}
+
+.btn-admin:hover {
+    background: #ff9800;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 1rem;
+    }
+
+    .admin-header {
+        padding: 1rem;
+    }
+
+    .admin-nav {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+} 

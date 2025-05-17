@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Hoteles - EasyStay Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <link rel="stylesheet" href="/css/admin-hotels.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="admin-main">
+        <div class="hotels-header">
+            <h1>Gestión de Hoteles</h1>
+            <a href="/admin/hotels/new" class="btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Hotel
+            </a>
+        </div>
+
+        <div class="hotels-filters">
+            <input type="text" id="searchHotel" placeholder="Buscar hotel...">
+            <select id="filterCity">
+                <option value="">Todas las ciudades</option>
+                <% cities.forEach(function(city) { %>
+                    <option value="<%= city %>"><%= city %></option>
+                <% }); %>
+            </select>
+            <select id="filterStatus">
+                <option value="">Todos los estados</option>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+                <option value="en_mantenimiento">En mantenimiento</option>
+            </select>
+        </div>
+
+        <div class="hotels-grid">
+            <% hotels.forEach(function(hotel) { %>
+                <div class="hotel-card">
+                    <div class="hotel-image">
+                        <img src="<%= hotel.imagen_principal || '/img/default-hotel.jpg' %>" alt="<%= hotel.nombre %>">
+                        <span class="hotel-stars">
+                            <% for(let i = 0; i < hotel.estrellas; i++) { %>
+                                <i class="fas fa-star"></i>
+                            <% } %>
+                        </span>
+                    </div>
+                    <div class="hotel-info">
+                        <h3><%= hotel.nombre %></h3>
+                        <p class="hotel-location">
+                            <i class="fas fa-map-marker-alt"></i> <%= hotel.ciudad %>
+                        </p>
+                        <p class="hotel-price">
+                            <i class="fas fa-tag"></i> $<%= hotel.precio_base %> /noche
+                        </p>
+                        <span class="hotel-status status-<%= hotel.estado %>">
+                            <%= hotel.estado.replace('_', ' ').toUpperCase() %>
+                        </span>
+                    </div>
+                    <div class="hotel-actions">
+                        <a href="/admin/hotels/<%= hotel.id %>" class="btn-view" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="/admin/hotels/<%= hotel.id %>/edit" class="btn-edit" title="Editar" onclick="console.log('Clic en editar <%= hotel.id %>')">Editar</a>
+                        <button onclick="deleteHotel('<%= hotel.id %>')" class="btn-delete" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </main>
+
+    <script>
+        function deleteHotel(id) {
+            if(confirm('¿Estás seguro de que deseas eliminar este hotel?')) {
+                fetch(`/admin/hotels/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error al eliminar el hotel');
+                    }
+                });
+            }
+        }
+
+        // Implementar filtros
+        document.getElementById('searchHotel').addEventListener('input', filterHotels);
+        document.getElementById('filterCity').addEventListener('change', filterHotels);
+        document.getElementById('filterStatus').addEventListener('change', filterHotels);
+
+        function filterHotels() {
+            // Implementar lógica de filtrado
+        }
+    </script>
+</body>
+</html> 

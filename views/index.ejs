@@ -12,7 +12,7 @@
     <title>FORMULARIO DE REGISTRO E INICIO SESIÓN</title>
 </head>
 <body>
-    <div class="container-form register">
+    <div class="container-form register<% if (typeof error !== 'undefined' && error) { %> hide<% } %>">
         <div class="information">
             <div class="info-childs">
                 <h2>Bienvenido</h2>
@@ -51,8 +51,18 @@
                     <div>
                         <label>
                             <i class='bx bx-lock-alt' ></i>
-                            <input type="password" placeholder="Contraseña" name="password" required>
+                            <input type="password" placeholder="Contraseña" name="password" id="register-password" required>
                             <i class='bx bx-show-alt toggle-password'></i>
+                            <div class="password-tooltip" id="passwordTooltip">
+                                <strong>La contraseña debe tener:</strong>
+                                <ul>
+                                    <li>Mínimo 8 caracteres</li>
+                                    <li>Al menos una mayúscula</li>
+                                    <li>Al menos una minúscula</li>
+                                    <li>Al menos un número</li>
+                                    <li>Al menos un carácter especial (!@#$%^&*)</li>
+                                </ul>
+                            </div>
                         </label>
                     </div>
                    
@@ -65,7 +75,7 @@
     </div>
 
 
-    <div class="container-form login hide">
+    <div class="container-form login<% if (typeof error !== 'undefined' && error) { %> <% } else { %> hide<% } %>">
         <div class="information">
             <div class="info-childs">
                 <h2>¡¡Bienvenido nuevamente!!</h2>
@@ -82,24 +92,26 @@
                     <i class='bx bxl-linkedin' ></i>
                 </div>
                 <p>o Iniciar Sesión con una cuenta</p>
-                <form class="form form-login"novalidate>
+                <form action="/login" method="POST" class="form form-login" id="loginForm">
                     <div>
-                        <label >
-                            <i class='bx bx-envelope' ></i>
-                            <input type="email" placeholder="Correo Electronico" name="email">
-                        </label>
+                      <label>
+                        <i class='bx bx-envelope'></i>
+                        <input type="email" placeholder="Correo Electrónico" name="email" required>
+                      </label>
                     </div>
                     <div>
-                        <label>
-                            <i class='bx bx-lock-alt' ></i>
-                            <input type="password" placeholder="Contraseña" name="password">
-                            <i class='bx bx-show-alt toggle-password'></i>
-                        </label>
+                      <label>
+                        <i class='bx bx-lock-alt'></i>
+                        <input type="password" placeholder="Contraseña" name="password" required>
+                        <i class='bx bx-show-alt toggle-password'></i>
+                      </label>
                     </div>
-                    <input type="submit" value="Iniciar Sesión">
-                    <div class="alerta-error">Todos los campos son obligatorios</div>
-                    <div class="alerta-exito">Te registraste correctamente</div>
-                </form>
+                    <button type="submit" class="btn-login estilizado">Iniciar Sesión</button>
+                    <% if (typeof error !== 'undefined' && error) { %>
+                      <div class="alerta-error" id="login-error-message"><%= error %></div>
+                    <% } %>
+                  </form>
+                  <div id="login-success-message" style="display:none; text-align:center; margin-top:15px; color:#007faf; font-size:1.1rem; font-weight:600;"></div>
             </div>
         </div>
     </div>
@@ -107,5 +119,17 @@
     <script src="/js/register.js"></script>
     <script src="/js/login.js"></script>
     <script src="/js/password.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const loginErrorDiv = document.getElementById('login-error-message');
+          console.log('loginErrorDiv:', loginErrorDiv);
+          if (loginErrorDiv) {
+            console.log('Texto del error:', loginErrorDiv.textContent);
+            if (loginErrorDiv.textContent.includes('inactiva')) {
+              alert('Tu cuenta está inactiva. Por favor, comunícate con el administrador.');
+            }
+          }
+        });
+        </script>
 </body>
 </html>

@@ -259,3 +259,69 @@ body::before {
   }
 }
 
+.alerta-error {
+  color: #ff0000;
+  background-color: #ffebee;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+  display: none; /* Se mostrará solo cuando haya error */
+}
+
+.alerta-error.mostrar {
+  display: block;
+}
+
+.password-tooltip {
+  display: none;
+  position: absolute;
+  top: 110%;
+  left: 0;
+  background: #fff;
+  color: #333;
+  border: 1px solid #007faf;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  padding: 12px 18px;
+  width: 260px;
+  font-size: 0.95rem;
+  z-index: 20;
+  text-align: left;
+}
+.password-tooltip strong {
+  color: #007faf;
+  font-size: 1rem;
+}
+.password-tooltip ul {
+  margin: 8px 0 0 18px;
+  padding: 0;
+  font-size: 0.95rem;
+}
+.password-tooltip li {
+  margin-bottom: 4px;
+}
+
+.form label:focus-within .password-tooltip,
+#register-password:focus ~ .password-tooltip {
+  display: block;
+}
+
+/* Botón de inicio de sesión estilizado */
+.btn-login.estilizado {
+  background: linear-gradient(90deg, #007faf 0%, #00c6a7 100%);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 12px 0;
+  width: 100%;
+  font-size: 1.1rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  transition: background 0.3s, transform 0.2s;
+  margin-top: 10px;
+}
+.btn-login.estilizado:hover {
+  background: linear-gradient(90deg, #00c6a7 0%, #007faf 100%);
+  transform: translateY(-2px) scale(1.03);
+  color: #fff;
+}

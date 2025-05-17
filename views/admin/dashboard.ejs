@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyStay - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+</head>
+<body>
+    <header class="admin-header">
+        <div class="logo">
+            <img src="/img/6.png" alt="EasyStay" />
+            <span></span>
+        </div>
+        <nav class="admin-nav">
+            <a href="/admin/dashboard" class="active"><i class="fas fa-tachometer-alt"></i><center>Dashboard</center> </a>
+        </nav>
+        <div class="admin-user">
+            <i class="fas fa-user-shield"></i>
+            <span><%= user.nombre %> <small>(<%= user.rol %>)</small></span>
+            <a href="/logout" class="logout-btn" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </header>
+
+    <main class="admin-main">
+        <h1>Panel de Administración</h1>
+        <p class="admin-welcome">¡Bienvenido, <strong><%= user.nombre %></strong>! Gestiona tu plataforma de manera eficiente.</p>
+        <div class="admin-cards">
+            <a href="/admin/users" class="admin-card">
+                <i class="fas fa-users"></i>
+                <h2>Gestionar Usuarios</h2>
+                <p>Ver, editar y administrar usuarios de la plataforma.</p>
+            </a>
+            <a href="/admin/hotels" class="admin-card">
+                <i class="fas fa-hotel"></i>
+                <h2>Gestionar Hoteles</h2>
+                <p>Administra los hoteles registrados y sus detalles.</p>
+            </a>
+            <a href="/admin/restaurants" class="admin-card">
+                <i class="fas fa-utensils"></i>
+                <h2>Gestionar Restaurantes</h2>
+                <p>Controla los restaurantes y su información.</p>
+            </a>
+            <a href="/admin/recompensas" class="admin-card">
+                <i class="fas fa-gift"></i>
+                <h2>Recompensas</h2>
+                <p>Gestiona las recompensas y beneficios para usuarios.</p>
+            </a>
+        </div>
+    </main>
+
+    <footer class="admin-footer">
+        <span>&copy; 2025 EasyStay | Panel de Administración</span>
+    </footer>
+</body>
+</html>

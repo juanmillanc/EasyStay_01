@@ -1,0 +1,166 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-hotel me-2"></i>Editar Reserva de Hotel</h3>
+                </div>
+                <div class="card-body">
+                    <form action="/hotel/reserva/update/<%= reserva.id %>" method="POST" id="editForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="check_in" class="form-label">Fecha de Check-in</label>
+                                <input type="date" class="form-control" id="check_in" name="check_in" 
+                                    value="<%= reserva.check_in %>" required
+                                    min="<%= new Date().toISOString().split('T')[0] %>">
+                                <div class="form-text">La fecha debe ser posterior a hoy</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="check_out" class="form-label">Fecha de Check-out</label>
+                                <input type="date" class="form-control" id="check_out" name="check_out" 
+                                    value="<%= reserva.check_out %>" required>
+                                <div class="form-text">La fecha debe ser posterior al check-in</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="num_huespedes" class="form-label">Número de Huéspedes</label>
+                                <input type="number" class="form-control" id="num_huespedes" name="num_huespedes" 
+                                    value="<%= reserva.num_huespedes %>" required min="1" max="10">
+                                <div class="form-text">Máximo 10 huéspedes por habitación</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="tipo_habitacion" class="form-label">Tipo de Habitación</label>
+                                <select class="form-select" id="tipo_habitacion" name="tipo_habitacion" required>
+                                    <option value="individual" <%= reserva.tipo_habitacion === 'individual' ? 'selected' : '' %>>Individual</option>
+                                    <option value="doble" <%= reserva.tipo_habitacion === 'doble' ? 'selected' : '' %>>Doble</option>
+                                    <option value="suite" <%= reserva.tipo_habitacion === 'suite' ? 'selected' : '' %>>Suite</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="estado" class="form-label">Estado de la Reserva</label>
+                            <select class="form-select" id="estado" name="estado" required>
+                                <option value="activa" <%= reserva.estado === 'activa' ? 'selected' : '' %>>Activa</option>
+                                <option value="inactiva" <%= reserva.estado === 'inactiva' ? 'selected' : '' %>>Inactiva</option>
+                            </select>
+                            <div class="form-text">Al inactivar la reserva, se mantendrá en el historial pero no será visible en las búsquedas activas</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="comentarios" class="form-label">Comentarios Adicionales</label>
+                            <textarea class="form-control" id="comentarios" name="comentarios" rows="3" 
+                                maxlength="500"><%= reserva.comentarios %></textarea>
+                            <div class="form-text">Máximo 500 caracteres</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div>
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                                </button>
+                                <a href="/bookings" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Volver
+                                </a>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-danger" onclick="confirmarEliminacion()">
+                                    <i class="fas fa-trash-alt me-2"></i>Eliminar Reserva
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Formulario oculto para eliminar -->
+                    <form action="/hotel/reserva/delete/<%= reserva.id %>" method="POST" id="deleteForm" style="display: none;"></form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarEliminacion() {
+    Swal.fire({
+        title: '¿Estás seguro de eliminar esta reserva?',
+        text: "Esta acción no se puede deshacer y eliminará permanentemente la reserva",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar permanentemente',
+        cancelButtonText: 'Cancelar',
+        showDenyButton: true,
+        denyButtonText: 'Inactivar en su lugar',
+        denyButtonColor: '#6c757d'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('deleteForm').submit();
+        } else if (result.isDenied) {
+            document.getElementById('estado').value = 'inactiva';
+            document.getElementById('editForm').submit();
+        }
+    });
+}
+
+// Validación de fechas
+document.getElementById('check_in').addEventListener('change', validarFechas);
+document.getElementById('check_out').addEventListener('change', validarFechas);
+
+function validarFechas() {
+    const checkIn = new Date(document.getElementById('check_in').value);
+    const checkOut = new Date(document.getElementById('check_out').value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (checkIn < today) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error en la fecha de check-in',
+            text: 'La fecha de check-in debe ser posterior a hoy'
+        });
+        document.getElementById('check_in').value = '';
+        return;
+    }
+    
+    if (checkOut <= checkIn) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error en las fechas',
+            text: 'La fecha de check-out debe ser posterior a la fecha de check-in'
+        });
+        document.getElementById('check_out').value = '';
+    }
+}
+
+// Validación del número de personas
+document.getElementById('num_huespedes').addEventListener('change', function() {
+    const numPersonas = parseInt(this.value);
+    if (numPersonas < 1 || numPersonas > 10) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error en el número de huéspedes',
+            text: 'El número de huéspedes debe estar entre 1 y 10'
+        });
+        this.value = '';
+    }
+});
+
+// Validación de comentarios
+document.getElementById('comentarios').addEventListener('input', function() {
+    if (this.value.length > 500) {
+        this.value = this.value.substring(0, 500);
+        Swal.fire({
+            icon: 'warning',
+            title: 'Límite de caracteres alcanzado',
+            text: 'Los comentarios no pueden exceder los 500 caracteres'
+        });
+    }
+});
+</script>
+
+<%- include('../partials/footer') %> 

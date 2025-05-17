@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mountain View Resort - Naturaleza y Lujo en Valle de Bravo</title>
+    <link rel="stylesheet" href="/css/mountain.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="logo-container">
+            <img src="/img/mountain-logo.png" alt="" class="logo">
+            <h1>Mountain View Resort</h1>
+        </div>
+        <a href="/" class="back-to-home">
+            <i class="fas fa-arrow-left"></i> 
+        </a>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#habitaciones">Cabañas</a></li>
+                <li><a href="#experiencias">Experiencias</a></li>
+                <li><a href="#galeria">Galería</a></li>
+                <li><a href="#ubicacion">Ubicación</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+                <li><a href="#reservar" class="btn-reserva">Reservar</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Sección Hero -->
+        <section id="inicio" class="hero">
+            <div class="hero-content">
+                <h2>Descansa entre las montañas</h2>
+                <p>Lujo rústico con vistas espectaculares en Valle de Bravo</p>
+                <a href="#reservar" class="btn-hero">Reservar ahora</a>
+            </div>
+        </section>
+
+        <!-- Sección de información del resort -->
+        <section class="resort-info">
+            <h2>Bienvenido a Mountain View Resort</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <i class="fas fa-mountain"></i>
+                    <h3>Nuestro Refugio</h3>
+                    <p>Mountain View Resort es un exclusivo complejo de cabañas de lujo situado en las montañas de Valle de Bravo. Ofrecemos una experiencia única que combina la comodidad moderna con el encanto rústico, todo rodeado de naturaleza virgen.</p>
+                </div>
+                
+                <div class="info-item">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <h3>Ubicación Privilegiada</h3>
+                    <p>Ubicado a solo 15 minutos del centro de Valle de Bravo y a 2.5 horas de la Ciudad de México. Nuestro resort está estratégicamente situado para ofrecer privacidad y tranquilidad, con acceso fácil a todas las atracciones de la región.</p>
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3766.234567890123!2d-100.12345678901234!3d19.123456789012345!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTnCsDA3JzI0LjQiTiAxMDDCsDA3JzM2LjUiVw!5e0!3m2!1ses!2smx!4v1620000000000!5m2!1ses!2smx" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de cabañas -->
+        <section id="habitaciones" class="cabins-section">
+            <h2>Nuestras Cabañas</h2>
+            <div class="cabins-grid">
+                <div class="cabin-card">
+                    <img src="/img/bosque.jpg" alt="Cabaña Estándar">
+                    <h3>Cabaña del Bosque</h3>
+                    <ul>
+                        <li>1 recámara con cama king size</li>
+                        <li>Chimenea interior</li>
+                        <li>55 m² de espacio</li>
+                        <li>Terraza privada con hamaca</li>
+                        <li>Vista al bosque</li>
+                    </ul>
+                    <p class="price">Desde $1,800/noche</p>
+                    <a href="#reservar" class="btn-cabin">Reservar</a>
+                </div>
+                
+                <div class="cabin-card">
+                    <img src="/img/cabana-deluxe.jpg" alt="Cabaña Deluxe">
+                    <h3>Cabaña de Montaña</h3>
+                    <ul>
+                        <li>2 recámaras (1 king, 2 queen)</li>
+                        <li>Chimenea y jacuzzi interior</li>
+                        <li>85 m² de espacio</li>
+                        <li>Terraza con asador</li>
+                        <li>Vista panorámica</li>
+                    </ul>
+                    <p class="price">Desde $2,800/noche</p>
+                    <a href="#reservar" class="btn-cabin">Reservar</a>
+                </div>
+                
+                <div class="cabin-card">
+                    <img src="/img/cabana-premium.jpg" alt="Cabaña Premium">
+                    <h3>Villa Presidencial</h3>
+                    <ul>
+                        <li>3 recámaras (2 king, 2 queen)</li>
+                        <li>Jacuzzi privado al aire libre</li>
+                        <li>120 m² de espacio</li>
+                        <li>Sala de estar con chimenea</li>
+                        <li>Vista exclusiva al valle</li>
+                    </ul>
+                    <p class="price">Desde $4,500/noche</p>
+                    <a href="#reservar" class="btn-cabin">Reservar</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de experiencias -->
+        <section id="experiencias" class="experiences-section">
+            <h2>Experiencias Únicas</h2>
+            <div class="experiences-grid">
+                <div class="experience-item">
+                    <i class="fas fa-utensils"></i>
+                    <h3>Gastronomía</h3>
+                    <p>Restaurante con cocina de autor usando ingredientes locales. Menú degustación disponible los fines de semana.</p>
+                </div>
+                
+                <div class="experience-item">
+                    <i class="fas fa-spa"></i>
+                    <h3>Spa en la Naturaleza</h3>
+                    <p>Tratamientos con productos naturales en cabañas de spa con vista al bosque. Incluye temazcal tradicional.</p>
+                </div>
+                
+                <div class="experience-item">
+                    <i class="fas fa-hiking"></i>
+                    <h3>Ecoturismo</h3>
+                    <p>Senderismo guiado, observación de aves, paseos a caballo y recorridos en lancha por el lago.</p>
+                </div>
+                
+                <div class="experience-item">
+                    <i class="fas fa-wine-glass-alt"></i>
+                    <h3>Catas y Eventos</h3>
+                    <p>Catas de vino local y mezcal. Espacios para eventos especiales con capacidad hasta 100 personas.</p>
+                </div>
+                
+                <div class="experience-item">
+                    <i class="fas fa-bicycle"></i>
+                    <h3>Deportes</h3>
+                    <p>Alquiler de bicicletas de montaña, equipo para pesca deportiva y kayaks en el lago.</p>
+                </div>
+                
+                <div class="experience-item">
+                    <i class="fas fa-child"></i>
+                    <h3>Familia</h3>
+                    <p>Talleres de naturaleza para niños, zona de juegos al aire libre y actividades familiares guiadas.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de galería -->
+        <section id="galeria" class="gallery-section">
+            <h2>Galería</h2>
+            <div class="gallery-grid">
+                <img src="/img/mountain-view-resort.jpg" alt="Cabañas exteriores" class="gallery-img">
+                <img src="/img/aire.jpg" alt="Restaurante" class="gallery-img">
+                <img src="/img/vistas.jpg" alt="Vistas" class="gallery-img">
+                <img src="/img/interior.jpg" alt="Interior cabaña" class="gallery-img">
+                <img src="/img/actividades.jpg" alt="Actividades" class="gallery-img">
+            </div>
+        </section>
+
+        <!-- Sección de paquetes -->
+        <section class="packages-section">
+            <h2>Paquetes Especiales</h2>
+            <div class="packages-grid">
+                <div class="package-card">
+                    <h3>Escape Romántico</h3>
+                    <p>2 noches en Cabaña del Bosque + cena gourmet + botella de vino + masaje para parejas</p>
+                    <p class="price">$4,200 <span class="old-price">$5,500</span></p>
+                    <p class="valid">Válido hasta 30/11/2023</p>
+                    <a href="#reservar" class="btn-package">Reservar paquete</a>
+                </div>
+                
+                <div class="package-card">
+                    <h3>Aventura en Familia</h3>
+                    <p>3 noches en Cabaña de Montaña + actividades ecoturísticas + taller infantil + desayunos</p>
+                    <p class="price">$7,800 <span class="old-price">$9,500</span></p>
+                    <p class="valid">Válido hasta 15/12/2023</p>
+                    <a href="#reservar" class="btn-package">Reservar paquete</a>
+                </div>
+                
+                <div class="package-card">
+                    <h3>Lujo Total</h3>
+                    <p>4 noches en Villa Presidencial + spa ilimitado + chef privado + tour privado por el lago</p>
+                    <p class="price">$16,500 <span class="old-price">$20,000</span></p>
+                    <p class="valid">Válido hasta 31/01/2024</p>
+                    <a href="#reservar" class="btn-package">Reservar paquete</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de reservas -->
+        <section id="reservar" class="booking-section">
+            <h2>Reservar ahora</h2>
+            <div class="booking-form">
+                <form id="reservaForm">
+                    <div class="form-group">
+                        <label for="fecha-entrada">Fecha de entrada:</label>
+                        <input type="date" id="fecha-entrada" name="fecha-entrada" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fecha-salida">Fecha de salida:</label>
+                        <input type="date" id="fecha-salida" name="fecha-salida" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="adultos">Adultos:</label>
+                        <select id="adultos" name="adultos">
+                            <option value="1">1</option>
+                            <option value="2" selected>2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ninos">Niños:</label>
+                        <select id="ninos" name="ninos">
+                            <option value="0" selected>0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipo-cabana">Tipo de cabaña:</label>
+                        <select id="tipo-cabana" name="tipo-cabana">
+                            <option value="bosque">Cabaña del Bosque</option>
+                            <option value="montana">Cabaña de Montaña</option>
+                            <option value="villa">Villa Presidencial</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn-submit">Ver disponibilidad</button>
+                </form>
+                
+                <div class="booking-info">
+                    <h3>Políticas de reservación</h3>
+                    <ul>
+                        <li>Check-in: 4:00 PM | Check-out: 12:00 PM</li>
+                        <li>Depósito del 30% requerido para garantizar reservación</li>
+                        <li>Cancelación gratuita hasta 7 días antes</li>
+                        <li>Mínimo 2 noches en temporada alta</li>
+                    </ul>
+                    
+                    <h3>Métodos de pago aceptados</h3>
+                    <div class="payment-methods">
+                        <i class="fab fa-cc-visa"></i>
+                        <i class="fab fa-cc-mastercard"></i>
+                        <i class="fab fa-cc-amex"></i>
+                        <i class="fab fa-cc-paypal"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de contacto -->
+        <section id="contacto" class="contact-section">
+            <h2>Contacto</h2>
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <h3>Información de contacto</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> Carretera Valle de Bravo - Avándaro Km 5.5, Valle de Bravo, México</p>
+                    <p><i class="fas fa-phone"></i> +52 726 123 4567</p>
+                    <p><i class="fas fa-envelope"></i> reservaciones@mountainviewresort.com</p>
+                    
+                    <h3>Redes sociales</h3>
+                    <div class="social-media">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#"><i class="fab fa-tripadvisor"></i></a>
+                    </div>
+                </div>
+                
+                <div class="contact-form">
+                    <form id="contactoForm">
+                        <div class="form-group">
+                            <label for="nombre">Nombre:</label>
+                            <input type="text" id="nombre" name="nombre" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="asunto">Asunto:</label>
+                            <input type="text" id="asunto" name="asunto" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="mensaje">Mensaje:</label>
+                            <textarea id="mensaje" name="mensaje" rows="5" required></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn-submit">Enviar mensaje</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Mountain View Resort</h3>
+                <p>El refugio de montaña más exclusivo de Valle de Bravo. Disfruta de naturaleza, lujo y tranquilidad en un entorno único.</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Enlaces rápidos</h3>
+                <ul>
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#habitaciones">Cabañas</a></li>
+                    <li><a href="#experiencias">Experiencias</a></li>
+                    <li><a href="#galeria">Galería</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Newsletter</h3>
+                <p>Suscríbete para recibir ofertas exclusivas</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Tu email" required>
+                    <button type="submit">Suscribirse</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2023 Mountain View Resort. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="/js/mountain.js"></script>
+</body>
+</html>
