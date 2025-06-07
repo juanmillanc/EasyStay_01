@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const db = require('../databases/db');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -14,48 +14,88 @@ const uploadDir = path.join(__dirname, '../public/uploads/hotels');
     }
 })();
 
+// Función para reconstruir el array de habitaciones desde el body
+function parseHabitaciones(body) {
+    const habitaciones = [];
+    let i = 0;
+    while (body[`habitaciones[${i}][tipo]`] !== undefined) {
+        habitaciones.push({
+            tipo: body[`habitaciones[${i}][tipo]`],
+            capacidad: body[`habitaciones[${i}][capacidad]`],
+            precio: body[`habitaciones[${i}][precio]`],
+            cantidad_disponible: body[`habitaciones[${i}][cantidad_disponible]`],
+            descripcion: body[`habitaciones[${i}][descripcion]`]
+        });
+        i++;
+    }
+    return habitaciones;
+}
+
 const hotelController = {
     // Listar todos los hoteles
     index: async (req, res) => {
         try {
             const [hotels] = await db.query(`
                 SELECT h.*, 
-                       c.* 
+                       c.*,
+                       GROUP_CONCAT(
+                           JSON_OBJECT(
+                               'id', hab.id,
+                               'tipo', hab.tipo,
+                               'descripcion', hab.descripcion,
+                               'capacidad', hab.capacidad,
+                               'precio', hab.precio,
+                               'cantidad_disponible', hab.cantidad_disponible,
+                               'estado', hab.estado
+                           )
+                       ) as habitaciones
                 FROM hoteles h 
                 LEFT JOIN caracteristicas_hotel c ON h.id = c.hotel_id
+                LEFT JOIN habitaciones hab ON h.id = hab.hotel_id
+                GROUP BY h.id
                 ORDER BY h.fecha_creacion DESC
             `);
 
-            // Agrupar características por hotel
-            const hotelsMap = new Map();
-            hotels.forEach(row => {
-                if (!hotelsMap.has(row.id)) {
-                    const hotel = {...row};
-                    delete hotel.hotel_id;
-                    hotel.caracteristicas = {};
-                    hotelsMap.set(row.id, hotel);
-                }
-                const hotel = hotelsMap.get(row.id);
-                if (row.wifi !== null) {
-                    hotel.caracteristicas = {
-                        wifi: row.wifi,
-                        parking: row.parking,
-                        piscina: row.piscina,
-                        restaurante: row.restaurante,
-                        aire_acondicionado: row.aire_acondicionado,
-                        gimnasio: row.gimnasio,
-                        spa: row.spa,
-                        bar: row.bar,
-                        mascotas: row.mascotas
+            // Procesar los resultados
+            const processedHotels = hotels.map(hotel => {
+                const processedHotel = {...hotel};
+                
+                // Procesar características
+                if (hotel.wifi !== null) {
+                    processedHotel.caracteristicas = {
+                        wifi: hotel.wifi,
+                        parking: hotel.parking,
+                        piscina: hotel.piscina,
+                        restaurante: hotel.restaurante,
+                        aire_acondicionado: hotel.aire_acondicionado,
+                        gimnasio: hotel.gimnasio,
+                        spa: hotel.spa,
+                        bar: hotel.bar,
+                        mascotas: hotel.mascotas
                     };
                 }
+
+                // Procesar habitaciones
+                if (hotel.habitaciones) {
+                    processedHotel.habitaciones = hotel.habitaciones
+                        .split(',')
+                        .map(hab => JSON.parse(hab));
+                } else {
+                    processedHotel.habitaciones = [];
+                }
+
+                return processedHotel;
             });
+
+            // --- DEBUG LOG ---
+            console.log('Hoteles procesados para listado (incluyendo habitaciones):', processedHotels);
+            // --- END DEBUG LOG ---
 
             // Obtener ciudades únicas para el filtro
             const [cities] = await db.query('SELECT DISTINCT ciudad FROM hoteles ORDER BY ciudad');
 
             res.render('admin/hotels/index', {
-                hotels: Array.from(hotelsMap.values()),
+                hotels: processedHotels,
                 cities: cities.map(row => row.ciudad),
                 user: req.user,
                 path: '/admin/hotels'
@@ -78,6 +118,9 @@ const hotelController = {
 
     // Guardar nuevo hotel
     store: async (req, res) => {
+        // Reemplazar coma por punto en coordenadas
+        const lat = req.body.coordenadas_lat ? req.body.coordenadas_lat.replace(',', '.') : null;
+        const lng = req.body.coordenadas_lng ? req.body.coordenadas_lng.replace(',', '.') : null;
         const connection = await db.getConnection();
         try {
             await connection.beginTransaction();
@@ -105,11 +148,13 @@ const hotelController = {
                 req.body.estrellas,
                 req.body.precio_base,
                 imagePath,
-                req.body.coordenadas_lat || null,
-                req.body.coordenadas_lng || null,
+                lat,
+                lng,
                 req.body.estado,
-                req.user.id
+                req.session.user.id
             ]);
+
+            const hotelId = result.insertId;
 
             // Insertar características
             await connection.query(`
@@ -118,7 +163,7 @@ const hotelController = {
                     aire_acondicionado, gimnasio, spa, bar, mascotas
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
-                result.insertId,
+                hotelId,
                 req.body.wifi ? 1 : 0,
                 req.body.parking ? 1 : 0,
                 req.body.piscina ? 1 : 0,
@@ -129,6 +174,27 @@ const hotelController = {
                 req.body.bar ? 1 : 0,
                 req.body.mascotas ? 1 : 0
             ]);
+
+            // Procesar habitaciones correctamente
+            const habitaciones = parseHabitaciones(req.body);
+            if (habitaciones.length > 0) {
+                for (const habitacion of habitaciones) {
+                    await connection.query(`
+                        INSERT INTO habitaciones (
+                            hotel_id, tipo, descripcion, capacidad,
+                            precio, cantidad_disponible, estado
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    `, [
+                        hotelId,
+                        habitacion.tipo,
+                        habitacion.descripcion,
+                        habitacion.capacidad,
+                        habitacion.precio,
+                        habitacion.cantidad_disponible,
+                        'disponible'
+                    ]);
+                }
+            }
 
             await connection.commit();
             req.flash('success', 'Hotel creado exitosamente');
@@ -148,10 +214,23 @@ const hotelController = {
         try {
             const [hotels] = await db.query(`
                 SELECT h.*, 
-                       c.* 
+                       c.*,
+                       GROUP_CONCAT(
+                           JSON_OBJECT(
+                               'id', hab.id,
+                               'tipo', hab.tipo,
+                               'descripcion', hab.descripcion,
+                               'capacidad', hab.capacidad,
+                               'precio', hab.precio,
+                               'cantidad_disponible', hab.cantidad_disponible,
+                               'estado', hab.estado
+                           )
+                       ) as habitaciones
                 FROM hoteles h 
                 LEFT JOIN caracteristicas_hotel c ON h.id = c.hotel_id
+                LEFT JOIN habitaciones hab ON h.id = hab.hotel_id
                 WHERE h.id = ?
+                GROUP BY h.id
             `, [req.params.id]);
 
             if (hotels.length === 0) {
@@ -160,17 +239,34 @@ const hotelController = {
             }
 
             const hotel = {...hotels[0]};
-            hotel.caracteristicas = {
-                wifi: hotel.wifi,
-                parking: hotel.parking,
-                piscina: hotel.piscina,
-                restaurante: hotel.restaurante,
-                aire_acondicionado: hotel.aire_acondicionado,
-                gimnasio: hotel.gimnasio,
-                spa: hotel.spa,
-                bar: hotel.bar,
-                mascotas: hotel.mascotas
-            };
+            
+            // Procesar características
+            if (hotel.wifi !== null) {
+                hotel.caracteristicas = {
+                    wifi: hotel.wifi,
+                    parking: hotel.parking,
+                    piscina: hotel.piscina,
+                    restaurante: hotel.restaurante,
+                    aire_acondicionado: hotel.aire_acondicionado,
+                    gimnasio: hotel.gimnasio,
+                    spa: hotel.spa,
+                    bar: hotel.bar,
+                    mascotas: hotel.mascotas
+                };
+            }
+
+            // Procesar habitaciones
+            if (hotel.habitaciones) {
+                hotel.habitaciones = hotel.habitaciones
+                    .split(',')
+                    .map(hab => JSON.parse(hab));
+            } else {
+                hotel.habitaciones = [];
+            }
+
+            // --- DEBUG LOG ---
+            console.log('Habitaciones cargadas para edición:', hotel.habitaciones);
+            // --- END DEBUG LOG ---
 
             res.render('admin/hotels/form', { 
                 hotel,
@@ -265,6 +361,54 @@ const hotelController = {
                 req.params.id
             ]);
 
+            // Actualizar habitaciones
+            // Primero eliminamos las habitaciones existentes
+            await connection.query('DELETE FROM habitaciones WHERE hotel_id = ?', [req.params.id]);
+
+            // Luego insertamos las nuevas habitaciones o actualizamos las existentes si tienen ID
+            if (req.body.habitaciones && Array.isArray(req.body.habitaciones)) {
+                for (const habitacion of req.body.habitaciones) {
+                    // Si la habitacion tiene un ID, es una edicion; si no, es nueva
+                    if (habitacion.id) {
+                        await connection.query(`
+                            UPDATE habitaciones SET
+                                tipo = ?,
+                                descripcion = ?,
+                                capacidad = ?,
+                                precio = ?,
+                                cantidad_disponible = ?,
+                                estado = ?
+                            WHERE id = ? AND hotel_id = ?
+                        `, [
+                            habitacion.tipo,
+                            habitacion.descripcion,
+                            habitacion.capacidad,
+                            habitacion.precio,
+                            habitacion.cantidad_disponible,
+                            habitacion.estado,
+                            habitacion.id,
+                            req.params.id
+                        ]);
+                    } else {
+                        // Es una habitacion nueva
+                        await connection.query(`
+                            INSERT INTO habitaciones (
+                                hotel_id, tipo, descripcion, capacidad,
+                                precio, cantidad_disponible, estado
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                        `, [
+                            req.params.id,
+                            habitacion.tipo,
+                            habitacion.descripcion,
+                            habitacion.capacidad,
+                            habitacion.precio,
+                            habitacion.cantidad_disponible,
+                            habitacion.estado // Usar el estado del formulario
+                        ]);
+                    }
+                }
+            }
+
             await connection.commit();
             req.flash('success', 'Hotel actualizado exitosamente');
             res.redirect('/admin/hotels');
@@ -287,7 +431,7 @@ const hotelController = {
             // Obtener imagen antes de eliminar
             const [hotel] = await connection.query('SELECT imagen_principal FROM hoteles WHERE id = ?', [req.params.id]);
 
-            // Eliminar hotel (las características se eliminarán en cascada)
+            // Eliminar hotel (las características y habitaciones se eliminarán en cascada)
             await connection.query('DELETE FROM hoteles WHERE id = ?', [req.params.id]);
 
             // Eliminar imagen si existe

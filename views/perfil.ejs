@@ -161,6 +161,35 @@
                     </div>
                 </div>
                 
+                <% if (puntos) { %>
+                <div class="profile-info-card">
+                    <h2>Puntos y Nivel</h2>
+
+                    <div class="profile-detail">
+                        <strong>Puntos totales</strong>
+                        <span><%= puntos.puntos_totales %></span>
+                    </div>
+
+                    <div class="profile-detail">
+                        <strong>Puntos disponibles</strong>
+                        <span><%= puntos.puntos_disponibles %></span>
+                    </div>
+
+                    <div class="profile-detail">
+                         <strong>Nivel actual</strong>
+                        <span><%= puntos.nivel_nombre %></span>
+                    </div>
+
+                    <!-- Puedes añadir aquí información sobre el siguiente nivel o beneficios -->
+
+                 </div>
+                <% } else { %>
+                     <div class="profile-info-card">
+                        <h2>Puntos y Nivel</h2>
+                         <p>No se pudo cargar la información de puntos.</p>
+                     </div>
+                <% } %>
+                
             </div>
             
             <div class="profile-actions">

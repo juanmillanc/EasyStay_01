@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyStay - Historial de Puntos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <style>
+        .historial-container {
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .historial-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .historial-table {
+            width: 100%;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .historial-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .historial-table th,
+        .historial-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .historial-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .historial-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .tipo-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tipo-ganado {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .tipo-redimido {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-volver {
+            background: #666;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-volver:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <header class="admin-header">
+        <div class="logo">
+            <img src="/img/6.png" alt="EasyStay" />
+            <span></span>
+        </div>
+        <nav class="admin-nav">
+            <a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i><center>Dashboard</center></a>
+            <a href="/admin/puntos" class="active"><i class="fas fa-star"></i><center>Puntos</center></a>
+        </nav>
+        <div class="admin-user">
+            <i class="fas fa-user-shield"></i>
+            <span><%= user.nombre %> <small>(<%= user.rol %>)</small></span>
+            <a href="/logout" class="logout-btn" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </header>
+
+    <main class="historial-container">
+        <div class="historial-header">
+            <h1>Historial de Puntos - <%= usuario.nombre %></h1>
+            <a href="/admin/puntos" class="btn-volver">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+
+        <div class="historial-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Puntos</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% historial.forEach(function(registro) { %>
+                        <tr>
+                            <td><%= new Date(registro.fecha).toLocaleString() %></td>
+                            <td>
+                                <span class="tipo-badge tipo-<%= registro.tipo %>">
+                                    <%= registro.tipo === 'ganado' ? 'Ganado' : 'Redimido' %>
+                                </span>
+                            </td>
+                            <td><%= registro.puntos %></td>
+                            <td><%= registro.descripcion %></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html> 

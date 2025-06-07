@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title><%= hotel.nombre %> - Detalles</title>
+    <link rel="stylesheet" href="/css/search.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .btn-volver {
+            display: inline-block;
+            background: #eee;
+            color: #ffb300;
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            transition: background 0.2s;
+        }
+        .btn-volver:hover {
+            background: #ffecb3;
+        }
+        .hotel-detalle-container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 2.5rem 2rem;
+        }
+        .hotel-header {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .hotel-header img {
+            width: 220px;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+        }
+        .hotel-info {
+            flex: 1;
+        }
+        .hotel-info h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2.2rem;
+            color: #ffb300;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+        .hotel-info-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.18rem 0;
+            color: #444;
+            font-size: 1.1rem;
+        }
+        .hotel-info-row i {
+            color: #ffb300;
+            font-size: 1.1rem;
+            min-width: 18px;
+            text-align: center;
+        }
+        .stars {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .stars i {
+            color: #ffb300;
+            font-size: 1.15rem;
+        }
+        .btn-maps {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f7f7fa;
+            color: #1976d2;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            margin-top: 0.5rem;
+            font-size: 1.05rem;
+            transition: background 0.2s;
+        }
+        .btn-maps i {
+            color: #1976d2;
+        }
+        .btn-maps:hover {
+            background: #e3eafc;
+        }
+        #mini-mapa {
+            width: 100%;
+            height: 200px;
+            border-radius: 10px;
+            margin: 1.2rem 0 2rem 0;
+            box-shadow: 0 2px 8px rgba(25,118,210,0.08);
+        }
+        .caracteristicas-lista {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0 2rem 0;
+        }
+        .caracteristica {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            color: #333;
+            font-size: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .habitaciones-section {
+            margin-top: 2rem;
+        }
+        .habitaciones-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        .habitacion-card {
+            background: #f7f7fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            padding: 1rem 1.2rem;
+            min-width: 180px;
+            max-width: 100%;
+            font-size: 1rem;
+            margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .habitacion-card h3, .habitacion-card h4 {
+            color: #ffb300;
+            margin-bottom: 0.3rem;
+            font-size: 1.08rem;
+            font-weight: 700;
+        }
+        .habitacion-card p {
+            margin: 0.1rem 0;
+            color: #444;
+            font-size: 0.98rem;
+        }
+        .btn-reservar {
+            display: inline-block;
+            background: #ffb300;
+            color: #fff;
+            padding: 0.7rem 2rem;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            margin-top: 1.5rem;
+            transition: background 0.2s;
+        }
+        .btn-reservar:hover {
+            background: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="hotel-detalle-container">
+        <a href="javascript:history.back()" class="btn-volver">← Volver</a>
+        <div class="hotel-header">
+            <img src="<%= hotel.imagen_principal || '/img/default-hotel.jpg' %>" alt="<%= hotel.nombre %>">
+            <div class="hotel-info">
+                <h1><i class="fas fa-hotel"></i> <%= hotel.nombre %></h1>
+                <div class="hotel-info-row"><i class="fas fa-map-marker-alt"></i> <span><%= hotel.direccion %></span></div>
+                <div class="hotel-info-row"><i class="fas fa-city"></i> <span><%= hotel.ciudad %></span></div>
+                <div class="hotel-info-row">
+                    <span class="stars">
+                        <% for(let i=1; i<=5; i++) { %>
+                            <% if(i <= hotel.estrellas) { %>
+                                <i class="fas fa-star"></i>
+                            <% } else { %>
+                                <i class="far fa-star"></i>
+                            <% } %>
+                        <% } %>
+                    </span>
+                    <span style="margin-left:6px; color:#888; font-size:0.98em;">(<%= hotel.estrellas %> estrellas)</span>
+                </div>
+                <div class="hotel-info-row"><i class="fas fa-money-bill-wave"></i> <span>Precio base: $<%= hotel.precio_base %></span></div>
+                <% if (hotel.coordenadas_lat && hotel.coordenadas_lng) { %>
+                    <a href="https://www.google.com/maps/search/?api=1&query=<%= hotel.coordenadas_lat %>,<%= hotel.coordenadas_lng %>" target="_blank" class="btn-maps"><i class="fas fa-map"></i> Ver ubicación en Google Maps</a>
+                <% } %>
+            </div>
+        </div>
+        <% if (hotel.coordenadas_lat && hotel.coordenadas_lng) { %>
+            <div id="mini-mapa"></div>
+        <% } %>
+        <h2>Características</h2>
+        <div class="caracteristicas-lista">
+            <% if (hotel.wifi) { %><span class="caracteristica"><i class="fas fa-wifi"></i> WiFi</span><% } %>
+            <% if (hotel.parking) { %><span class="caracteristica"><i class="fas fa-square-parking"></i> Parking</span><% } %>
+            <% if (hotel.piscina) { %><span class="caracteristica"><i class="fas fa-person-swimming"></i> Piscina</span><% } %>
+            <% if (hotel.restaurante) { %><span class="caracteristica"><i class="fas fa-utensils"></i> Restaurante</span><% } %>
+            <% if (hotel.aire_acondicionado) { %><span class="caracteristica"><i class="fas fa-wind"></i> Aire acondicionado</span><% } %>
+            <% if (hotel.gimnasio) { %><span class="caracteristica"><i class="fas fa-dumbbell"></i> Gimnasio</span><% } %>
+            <% if (hotel.spa) { %><span class="caracteristica"><i class="fas fa-spa"></i> Spa</span><% } %>
+            <% if (hotel.bar) { %><span class="caracteristica"><i class="fas fa-martini-glass"></i> Bar</span><% } %>
+            <% if (hotel.mascotas) { %><span class="caracteristica"><i class="fas fa-dog"></i> Acepta mascotas</span><% } %>
+        </div>
+        <div class="habitaciones-section">
+            <h2>Habitaciones</h2>
+            <% if (habitaciones.length > 0) { %>
+                <div class="habitaciones-grid">
+                <% habitaciones.forEach(hab => { %>
+                    <div class="habitacion-card">
+                        <h4><i class="fas fa-bed"></i> <%= hab.tipo %></h4>
+                        <p><i class="fas fa-user-friends"></i> <strong>Capacidad:</strong> <%= hab.capacidad %> personas</p>
+                        <p><i class="fas fa-money-bill-wave"></i> <strong>Precio:</strong> $<%= hab.precio %></p>
+                        <% if (hab.descripcion) { %>
+                        <p><i class="fas fa-align-left"></i> <%= hab.descripcion %></p>
+                        <% } %>
+                        <a href="/hotel/reservar/<%= hotel.id %>?habitacion=<%= hab.id %>" class="btn-reservar">Reservar</a>
+                    </div>
+                <% }) %>
+                </div>
+            <% } else { %>
+                <p>No hay habitaciones registradas para este hotel.</p>
+            <% } %>
+        </div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <% if (hotel.coordenadas_lat && hotel.coordenadas_lng) { %>
+    <script>
+        var map = L.map('mini-mapa').setView([<%= hotel.coordenadas_lat %>, <%= hotel.coordenadas_lng %>], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+        L.marker([<%= hotel.coordenadas_lat %>, <%= hotel.coordenadas_lng %>]).addTo(map)
+            .bindPopup('<b><%= hotel.nombre %></b><br><%= hotel.direccion %>');
+    </script>
+    <% } %>
+</body>
+</html>

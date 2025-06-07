@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Notificación a Usuario - EasyStay</title>
+    <style>
+        /* Estilos generales mejorados */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .informar-container {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2.5rem 3rem;
+            max-width: 700px;
+            margin: 2rem auto;
+        }
+        
+        .informar-container h1 {
+            color: #ff8c00;
+            font-size: 2.2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        /* Campos de formulario más grandes */
+        .form-group {
+            margin-bottom: 1.8rem;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 0.8rem;
+            display: block;
+            font-size: 1.1rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1.1rem;
+            background: #fff;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #ff8c00;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.2);
+        }
+        
+        select.form-control {
+            height: 3.5rem;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.2rem;
+        }
+        
+        textarea.form-control {
+            min-height: 180px;
+            font-family: inherit;
+            line-height: 1.6;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+        
+        .checkbox-container input {
+            width: 1.2rem;
+            height: 1.2rem;
+            margin-right: 0.8rem;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #ff8c00, #ff6b00);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            display: block;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(to right, #e67e00, #e65c00);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+        }
+        
+        .mensaje-estado {
+            padding: 1.2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+        
+        .volver-panel {
+            display: inline-block;
+            margin-top: 2rem;
+            color: #7a5cff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+        
+        .volver-panel:hover {
+            color: #5e3dff;
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .informar-container {
+                padding: 1.8rem 1.5rem;
+                max-width: 95%;
+            }
+            
+            .form-control {
+                padding: 0.9rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="informar-container">
+            <h1>Notificación a Usuario</h1>
+            
+            <% if (typeof success !== 'undefined') { %>
+                <div class="mensaje-estado success"><%= success %></div>
+            <% } %>
+            
+            <% if (typeof error !== 'undefined') { %>
+                <div class="mensaje-estado error"><%= error %></div>
+            <% } %>
+            
+            <form action="/admin/informar" method="POST">
+                <div class="form-group">
+                    <label for="usuario">Seleccione el usuario:</label>
+                    <select name="email" id="usuario" class="form-control" required>
+                        <% usuarios.forEach(function(usuario) { %>
+                            <option value="<%= usuario.email %>"><%= usuario.nombre %> - <%= usuario.email %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tipo_notificacion">Tipo de notificación:</label>
+                    <select name="tipo_notificacion" id="tipo_notificacion" class="form-control" required>
+                        <option value="cancelacion">Cancelación de reserva</option>
+                        <option value="advertencia">Advertencia</option>
+                        <option value="confirmacion">Confirmación</option>
+                        <option value="informacion">Información importante</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="asunto">Asunto:</label>
+                    <input type="text" name="asunto" id="asunto" class="form-control" required placeholder="Ej: Cancelación de reserva #REF123">
+                </div>
+                
+                <div class="form-group">
+                    <label for="motivo">Motivo detallado:</label>
+                    <textarea name="motivo" id="motivo" class="form-control" required placeholder="Describa el motivo específico de la notificación..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mensaje">Mensaje personalizado:</label>
+                    <textarea name="mensaje" id="mensaje" class="form-control" required placeholder="Escriba el mensaje que recibirá el usuario..."></textarea>
+                </div>
+                
+                <div class="checkbox-container">
+                    <input type="checkbox" id="enviar_copia" name="enviar_copia">
+                    <label for="enviar_copia">Enviar copia a mi correo</label>
+                </div>
+                
+                <button type="submit" class="btn">Enviar Notificación</button>
+            </form>
+            
+            <a href="/admin/dashboard" class="volver-panel">← Volver al panel de administración</a>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const usuarioSelect = document.getElementById('usuario');
+            const tipoNotificacion = document.getElementById('tipo_notificacion');
+            const asuntoInput = document.getElementById('asunto');
+            const motivoTextarea = document.getElementById('motivo');
+            const mensajeTextarea = document.getElementById('mensaje');
+            
+            // Autocompletar asunto según tipo de notificación
+            tipoNotificacion.addEventListener('change', function() {
+                const tipo = this.value;
+                let asunto = '';
+                
+                switch(tipo) {
+                    case 'cancelacion': asunto = 'Cancelación de reserva'; break;
+                    case 'advertencia': asunto = 'Advertencia importante'; break;
+                    case 'confirmacion': asunto = 'Confirmación de reserva'; break;
+                    case 'informacion': asunto = 'Información importante sobre su reserva'; break;
+                }
+                
+                asuntoInput.value = asunto;
+            });
+            
+            // Cargar plantilla básica según tipo de notificación
+            tipoNotificacion.addEventListener('change', function() {
+                const tipo = this.value;
+                let mensaje = '';
+                
+                switch(tipo) {
+                    case 'cancelacion':
+                        mensaje = `Estimado/a,\n\nLamentamos informarle que su reserva ha sido cancelada debido al incumplimiento de nuestras políticas.\n\nMotivo: [Especifique el motivo detallado]\n\nPara cualquier aclaración, no dude en contactarnos.\n\nAtentamente,\nEl equipo de EasyStay`;
+                        break;
+                    case 'advertencia':
+                        mensaje = `Estimado/a,\n\nLe escribimos para informarle sobre una incidencia relacionada con su cuenta o reserva.\n\nDetalles: [Describa la situación]\n\nLe rogamos tome las medidas necesarias.\n\nAtentamente,\nEl equipo de EasyStay`;
+                        break;
+                    case 'confirmacion':
+                        mensaje = `Estimado/a,\n\nNos complace confirmarle que su reserva ha sido procesada correctamente.\n\nDetalles de la reserva: [Incluya los detalles relevantes]\n\nGracias por confiar en nosotros.\n\nAtentamente,\nEl equipo de EasyStay`;
+                        break;
+                    case 'informacion':
+                        mensaje = `Estimado/a,\n\nTiene una notificación importante sobre su reserva con EasyStay.\n\nInformación: [Proporcione los detalles relevantes]\n\nNo dude en contactarnos si necesita ayuda.\n\nAtentamente,\nEl equipo de EasyStay`;
+                        break;
+                }
+                
+                mensajeTextarea.value = mensaje;
+            });
+            
+            // Validación antes de enviar
+            document.querySelector('form').addEventListener('submit', function(e) {
+                if (motivoTextarea.value.includes('[Especifique') || motivoTextarea.value.includes('[Describa') || 
+                    mensajeTextarea.value.includes('[Especifique') || mensajeTextarea.value.includes('[Describa')) {
+                    e.preventDefault();
+                    alert('Por favor, complete todos los campos marcados con placeholders antes de enviar.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

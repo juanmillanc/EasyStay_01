@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Comprobante de Reserva</title>
+    <style>
+        body { background: #f6f8fa; font-family: 'Montserrat', Arial, sans-serif; }
+        .comprobante-container {
+            max-width: 480px;
+            margin: 3rem auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+            padding: 2.5rem 2rem 2rem 2rem;
+            text-align: center;
+            border: 2.5px solid #ffb300;
+        }
+        .comprobante-container h1 { color: #ffb300; font-size: 1.7rem; margin-bottom: 1.2rem; font-weight: 800; }
+        .comprobante-list { text-align: left; margin: 1.5rem 0; font-size: 1.08rem; }
+        .comprobante-list li { margin-bottom: 0.7rem; }
+        .advertencia { color: #d32f2f; background: #fff3cd; border: 1.5px solid #ffb300; border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 1rem; font-weight: 700; }
+        .btn-volver { background: #bbb; color: #222; border-radius: 8px; padding: 0.6rem 1.5rem; font-size: 1rem; font-weight: 600; margin-top: 1.3rem; text-decoration: none; transition: background 0.2s, color 0.2s; }
+        .btn-volver:hover { background: #888; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="comprobante-container">
+        <h1>Comprobante de Reserva</h1>
+        <% if (typeof advertencia !== 'undefined' && advertencia) { %>
+            <div class="advertencia"><%= advertencia %></div>
+        <% } %>
+        <ul class="comprobante-list">
+            <li><strong>Hotel:</strong> <%= reserva.hotel %></li>
+            <li><strong>Habitación:</strong> <%= reserva.habitacion %></li>
+            <li><strong>Check-in:</strong> <%= reserva.fecha_entrada %></li>
+            <li><strong>Check-out:</strong> <%= reserva.fecha_salida %></li>
+            <li><strong>Huéspedes:</strong> <%= reserva.num_huespedes %></li>
+            <li><strong>Total:</strong> $<%= reserva.precio_total %></li>
+            <li><strong>Puntos ganados:</strong> <%= reserva.puntosGanados %></li>
+        </ul>
+        <a href="/perfil" class="btn-volver">Volver al perfil</a>
+    </div>
+</body>
+</html> 

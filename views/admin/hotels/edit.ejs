@@ -62,6 +62,46 @@
                     <label for="descripcion">Descripción</label>
                     <textarea id="descripcion" name="descripcion" rows="3"><%= hotel.descripcion || '' %></textarea>
                 </div>
+
+                <!-- Sección de Habitaciones -->
+                <div class="form-section">
+                    <h3>Habitaciones</h3>
+                    <div id="habitaciones-container">
+                        <% if (hotel.habitaciones && hotel.habitaciones.length > 0) { %>
+                            <% hotel.habitaciones.forEach((habitacion, index) => { %>
+                                <div class="habitacion-item">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Tipo de Habitación *</label>
+                                            <input type="text" name="habitaciones[<%= index %>][tipo]" value="<%= habitacion.tipo %>" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Capacidad *</label>
+                                            <input type="number" name="habitaciones[<%= index %>][capacidad]" value="<%= habitacion.capacidad %>" min="1" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Precio por Noche *</label>
+                                            <input type="number" name="habitaciones[<%= index %>][precio]" value="<%= habitacion.precio %>" step="0.01" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Cantidad Disponible *</label>
+                                            <input type="number" name="habitaciones[<%= index %>][cantidad_disponible]" value="<%= habitacion.cantidad_disponible %>" min="0" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Descripción</label>
+                                        <textarea name="habitaciones[<%= index %>][descripcion]"><%= habitacion.descripcion %></textarea>
+                                    </div>
+                                    <button type="button" class="btn-remove" onclick="removeHabitacion(this)">Eliminar Habitación</button>
+                                </div>
+                            <% }); %>
+                        <% } %>
+                    </div>
+                    <button type="button" class="btn-add" onclick="addHabitacion()">Agregar Habitación</button>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="imagen_principal">Imagen principal</label>
@@ -98,6 +138,48 @@
                 alert('El precio base debe ser mayor que 0');
             }
         });
+
+        // Funciones para manejar habitaciones
+        function addHabitacion() {
+            const container = document.getElementById('habitaciones-container');
+            const index = container.children.length;
+            
+            const habitacionHTML = `
+                <div class="habitacion-item">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo de Habitación *</label>
+                            <input type="text" name="habitaciones[${index}][tipo]" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Capacidad *</label>
+                            <input type="number" name="habitaciones[${index}][capacidad]" min="1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Precio por Noche *</label>
+                            <input type="number" name="habitaciones[${index}][precio]" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad Disponible *</label>
+                            <input type="number" name="habitaciones[${index}][cantidad_disponible]" min="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea name="habitaciones[${index}][descripcion]"></textarea>
+                    </div>
+                    <button type="button" class="btn-remove" onclick="removeHabitacion(this)">Eliminar Habitación</button>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', habitacionHTML);
+        }
+
+        function removeHabitacion(button) {
+            button.closest('.habitacion-item').remove();
+        }
     </script>
 </body>
 </html> 

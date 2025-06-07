@@ -181,6 +181,15 @@
         </div>
     <% } %>
 
+    <% function formatFecha(fecha, hora) {
+        if (!fecha) return '';
+        const d = new Date(fecha);
+        const dia = d.getDate().toString().padStart(2, '0');
+        const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+        const anio = d.getFullYear();
+        return `${anio}-${mes}-${dia} ${hora}`;
+    } %>
+
     <div class="reservas-container">
         <a href="/" class="back-to-home">
             <i class="fas fa-arrow-left"></i> Volver
@@ -193,12 +202,11 @@
                 <ul class="reserva-list">
                     <% hotelBookings.forEach(r => { %>
                         <li class="reserva-card">
-                            <div><strong>Hotel ID:</strong> <%= r.hotel_id %></div>
-                            <div><strong>Habitación ID:</strong> <%= r.habitacion_id %></div>
-                            <div><strong>Check-in:</strong> <span class="fecha"><%= r.check_in %></span></div>
-                            <div><strong>Check-out:</strong> <span class="fecha"><%= r.check_out %></span></div>
-                            <div><strong>Huéspedes:</strong> <%= r.num_huespedes %></div>
-                            <div><strong>Tipo de Habitación:</strong> <%= r.tipo_habitacion %></div>
+                            <div><strong>Hotel:</strong> <%= r.hotel_nombre %></div>
+                            <div><strong>Habitación:</strong> <%= r.habitacion_tipo %></div>
+                            <div><strong>Check-in:</strong> <span class="fecha"><i class="fas fa-calendar-day"></i> <%= formatFecha(r.fecha_entrada, '15:00 pm') %> </span></div>
+                            <div><strong>Check-out:</strong> <span class="fecha"><i class="fas fa-calendar-day"></i> <%= formatFecha(r.fecha_salida, '10:00 am') %> </span></div>
+                            <div><strong>Huéspedes:</strong> <%= r.numero_huespedes %></div>
                             <div>
                                 <strong>Estado:</strong> 
                                 <span class="estado-badge <%= r.estado === 'activa' ? 'estado-activa' : 'estado-inactiva' %>">
@@ -208,14 +216,36 @@
                             <% if (r.comentarios) { %>
                                 <div><strong>Comentarios:</strong> <%= r.comentarios %></div>
                             <% } %>
-                            
                             <div class="reserva-actions">
                                 <a href="/hotel/reserva/edit/<%= r.id %>" class="btn btn-edit">
                                     <i class="fas fa-edit"></i> Editar
                                 </a>
-                                <button onclick="confirmarEliminacion('<%= r.id %>')" class="btn btn-delete">
-                                    <i class="fas fa-trash-alt"></i> Eliminar
-                                </button>
+                                <% if (r.estado !== 'cancelada' && r.estado !== 'finalizada') { %>
+                                    <form action="/hotel/reserva/cancelar/<%= r.id %>" method="POST" style="display:inline;">
+                                        <button type="button" onclick="confirmarCancelacion(this)" class="btn btn-delete">
+                                            <i class="fas fa-ban"></i> Cancelar reserva
+                                        </button>
+                                    </form>
+                                <% } %>
+                                <% if (r.estado === 'abonada') { %>
+                                    <% 
+                                        const fechaSalida = new Date(r.fecha_salida);
+                                        const hoy = new Date();
+                                        const puedeConfirmar = fechaSalida < hoy;
+                                    %>
+                                    <% if (puedeConfirmar) { %>
+                                        <form action="/hotel/reserva/confirmar-estadia/<%= r.id %>" method="POST" style="display:inline;">
+                                            <button type="button" onclick="confirmarEstadia(this)" class="btn" style="background:#28a745;color:#fff;">
+                                                <i class="fas fa-check-circle"></i> Confirmar estadía
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                <% } %>
+                                <% if (r.estado !== 'abonada' && r.estado !== 'finalizada') { %>
+                                    <a href="/hotel/reserva/abonar/<%= r.id %>" class="btn btn-abonar" style="background:#ffb300;color:#fff;">
+                                        <i class="fas fa-wallet"></i> Hacer abono
+                                    </a>
+                                <% } %>
                             </div>
                         </li>
                     <% }) %>
@@ -272,15 +302,10 @@
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'Sí, eliminar permanentemente',
-            cancelButtonText: 'Cancelar',
-            showDenyButton: true,
-            denyButtonText: 'Inactivar en su lugar',
-            denyButtonColor: '#6c757d'
+            cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
                 window.location.href = `/hotel/reserva/delete/${id}`;
-            } else if (result.isDenied) {
-                window.location.href = `/hotel/reserva/edit/${id}?inactivar=true`;
             }
         });
     }
@@ -309,6 +334,41 @@
             } else if (result.isDenied) {
                 // Redirigir a la página de edición con el estado inactivo
                 window.location.href = `/restaurante/reserva/edit/${id}?estado=inactiva`;
+            }
+        });
+    }
+
+    // Función para mostrar SweetAlert de confirmación de cancelación
+    function confirmarCancelacion(button) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Esta acción no se puede deshacer",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, cancelar',
+            cancelButtonText: 'No, volver'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                button.closest('form').submit();
+            }
+        });
+    }
+
+    function confirmarEstadia(button) {
+        Swal.fire({
+            title: '¿Confirmar estadía?',
+            text: "Al confirmar, se te otorgarán los puntos por tu estadía",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, confirmar',
+            cancelButtonText: 'No, volver'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                button.closest('form').submit();
             }
         });
     }

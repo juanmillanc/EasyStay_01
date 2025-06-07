@@ -29,10 +29,10 @@
         justify-content: center;
       }
       .hotel-card {
-        background: #fffbe6;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(255,179,0,0.10);
-        padding: 1.2rem 1.5rem;
+        background: #f7f7fa;
+        border-radius: 14px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        padding: 0;
         min-width: 240px;
         max-width: 320px;
         flex: 1 1 260px;
@@ -41,21 +41,87 @@
         flex-direction: column;
         align-items: flex-start;
         transition: box-shadow 0.2s, transform 0.2s;
+        position: relative;
+        overflow: hidden;
       }
       .hotel-card:hover {
         box-shadow: 0 6px 24px rgba(255,179,0,0.18);
         transform: translateY(-4px) scale(1.03);
       }
-      .hotel-card h3 {
-        color: #ffb300;
-        margin: 0 0 0.5rem 0;
-        font-size: 1.2rem;
-        font-weight: 700;
+      .hotel-card .hotel-img {
+        width: 100%;
+        height: 170px;
+        object-fit: cover;
+        background: #eaeaea;
+        display: block;
       }
-      .hotel-card p {
-        margin: 0.1rem 0;
+      .hotel-card .hotel-content {
+        padding: 1.2rem 1.5rem 1.2rem 1.5rem;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .hotel-card .hotel-header {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.5rem;
+      }
+      .hotel-card .hotel-header i {
+        color: #ffb300;
+        font-size: 1.3rem;
+      }
+      .hotel-card .hotel-title {
+        color: #ffb300;
+        font-size: 1.18rem;
+        font-weight: 700;
+        margin: 0;
+      }
+      .hotel-card .hotel-info-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.18rem 0;
         color: #444;
         font-size: 1rem;
+      }
+      .hotel-card .hotel-info-row i {
+        color: #ffb300;
+        font-size: 1.05rem;
+        min-width: 18px;
+        text-align: center;
+      }
+      .hotel-card .stars {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .hotel-card .stars i {
+        color: #ffb300;
+        font-size: 1.1rem;
+      }
+      .hotel-card .btn-ver-hotel {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        background: #ffb300;
+        color: #fff;
+        padding: 0.5rem 1.2rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.05rem;
+        box-shadow: 0 2px 8px rgba(255,179,0,0.10);
+        transition: background 0.2s, transform 0.2s;
+      }
+      .hotel-card .btn-ver-hotel i {
+        font-size: 1.1rem;
+      }
+      .hotel-card .btn-ver-hotel:hover {
+        background: #e6a100;
+        transform: translateY(-2px) scale(1.04);
       }
       @media (max-width: 900px) {
         .todos-hoteles {
@@ -352,38 +418,7 @@
             <img src="https://imgcy.trivago.com/image/upload/hardcodedimages/mpm-localised-logos-dark/634.png" alt="Trip.com">
         </section>
 
-        <section class="deals">
-            <h2><center>Excelentes ofertas de hotel del momento</center></h2>
-            <div class="hotel-cards">
-                <div class="hotel-card">
-                    <a href="/hotels/marina-resort">
-                    <img src="/img/3.png" alt="Hotel 1">
-                    <div class="hotel-info">
-                        <h3>Hotel Marina Resort</h3>
-                        <p>Playa del Carmen, México</p>
-                    </div>
-                </a>
-                </div>
-                <div class="hotel-card">
-                    <a href="/hotels/mountain-view">
-                    <img src="/img/2.png" alt="Hotel 2">
-                    <div class="hotel-info">
-                        <h3>Mountain View Resort</h3>
-                        <p>Valle de Bravo, México</p>
-                    </div>
-                </a>
-                </div>
-                <div class="hotel-card">
-                    <a href="/hotels/city-lights">
-                    <img src="/img/5.png" alt="Hotel 3">
-                    <div class="hotel-info">
-                        <h3>City Lights Hotel</h3>
-                        <p>Ciudad de México, México</p>
-                    </div>
-                </a>
-                </div>
-            </div>
-        </section>
+      
 
         <section class="todos-hoteles">
             <h2>Todos los hoteles disponibles</h2>
@@ -391,12 +426,44 @@
                 <% if (typeof hoteles !== 'undefined' && hoteles.length > 0) { %>
                     <% hoteles.forEach(hotel => { %>
                         <div class="hotel-card">
-                            <h3><%= hotel.nombre %></h3>
-                            <p><%= hotel.direccion %></p>
-                            <p>Ciudad: <%= hotel.ciudad %></p>
-                            <p>Estrellas: <%= hotel.estrellas %></p>
-                            <p>Precio base: $<%= hotel.precio_base %></p>
-                            <a href="/hotel/reservar/<%= hotel.id %>" class="btn-reservar">Reservar</a>
+                            <% if (hotel.imagen_principal) { %>
+                                <img src="<%= hotel.imagen_principal %>" alt="Imagen de <%= hotel.nombre %>" class="hotel-img">
+                            <% } else { %>
+                                <div class="hotel-img" style="display:flex;align-items:center;justify-content:center;color:#bbb;font-size:2.5rem;">
+                                    <i class="fas fa-hotel"></i>
+                                </div>
+                            <% } %>
+                            <div class="hotel-content">
+                                <div class="hotel-header">
+                                    <i class="fas fa-hotel"></i>
+                                    <span class="hotel-title"><%= hotel.nombre %></span>
+                                </div>
+                                <div class="hotel-info-row">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span><%= hotel.direccion %></span>
+                                </div>
+                                <div class="hotel-info-row">
+                                    <i class="fas fa-city"></i>
+                                    <span><%= hotel.ciudad %></span>
+                                </div>
+                                <div class="hotel-info-row">
+                                    <span class="stars">
+                                        <% for(let i=1; i<=5; i++) { %>
+                                            <% if(i <= hotel.estrellas) { %>
+                                                <i class="fas fa-star"></i>
+                                            <% } else { %>
+                                                <i class="far fa-star"></i>
+                                            <% } %>
+                                        <% } %>
+                                    </span>
+                                    <span style="margin-left:6px; color:#888; font-size:0.98em;">(<%= hotel.estrellas %> estrellas)</span>
+                                </div>
+                                <div class="hotel-info-row">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <span>Precio base: $<%= hotel.precio_base %></span>
+                                </div>
+                                <a href="/hotel/<%= hotel.id %>" class="btn-ver-hotel"><i class="fas fa-eye"></i> Ver hotel</a>
+                            </div>
                         </div>
                     <% }) %>
                 <% } else { %>

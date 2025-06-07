@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Reserva de Hotel</title>
+    <style>
+        body {
+            background: linear-gradient(120deg, #fffbe6 0%, #ffe0b2 100%);
+            font-family: 'Montserrat', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .reserva-container {
+            max-width: 440px;
+            margin: 3.5rem auto;
+            background: #fffdfa;
+            border-radius: 22px;
+            box-shadow: 0 6px 32px rgba(255,179,0,0.18), 0 1.5px 8px rgba(0,0,0,0.07);
+            padding: 2.5rem 2.2rem 2rem 2.2rem;
+            text-align: center;
+            border: 2.5px solid #ffb300;
+            position: relative;
+        }
+        .reserva-container h1 {
+            color: #ff9800;
+            font-size: 1.5rem;
+            margin-bottom: 1.7rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 8px #ffe0b2;
+        }
+        .reserva-form label {
+            display: block;
+            margin: 1.1rem 0 0.4rem 0;
+            color: #ff9800;
+            font-weight: 700;
+            text-align: left;
+            font-size: 1.08rem;
+        }
+        .reserva-form input[type="date"],
+        .reserva-form input[type="number"],
+        .reserva-form select {
+            width: 100%;
+            padding: 0.6rem 0.7rem;
+            border-radius: 8px;
+            border: 1.5px solid #ffd54f;
+            font-size: 1.05rem;
+            margin-bottom: 0.8rem;
+            background: #fffbe6;
+            transition: border 0.2s;
+        }
+        .reserva-form input:focus,
+        .reserva-form select:focus {
+            border: 2px solid #ffb300;
+            outline: none;
+        }
+        .btn-confirmar {
+            display: inline-block;
+            background: linear-gradient(90deg, #ffb300 60%, #ff9800 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.85rem 2.2rem;
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-top: 1.3rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(255,179,0,0.13);
+            letter-spacing: 0.5px;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .btn-confirmar:hover {
+            background: linear-gradient(90deg, #ff9800 60%, #ffb300 100%);
+            transform: translateY(-2px) scale(1.04);
+        }
+        .btn-volver {
+            background: #bbb;
+            color: #222;
+            border-radius: 8px;
+            padding: 0.6rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            margin-top: 1.3rem;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-volver:hover {
+            background: #888;
+            color: #fff;
+        }
+        .icono-reserva {
+            font-size: 2.5rem;
+            color: #ffb300;
+            margin-bottom: 0.7rem;
+            text-shadow: 0 2px 8px #ffe0b2;
+        }
+    </style>
+</head>
+<body>
+    <div class="reserva-container">
+        <div class="icono-reserva"><i class="fas fa-edit"></i></div>
+        <h1>Editar Reserva en <%= reserva.hotel_nombre %></h1>
+        <form action="/hotel/reserva/edit/<%= reserva.id %>" method="POST" class="reserva-form">
+            <label>Fecha de entrada:
+                <input type="date" name="fecha_entrada" id="fecha_entrada" value="<%= reserva.fecha_entrada.toISOString().split('T')[0] %>" required>
+            </label>
+            <label>Fecha de salida:
+                <input type="date" name="fecha_salida" id="fecha_salida" value="<%= reserva.fecha_salida.toISOString().split('T')[0] %>" required>
+            </label>
+            <label>Número de personas:
+                <input type="number" name="num_personas" min="1" max="10" value="<%= reserva.numero_huespedes %>" required>
+            </label>
+            <label>Habitación:
+                <select name="habitacion_id" id="habitacion_id" required>
+                    <% habitaciones.forEach(h => { %>
+                        <option value="<%= h.id %>" <%= (reserva.habitacion_id == h.id) ? 'selected' : '' %>>
+                            <%= h.tipo %> (Capacidad: <%= h.capacidad %> personas, $<%= h.precio %>/noche)
+                        </option>
+                    <% }) %>
+                </select>
+            </label>
+            <button type="submit" class="btn-confirmar">Guardar cambios</button>
+            <a href="/bookings" class="btn-volver">Volver</a>
+        </form>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+    <script>
+        // Script para poner la fecha mínima de hoy en los campos de fecha
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha_entrada').setAttribute('min', today);
+        document.getElementById('fecha_salida').setAttribute('min', today);
+    </script>
+</body>
+</html> 

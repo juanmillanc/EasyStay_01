@@ -3,87 +3,479 @@
 <head>
     <meta charset="UTF-8">
     <title>Reservar Hotel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
-            background: #f5f5f5;
+            background: linear-gradient(120deg, #fffbe6 0%, #ffe0b2 100%);
             font-family: 'Montserrat', Arial, sans-serif;
             margin: 0;
             padding: 0;
+            min-height: 100vh;
         }
         .reserva-container {
-            max-width: 420px;
-            margin: 3rem auto;
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 2px 16px rgba(255,179,0,0.10);
-            padding: 2.2rem 2rem 1.5rem 2rem;
+            max-width: 440px;
+            margin: 3.5rem auto;
+            background: #fffdfa;
+            border-radius: 22px;
+            box-shadow: 0 6px 32px rgba(255,179,0,0.18), 0 1.5px 8px rgba(0,0,0,0.07);
+            padding: 2.5rem 2.2rem 2rem 2.2rem;
             text-align: center;
+            border: 2.5px solid #ffb300;
+            position: relative;
         }
         .reserva-container h1 {
-            color: #ffb300;
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
+            color: #000000;
+            font-size: 1.7rem;
+            margin-bottom: 1.7rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 8px #ffe0b2;
         }
         .reserva-form label {
             display: block;
-            margin: 1rem 0 0.3rem 0;
-            color: #444;
-            font-weight: 600;
+            margin: 1.1rem 0 0.4rem 0;
+            color: #75716b;
+            font-weight: 700;
             text-align: left;
+            font-size: 1.08rem;
         }
         .reserva-form input[type="date"],
-        .reserva-form input[type="number"] {
+        .reserva-form input[type="number"],
+        .reserva-form select,
+        .campo-tarjeta input,
+        .campo-medio input,
+        .campo-pequeno input {
             width: 100%;
-            padding: 0.5rem;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 1rem;
-            margin-bottom: 0.7rem;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border: 1.5px solid #ffd54f;
+            font-size: 1.05rem;
+            margin-bottom: 0.8rem;
+            background: #fffbe6;
+            transition: all 0.3s;
+            box-sizing: border-box;
         }
-        .btn-confirmar, .btn-volver {
+        .reserva-form input:focus,
+        .reserva-form select:focus,
+        .campo-tarjeta input:focus,
+        .campo-medio input:focus,
+        .campo-pequeno input:focus {
+            border: 2px solid #ff8c00;
+            box-shadow: 0 0 0 2px rgba(255,140,0,0.2);
+            outline: none;
+        }
+        .btn-confirmar {
             display: inline-block;
-            background: #ffb300;
+            background: linear-gradient(90deg, #ffb300 60%, #ff9800 100%);
             color: #fff;
             border: none;
-            border-radius: 6px;
-            padding: 0.6rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-top: 1rem;
-            margin-right: 0.5rem;
+            border-radius: 8px;
+            padding: 0.85rem 2.2rem;
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-top: 1.3rem;
+            margin-bottom: 0.5rem;
             cursor: pointer;
-            transition: background 0.2s;
-            text-decoration: none;
+            box-shadow: 0 2px 12px rgba(255,179,0,0.13);
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            width: 100%;
         }
-        .btn-confirmar:hover, .btn-volver:hover {
-            background: #e6a100;
+        .btn-confirmar:hover {
+            background: linear-gradient(90deg, #ff9800 60%, #ffb300 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(255,179,0,0.2);
         }
         .btn-volver {
-            background: #bbb;
-            color: #222;
+            background: #f5f5f5;
+            color: #555;
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: auto;
+            display: block;
+            text-decoration: none;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 200px;
         }
         .btn-volver:hover {
-            background: #888;
+            background: #e0e0e0;
+            color: #333;
+        }
+        .icono-reserva {
+            font-size: 2.5rem;
+            color: #ffb300;
+            margin-bottom: 0.7rem;
+            text-shadow: 0 2px 8px #ffe0b2;
+        }
+        
+        /* Sección de pago mejorada */
+        .seccion-pago {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px dashed #ffd54f;
+        }
+        .seccion-pago h3 {
+            color: #ff8c00;
+            font-size: 1.2rem;
+            margin-bottom: 1.2rem;
+            text-align: left;
+            font-weight: 700;
+        }
+        .grupo-tarjeta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .grupo-tarjeta.vertical-stack > div {
+             flex-basis: 100%;
+             max-width: 100%;
+             margin-bottom: 1rem;
+             gap: 0;
+        }
+
+        .campo-tarjeta {
+            flex: 1 1 100%;
+        }
+        .campo-medio {
+            flex: 1 1 calc(50% - 0.5rem);
+        }
+        .campo-pequeno {
+            flex: 1 1 30%;
+        }
+        .campo-tarjeta input,
+        .campo-medio input,
+        .campo-pequeno input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border: 1.5px solid #ffd54f;
+            font-size: 1.05rem;
+            background: #fffbe6;
+            transition: all 0.3s;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .campo-tarjeta input:focus,
+        .campo-medio input:focus,
+        .campo-pequeno input:focus {
+            border-color: #ff8c00;
+            box-shadow: 0 0 0 2px rgba(255,140,0,0.2);
+            outline: none;
+        }
+        .iconos-tarjetas {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .iconos-tarjetas img {
+            height: 24px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        .iconos-tarjetas img:hover {
+            opacity: 1;
+        }
+        .etiqueta-pago {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #5f5f5f;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .grupo-cvv {
+            position: relative;
+        }
+        .info-cvv {
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+            cursor: help;
+        }
+        .tooltip {
+            visibility: hidden;
+            width: 160px;
+            background-color: #555;
             color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+        }
+        .info-cvv:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Estilos para alternativas */
+        .alternativas-section {
+            margin-top: 2rem;
+            text-align: left;
+        }
+        .alternativas-section h2 {
+            color: #ff8c00;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #ffb300;
+            padding-bottom: 0.5rem;
+        }
+        .alternativas-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .alternativa-item {
+            background-color: #fff8e1;
+            border: 1px solid #ffe0b2;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .alternativa-info {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .alternativa-info span {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .alternativa-link {
+            background: #1976d2;
+            color: #fff !important;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .fechas-alternativas .alternativa-item {
+            background-color: #e3f2fd;
+            border-color: #90caf9;
+        }
+        .fechas-alternativas h2 {
+            color: #1976d2;
+            border-bottom-color: #90caf9;
+        }
+        .fechas-alternativas .alternativa-link {
+            background: #ffb300;
+        }
+        
+        /* Mensajes de error */
+        .mensaje-error {
+            color: #d32f2f;
+            background: #fff3cd;
+            border: 1.5px solid #ffb300;
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
         }
     </style>
 </head>
 <body>
     <div class="reserva-container">
+        <div class="icono-reserva"><i class="fas fa-calendar-check"></i></div>
         <h1>Reservar en <%= hotel.nombre %></h1>
-        <form action="/hotel/reservar/<%= hotel.id %>" method="POST" class="reserva-form">
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="mensaje-error"><%= error %></div>
+        <% } %>
+        
+        <% if (typeof alternativas !== 'undefined' && alternativas.length > 0 || (typeof fechasAlternativas !== 'undefined' && fechasAlternativas.length > 0)) { %>
+           <!-- Las alternativas y fechas alternativas se mostrarán después del formulario -->
+        <% } %>
+        
+        <form action="/reservar-hotel" method="POST" class="reserva-form">
+            <input type="hidden" name="hotel_id" value="<%= hotel.id %>">
+            
             <label>Fecha de entrada:
-                <input type="date" name="fecha_entrada" required>
+                <input type="date" name="fecha_entrada" id="fecha_entrada" required>
             </label>
+            
             <label>Fecha de salida:
-                <input type="date" name="fecha_salida" required>
+                <input type="date" name="fecha_salida" id="fecha_salida" required>
             </label>
+            
             <label>Número de personas:
                 <input type="number" name="num_personas" min="1" max="10" required>
             </label>
+            
+            <label>Habitación:
+                <select name="habitacion_id" id="habitacion_id" required>
+                    <option value="">Selecciona una habitación</option>
+                    <% habitaciones.forEach(h => { %>
+                        <option value="<%= h.id %>" <%= (habitacionSeleccionada && (habitacionSeleccionada == h.id || habitacionSeleccionada == String(h.id))) ? 'selected' : '' %>>
+                            <%= h.tipo %> (Capacidad: <%= h.capacidad %> personas, $<%= h.precio %>/noche)
+                        </option>
+                    <% }) %>
+                </select>
+            </label>
+            
+            <div class="seccion-pago">
+                <h3>Información de Pago</h3>
+                
+                <div class="grupo-tarjeta">
+                    <div class="campo-tarjeta">
+                        <label class="etiqueta-pago">Número de tarjeta</label>
+                        <input type="text" name="numero_tarjeta" maxlength="19" pattern="(\d{4}\s?){3}\d{4}" 
+                               placeholder="1234 5678 9012 3456" required>
+                        
+                    </div>
+                </div>
+                
+                <div class="grupo-tarjeta vertical-stack">
+                    <div class="campo-medio">
+                        <label class="etiqueta-pago">Fecha de expiración</label>
+                        <input type="month" name="expiracion_tarjeta" required 
+                               placeholder="MM/AAAA" min="${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}">
+                    </div>
+                    
+                    <div class="campo-pequeno grupo-cvv">
+                        <label class="etiqueta-pago">CVV</label>
+                        <input type="text" name="cvv_tarjeta" maxlength="4" pattern="\d{3,4}" 
+                               placeholder="123" required>
+                        <span class="info-cvv">?
+                            <span class="tooltip">Código de 3 o 4 dígitos en el reverso de tu tarjeta</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
             <button type="submit" class="btn-confirmar">Confirmar reserva</button>
             <a href="/" class="btn-volver">Volver</a>
         </form>
+
+        <% if (typeof alternativas !== 'undefined' && alternativas.length > 0) { %>
+            <div class="alternativas-section">
+                <h2>Habitaciones alternativas disponibles:</h2>
+                <ul class="alternativas-list">
+                    <% alternativas.forEach(function(hab) { %>
+                        <li class="alternativa-item">
+                            <div class="alternativa-info">
+                                <span><%= hab.tipo %> (Capacidad: <%= hab.capacidad %> personas)</span>
+                                <span>Precio: $<%= hab.precio %>/noche</span>
+                            </div>
+                            <a href="/hotel/reservar/<%= hotel.id %>?habitacion=<%= hab.id %>" class="alternativa-link">Reservar</a>
+                        </li>
+                    <% }) %>
+                </ul>
+            </div>
+        <% } %>
+
+        <% if (typeof fechasAlternativas !== 'undefined' && fechasAlternativas.length > 0) { %>
+            <div class="alternativas-section fechas-alternativas">
+                <h2>Fechas alternativas sugeridas:</h2>
+                <ul class="alternativas-list">
+                    <% fechasAlternativas.forEach(function(f) { %>
+                        <li class="alternativa-item">
+                             <div class="alternativa-info">
+                                <span>Entrada: <%= f.fecha_entrada %></span>
+                                <span>Salida: <%= f.fecha_salida %></span>
+                            </div>
+                            <a href="?fecha_entrada=<%= f.fecha_entrada %>&fecha_salida=<%= f.fecha_salida %>" class="alternativa-link">Probar estas fechas</a>
+                        </li>
+                    <% }) %>
+                </ul>
+            </div>
+        <% } %>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+    <script>
+        // Script para poner la fecha mínima de hoy en los campos de fecha
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha_entrada').setAttribute('min', today);
+        document.getElementById('fecha_salida').setAttribute('min', today);
+
+        // Script para formato automático del número de tarjeta
+        const numeroTarjetaInput = document.querySelector('input[name="numero_tarjeta"]');
+        
+        numeroTarjetaInput.addEventListener('input', function(e) {
+            // Remover cualquier caracter no numérico
+            let value = e.target.value.replace(/\D/g, '');
+            // Limitar a 16 dígitos
+            value = value.substring(0, 16);
+            // Insertar espacios cada 4 dígitos
+            const formattedValue = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+            // Actualizar el valor del input
+            e.target.value = formattedValue;
+            
+            
+        });
+        
+        // Detectar tipo de tarjeta
+        function detectCardType(number) {
+            const visa = /^4/;
+            const mastercard = /^5[1-5]/;
+            const amex = /^3[47]/;
+            
+            if (visa.test(number)) return 'visa';
+            if (mastercard.test(number)) return 'mastercard';
+            if (amex.test(number)) return 'amex';
+            return '';
+        }
+        
+        // Resaltar icono de tarjeta
+        function highlightCardIcon(type) {
+            const icons = document.querySelectorAll('.iconos-tarjetas img');
+            icons.forEach(icon => {
+                if (icon.alt.toLowerCase().includes(type)) {
+                    icon.style.opacity = '1';
+                    icon.style.transform = 'scale(1.1)';
+                } else {
+                    icon.style.opacity = '0.5';
+                    icon.style.transform = 'scale(1)';
+                }
+            });
+        }
+        
+        // Tooltip para CVV
+        const cvvInput = document.querySelector('input[name="cvv_tarjeta"]');
+        const cvvTooltip = document.querySelector('.tooltip');
+        
+        cvvInput.addEventListener('focus', function() {
+            cvvTooltip.style.visibility = 'visible';
+            cvvTooltip.style.opacity = '1';
+        });
+        
+        cvvInput.addEventListener('blur', function() {
+            cvvTooltip.style.visibility = 'hidden';
+            cvvTooltip.style.opacity = '0';
+        });
+        
+        // Validación de fecha de expiración
+        const expiracionInput = document.querySelector('input[name="expiracion_tarjeta"]');
+        expiracionInput.addEventListener('change', function() {
+            const [year, month] = this.value.split('-');
+            const expDate = new Date(year, month - 1);
+            const currentDate = new Date();
+            
+            if (expDate < currentDate) {
+                this.setCustomValidity('La fecha de expiración debe ser futura');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    </script>
 </body>
-</html> 
+</html>

@@ -28,26 +28,40 @@
         <h1>Panel de Administración</h1>
         <p class="admin-welcome">¡Bienvenido, <strong><%= user.nombre %></strong>! Gestiona tu plataforma de manera eficiente.</p>
         <div class="admin-cards">
-            <a href="/admin/users" class="admin-card">
-                <i class="fas fa-users"></i>
-                <h2>Gestionar Usuarios</h2>
-                <p>Ver, editar y administrar usuarios de la plataforma.</p>
-            </a>
-            <a href="/admin/hotels" class="admin-card">
-                <i class="fas fa-hotel"></i>
-                <h2>Gestionar Hoteles</h2>
-                <p>Administra los hoteles registrados y sus detalles.</p>
-            </a>
-            <a href="/admin/restaurants" class="admin-card">
-                <i class="fas fa-utensils"></i>
-                <h2>Gestionar Restaurantes</h2>
-                <p>Controla los restaurantes y su información.</p>
-            </a>
-            <a href="/admin/recompensas" class="admin-card">
-                <i class="fas fa-gift"></i>
-                <h2>Recompensas</h2>
-                <p>Gestiona las recompensas y beneficios para usuarios.</p>
-            </a>
+            <div class="admin-row">
+                <a href="/admin/users" class="admin-card">
+                    <i class="fas fa-users"></i>
+                    <h2>Gestionar Usuarios</h2>
+                    <p>Ver, editar y administrar usuarios de la plataforma.</p>
+                </a>
+                <a href="/admin/hotels" class="admin-card">
+                    <i class="fas fa-hotel"></i>
+                    <h2>Gestionar Hoteles</h2>
+                    <p>Administra los hoteles registrados y sus detalles.</p>
+                </a>
+                <a href="/admin/restaurants" class="admin-card">
+                    <i class="fas fa-utensils"></i>
+                    <h2>Gestionar Restaurantes</h2>
+                    <p>Controla los restaurantes y su información.</p>
+                </a>
+            </div>
+            <div class="admin-row">
+                <a href="/admin/recompensas" class="admin-card">
+                    <i class="fas fa-gift"></i>
+                    <h2>Recompensas</h2>
+                    <p>Gestiona las recompensas y beneficios para usuarios.</p>
+                </a>
+                <a href="/admin/informar" class="admin-card">
+                    <i class="fas fa-info-circle"></i>
+                    <h2>Informar Usuario</h2>
+                    <p>Envía información o notificaciones a los usuarios.</p>
+                </a>
+                <a href="/admin/puntos" class="admin-card">
+                    <i class="fas fa-star"></i>
+                    <h2>Gestión de Puntos</h2>
+                    <p>Administra el sistema de puntos y recompensas por reservas.</p>
+                </a>
+            </div>
         </div>
     </main>
 

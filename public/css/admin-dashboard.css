@@ -120,12 +120,21 @@ body {
 }
 
 .admin-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 2rem;
+    align-items: center;
+}
+
+.admin-row {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    justify-content: center;
 }
 
 .admin-card {
+    width: 300px;
     background: #fffbe6;
     border-radius: 14px;
     box-shadow: 0 2px 8px rgba(255,179,0,0.08);
@@ -191,6 +200,17 @@ body {
     .admin-user {
         width: 100%;
         justify-content: flex-end;
+    }
+}
+
+@media (max-width: 1000px) {
+    .admin-row {
+        flex-direction: column;
+        align-items: center;
+    }
+    .admin-card {
+        width: 90vw;
+        max-width: 350px;
     }
 }
 

@@ -45,7 +45,9 @@ app.use(fileUpload({
 
 // Rutas
 const authRouter = require('./router/auth');
+const adminRouter = require('./router/admin');
 app.use('/', authRouter);
+app.use('/admin', adminRouter);
 
 // Rutas de hoteles (ejemplo)
 app.get('/hotels/marina-resort', (req, res) => {
