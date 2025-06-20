@@ -60,11 +60,38 @@
             <i class="fas fa-arrow-left"></i> Volver
         </a>
     </div>
-    <div class="user-info">
-        <i class="fas fa-user-circle"></i>
-        <% if (user) { %>
-            Bienvenido, <b><%= user.nombre %></b>
-            <span style="font-size:0.95em; color:#ffb300;">(<%= user.rol %>)</span>
+    <div class="user-actions">
+        <% if (locals.user) { %>
+            <div class="user-menu">
+                <button class="user-menu-button">
+                    <i class="fas fa-user-circle"></i>
+                    <span><%= user.nombre.split(' ')[0] %></span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="user-menu-content">
+                    <div class="user-info">
+                        <p class="user-name">Hola, <%= user.nombre %></p>
+                        <p class="user-email"><%= user.email %></p>
+                    </div>
+                    <hr class="dropdown-divider">
+                    <a href="/perfil" class="dropdown-item">
+                        <i class="fas fa-user-circle"></i> Mi perfil
+                    </a>
+                    <a href="/bookings" class="dropdown-item">
+                        <i class="fas fa-calendar-alt"></i> Mis reservas
+                    </a>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-heart"></i> Favoritos
+                    </a>
+                    <hr class="dropdown-divider">
+                    <a href="/logout" class="dropdown-item logout-link">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+                    </a>
+                </div>
+            </div>
+        <% } else { %>
+            <a href="/login" class="btn btn-login">Iniciar sesión</a>
+            <a href="/register" class="btn btn-register">Registrarse</a>
         <% } %>
     </div>
 </header>

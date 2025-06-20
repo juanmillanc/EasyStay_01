@@ -2419,4 +2419,34 @@ router.post('/restaurante/reserva/cancel/:id', isAuthenticated, async (req, res)
     }
 });
 
+// Ruta para ver el detalle de un hotel
+router.get('/hotel-detalle/:id', async (req, res) => {
+    try {
+        const hotelId = req.params.id;
+
+        // Obtener detalles del hotel
+        const [hotelResult] = await pool.query('SELECT * FROM hoteles WHERE id = ?', [hotelId]);
+        if (hotelResult.length === 0) {
+            return res.status(404).render('error', { message: 'Hotel no encontrado', user: req.session.user });
+        }
+        const hotel = hotelResult[0];
+
+        // Obtener habitaciones del hotel
+        const [habitacionesResult] = await pool.query('SELECT * FROM habitaciones WHERE hotel_id = ?', [hotelId]);
+        
+        // Obtener imágenes del hotel
+        const [imagenesResult] = await pool.query('SELECT * FROM imagenes_hotel WHERE hotel_id = ?', [hotelId]);
+
+        res.render('hotel-detalle', {
+            hotel,
+            habitaciones: habitacionesResult,
+            imagenes: imagenesResult,
+            user: req.session.user
+        });
+    } catch (error) {
+        console.error('Error al cargar detalle del hotel:', error);
+        res.status(500).render('error', { message: 'Error al cargar la página del hotel', user: req.session.user });
+    }
+});
+
 module.exports = router; 

@@ -166,21 +166,7 @@
     </style>
 </head>
 <body>
-    <header class="admin-header">
-        <div class="logo">
-            <img src="/img/6.png" alt="EasyStay" />
-            <span></span>
-        </div>
-        <nav class="admin-nav">
-            <a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i><center>Dashboard</center></a>
-            <a href="/admin/puntos" class="active"><i class="fas fa-star"></i><center>Puntos</center></a>
-        </nav>
-        <div class="admin-user">
-            <i class="fas fa-user-shield"></i>
-            <span><%= user.nombre %> <small>(<%= user.rol %>)</small></span>
-            <a href="/logout" class="logout-btn" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
-        </div>
-    </header>
+    <%- include('partials/header') %>
 
     <main class="puntos-container">
         <div class="puntos-header">
@@ -222,13 +208,23 @@
                         <tr>
                             <td><%= usuario.nombre %></td>
                             <td>
-                                <span class="nivel-badge nivel-<%= usuario.nivel_nombre.toLowerCase() %>">
-                                    <%= usuario.nivel_nombre %>
-                                </span>
+                                <% if (usuario.nivel_nombre) { %>
+                                    <span class="nivel-badge nivel-<%= usuario.nivel_nombre.toLowerCase() %>">
+                                        <%= usuario.nivel_nombre %>
+                                    </span>
+                                <% } else { %>
+                                    <span class="nivel-badge nivel-ninguno">Sin nivel</span>
+                                <% } %>
                             </td>
-                            <td><%= usuario.puntos_totales %></td>
-                            <td><%= usuario.puntos_disponibles %></td>
-                            <td><%= new Date(usuario.fecha_ultima_actualizacion).toLocaleDateString() %></td>
+                            <td><%= usuario.puntos_totales || 0 %></td>
+                            <td><%= usuario.puntos_disponibles || 0 %></td>
+                            <td>
+                                <% if (usuario.fecha_ultima_actualizacion) { %>
+                                    <%= new Date(usuario.fecha_ultima_actualizacion).toLocaleDateString() %>
+                                <% } else { %>
+                                    N/A
+                                <% } %>
+                            </td>
                             <td>
                                 <button onclick="verHistorial(<%= usuario.usuario_id %>)" class="btn-ver">
                                     <i class="fas fa-history"></i>

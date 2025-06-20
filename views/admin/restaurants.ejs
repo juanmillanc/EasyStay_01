@@ -19,6 +19,27 @@
         .page-header h1 {
             margin: 0;
         }
+        .btn-nuevo-restaurante {
+            background: linear-gradient(90deg, #ffb300 0%, #ff9800 100%);
+            color: #fff;
+            padding: 0.8rem 1.7rem;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(255,179,0,0.12);
+            transition: background 0.2s, transform 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-nuevo-restaurante:hover {
+            background: linear-gradient(90deg, #ffa000 0%, #ffb300 100%);
+            color: #fff;
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 4px 16px rgba(255,179,0,0.18);
+        }
         .card {
             background-color: #fff;
             border-radius: 12px;
@@ -33,6 +54,25 @@
         }
         .filters .search-bar {
             flex-grow: 1;
+            padding: 0.7rem 1.2rem;
+            border-radius: 25px;
+            border: 1.5px solid #ffb300;
+            font-size: 1.05rem;
+            box-shadow: 0 2px 8px rgba(255,179,0,0.07);
+            outline: none;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .filters .search-bar:focus {
+            border: 2px solid #ff9800;
+            box-shadow: 0 4px 16px rgba(255,179,0,0.13);
+        }
+        .filters .status-filter {
+            border-radius: 25px;
+            padding: 0.7rem 1.2rem;
+            border: 1.5px solid #eee;
+            font-size: 1.05rem;
+            background: #fafafa;
+            transition: border 0.2s;
         }
         .restaurants-grid {
             display: grid;
@@ -56,7 +96,16 @@
             width: 100%;
             height: 180px;
             object-fit: cover;
-            position: relative;
+            display: block;
+            background: #f3f3f3;
+        }
+        .restaurant-card-image.default-img {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #bbb;
+            font-size: 2.5rem;
+            font-weight: bold;
         }
         .status-badge {
             position: absolute;
@@ -119,7 +168,7 @@
     <main class="container">
         <div class="page-header">
             <h1>Gestión de Restaurantes</h1>
-            <a href="/admin/restaurants/new" class="btn btn-primary">
+            <a href="/admin/restaurants/new" class="btn-nuevo-restaurante">
                 <i class="fas fa-plus"></i> Agregar Nuevo Restaurante
             </a>
         </div>
@@ -139,14 +188,20 @@
                     <% restaurants.forEach(restaurant => { %>
                         <div class="restaurant-card">
                             <div style="position:relative;">
-                                <img src="<%= restaurant.imagen_principal || '/img/default-restaurant.jpg' %>" alt="<%= restaurant.nombre %>" class="restaurant-card-image">
+                                <% if (restaurant.imagen_principal) { %>
+                                    <img src="<%= restaurant.imagen_principal %>" alt="<%= restaurant.nombre %>" class="restaurant-card-image">
+                                <% } else { %>
+                                    <div class="restaurant-card-image default-img">
+                                        <i class="fas fa-utensils"></i>
+                                    </div>
+                                <% } %>
                                 <div class="status-badge <%= restaurant.estado %>"><%= restaurant.estado %></div>
                             </div>
                             <div class="restaurant-card-content">
                                 <h3><%= restaurant.nombre %></h3>
                                 <p><i class="fas fa-map-marker-alt"></i> <%= restaurant.ciudad %></p>
                                 <div class="restaurant-card-actions">
-                                    <a href="/admin/restaurants/edit/<%= restaurant.id || restaurant.restaurante_id %>" class="action-btn" title="Editar y gestionar mesas">
+                                    <a href="/admin/restaurants/edit/<%= restaurant.id %>" class="action-btn" title="Editar y gestionar mesas">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <a href="/restaurants/<%= restaurant.id %>" target="_blank" class="action-btn" title="Ver como cliente">

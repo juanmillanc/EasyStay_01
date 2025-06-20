@@ -133,7 +133,7 @@ router.get('/bookings', async (req, res) => {
 // Ruta para la página de restaurantes
 router.get('/restaurantes', async (req, res) => {
     try {
-        const [restaurants] = await pool.query('SELECT * FROM restaurantes');
+        const [restaurants] = await pool.query("SELECT * FROM restaurantes WHERE estado = 'activo'");
         res.render('restaurantes', {
             user: req.session.user,
             restaurants: restaurants,

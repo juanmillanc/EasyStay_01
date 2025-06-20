@@ -86,21 +86,7 @@
     </style>
 </head>
 <body>
-    <header class="admin-header">
-        <div class="logo">
-            <img src="/img/6.png" alt="EasyStay" />
-            <span></span>
-        </div>
-        <nav class="admin-nav">
-            <a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i><center>Dashboard</center></a>
-            <a href="/admin/puntos" class="active"><i class="fas fa-star"></i><center>Puntos</center></a>
-        </nav>
-        <div class="admin-user">
-            <i class="fas fa-user-shield"></i>
-            <span><%= user.nombre %> <small>(<%= user.rol %>)</small></span>
-            <a href="/logout" class="logout-btn" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
-        </div>
-    </header>
+    <%- include('partials/header') %>
 
     <main class="historial-container">
         <div class="historial-header">

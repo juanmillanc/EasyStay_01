@@ -59,7 +59,7 @@ app.get('/hotels/mountain-view', (req, res) => {
 
 // Middleware para logging
 app.use((req, res, next) => {
-    console.log('Petición a:', req.url);
+    console.log('Petición:', req.method, req.url);
     next();
 });
 

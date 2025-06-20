@@ -14,15 +14,23 @@ router.get('/puntos', async (req, res) => {
         const [totalUsuarios] = await pool.query('SELECT COUNT(*) as total FROM usuarios');
         const [totalPuntos] = await pool.query('SELECT SUM(puntos_totales) as total FROM puntos_usuario');
         const [puntosRedimidos] = await pool.query(
-            'SELECT SUM(puntos) as total FROM historial_puntos WHERE tipo = "redimido"'
+            'SELECT SUM(puntos) as total FROM historial_puntos WHERE tipo_operacion = "redimido"'
         );
 
-        // Obtener usuarios con sus puntos
+        // Obtener usuarios con sus puntos, excluyendo administradores
         const [usuarios] = await pool.query(
-            `SELECT u.id as usuario_id, u.nombre, pu.*, nu.nombre as nivel_nombre
+            `SELECT 
+                u.id AS usuario_id, 
+                u.nombre, 
+                u.rol, 
+                pu.puntos_totales, 
+                pu.puntos_disponibles,
+                (SELECT MAX(fecha) FROM historial_puntos WHERE usuario_id = u.id) AS fecha_ultima_actualizacion,
+                nu.nombre AS nivel_nombre
              FROM usuarios u
              LEFT JOIN puntos_usuario pu ON u.id = pu.usuario_id
              LEFT JOIN niveles_usuario nu ON pu.nivel_id = nu.id
+             WHERE u.rol = 'usuario'
              ORDER BY u.nombre`
         );
 
@@ -31,7 +39,8 @@ router.get('/puntos', async (req, res) => {
             usuarios,
             totalUsuarios: totalUsuarios[0].total,
             totalPuntos: totalPuntos[0].total || 0,
-            puntosRedimidos: puntosRedimidos[0].total || 0
+            puntosRedimidos: puntosRedimidos[0].total || 0,
+            path: '/admin/puntos'
         });
     } catch (error) {
         console.error('Error al cargar página de puntos:', error);
@@ -75,7 +84,8 @@ router.get('/puntos/historial/:usuarioId', async (req, res) => {
         res.render('admin/historial-puntos', {
             user: req.session.user,
             usuario: usuario[0],
-            historial
+            historial,
+            path: '/admin/puntos'
         });
     } catch (error) {
         console.error('Error al cargar historial de puntos:', error);
@@ -408,6 +418,72 @@ router.post('/mesas/delete/:id', async (req, res) => {
             res.redirect('/admin/restaurants');
         }
     }
+});
+
+// POST para activar/inactivar un restaurante
+router.post('/restaurants/toggle/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Obtener el estado actual
+        const [result] = await pool.query('SELECT estado FROM restaurantes WHERE id = ?', [id]);
+        if (result.length === 0) {
+            req.flash('error', 'Restaurante no encontrado.');
+            return res.redirect('/admin/restaurants');
+        }
+        const estadoActual = result[0].estado;
+        const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
+        await pool.query('UPDATE restaurantes SET estado = ? WHERE id = ?', [nuevoEstado, id]);
+        req.flash('success', `Restaurante ${nuevoEstado === 'activo' ? 'activado' : 'inactivado'} correctamente.`);
+    } catch (error) {
+        console.error('Error al cambiar el estado del restaurante:', error);
+        req.flash('error', 'Error al cambiar el estado del restaurante.');
+    }
+    res.redirect('/admin/restaurants');
+});
+
+// Ruta para la gestión de hoteles
+router.get('/hotels', async (req, res) => {
+    try {
+        const [hotels] = await pool.query(
+            'SELECT id, nombre, ciudad, estado, imagen_principal, categoria_id FROM hoteles'
+        );
+        console.log('Hoteles recuperados:', hotels);
+        res.render('admin/hotels', { 
+            user: req.session.user,
+            hotels,
+            path: '/admin/hotels'
+        });
+    } catch (error) {
+        console.error('Error fetching hotels for admin:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar los hoteles.',
+            user: req.session.user 
+        });
+    }
+});
+
+// POST para activar/inactivar un hotel
+router.post('/hotels/toggle-status/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [result] = await pool.query('SELECT estado FROM hoteles WHERE id = ?', [id]);
+        
+        if (result.length === 0) {
+            req.flash('error', 'Hotel no encontrado.');
+            return res.redirect('/admin/hotels');
+        }
+
+        const estadoActual = result[0].estado;
+        const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
+        
+        await pool.query('UPDATE hoteles SET estado = ? WHERE id = ?', [nuevoEstado, id]);
+        
+        req.flash('success', `El estado del hotel ha sido cambiado a ${nuevoEstado}.`);
+    } catch (error) {
+        console.error('Error al cambiar el estado del hotel:', error);
+        req.flash('error', 'Error al cambiar el estado del hotel.');
+    }
+    res.redirect('/admin/hotels');
 });
 
 module.exports = router; 

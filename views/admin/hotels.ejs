@@ -1,99 +1,300 @@
-<%- include('../partials/head') %>
-<link rel="stylesheet" href="/css/admin-hotels.css">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Hoteles - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <style>
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .btn-nuevo-hotel {
+        background: linear-gradient(90deg, #ffb300 0%, #ff9800 100%);
+        color: #fff;
+        padding: 0.8rem 1.7rem;
+        border-radius: 30px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(255,179,0,0.12);
+        transition: background 0.2s, transform 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+    }
+    .btn-nuevo-hotel:hover {
+        background: linear-gradient(90deg, #ffa000 0%, #ffb300 100%);
+        color: #fff;
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 4px 16px rgba(255,179,0,0.18);
+    }
+    .card {
+        background-color: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    .filters {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        align-items: center;
+    }
+    .search-box {
+        flex-grow: 1;
+        position: relative;
+    }
+    .search-box .fa-search {
+        position: absolute;
+        top: 50%;
+        left: 20px;
+        transform: translateY(-50%);
+        color: #aaa;
+    }
+    .search-bar {
+        flex-grow: 1;
+        padding: 0.7rem 1.2rem 0.7rem 3rem;
+        border-radius: 25px;
+        border: 1.5px solid #ffb300;
+        font-size: 1.05rem;
+        box-shadow: 0 2px 8px rgba(255,179,0,0.07);
+        outline: none;
+        transition: border 0.2s, box-shadow 0.2s;
+        width: 100%;
+    }
+    .search-bar:focus {
+        border: 2px solid #ff9800;
+        box-shadow: 0 4px 16px rgba(255,179,0,0.13);
+    }
+    .status-filter {
+        border-radius: 25px;
+        padding: 0.7rem 1.2rem;
+        border: 1.5px solid #eee;
+        font-size: 1.05rem;
+        background: #fafafa;
+        transition: border 0.2s;
+    }
+     .hotel-card-image.default-img {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #bbb;
+        font-size: 3.5rem;
+        background: #f3f3f3;
+        width: 100%;
+        height: 200px;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+    .hotels-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    .hotel-card {
+        background-color: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .hotel-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+    .hotel-card-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+    .hotel-card-status {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background-color: #28a745;
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    .hotel-card-status.inactivo {
+        background-color: #dc3545;
+    }
+     .hotel-card-status.en_mantenimiento {
+        background-color: #ffc107;
+        color: #333;
+    }
+    .hotel-card-content {
+        padding: 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .hotel-card-content h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.25rem;
+    }
+    .hotel-card-content p {
+        margin: 0 0 1rem 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    .hotel-card-actions {
+        margin-top: auto;
+        display: flex;
+        gap: 0.5rem;
+        border-top: 1px solid #eee;
+        padding-top: 1rem;
+    }
+    .action-btn {
+        background-color: #f0f0f0;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #555;
+        transition: all 0.2s;
+    }
+    .action-btn:hover {
+        background-color: #007bff;
+        color: white;
+    }
+</style>
+</head>
+<body>
+    <%- include('partials/header') %>
 
-<div class="admin-hotels-container">
-    <%- include('../partials/header') %>
-    
-    <div class="hotels-dashboard">
+    <main class="container" style="padding: 2rem;">
         <div class="dashboard-header">
             <h1>Gestión de Hoteles</h1>
-            <button class="add-hotel-btn" onclick="window.location.href='/admin/hotels/new'" type="button">
+            <a href="/admin/hotels/new" class="btn-nuevo-hotel">
                 <i class="fas fa-plus"></i> Agregar Nuevo Hotel
-            </button>
+            </a>
         </div>
 
-        <div class="hotels-filters">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Buscar hotel...">
-            </div>
-            <div class="filter-options">
-                <select>
-                    <option value="">Todos los estados</option>
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
-                </select>
-                <select>
-                    <option value="">Todas las categorías</option>
-                    <option value="5">5 estrellas</option>
-                    <option value="4">4 estrellas</option>
-                    <option value="3">3 estrellas</option>
-                    <option value="2">2 estrellas</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="hotels-grid">
-            <% if (typeof hotels !== 'undefined' && hotels.length > 0) { %>
-                <% hotels.forEach(hotel => { %>
-                    <div class="hotel-card">
-                        <div class="hotel-image">
-                            <img src="<%= hotel.imagen_url || '/img/default-hotel.jpg' %>" alt="<%= hotel.nombre %>">
-                            <div class="hotel-status <%= hotel.estado %>">
-                                <%= hotel.estado %>
-                            </div>
-                        </div>
-                        <div class="hotel-info">
-                            <h3><%= hotel.nombre %></h3>
-                            <p class="hotel-location">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <%= hotel.ubicacion %>
-                            </p>
-                            <div class="hotel-rating">
-                                <% for(let i = 0; i < hotel.categoria; i++) { %>
-                                    <i class="fas fa-star"></i>
-                                <% } %>
-                            </div>
-                        </div>
-                        <div class="hotel-actions">
-                            <button class="edit-btn" title="Editar" onclick="window.location.href='/admin/hotels/<%= hotel.id %>/edit'">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="view-btn" title="Ver detalles">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="toggle-status-btn" title="Cambiar estado" data-id="<%= hotel.id %>">
-                                <i class="fas fa-power-off"></i>
-                            </button>
-                        </div>
-                    </div>
-                <% }) %>
-            <% } else { %>
-                <div class="no-hotels">
-                    <i class="fas fa-hotel"></i>
-                    <p>No hay hoteles registrados</p>
+        <div class="card">
+            <div class="filters">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar hotel..." class="search-bar" id="search-input">
                 </div>
-            <% } %> 
+                <div class="filter-options">
+                    <select class="status-filter" id="status-filter">
+                        <option value="">Todos los estados</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                        <option value="en_mantenimiento">En Mantenimiento</option>
+                    </select>
+                    <select class="status-filter" id="category-filter">
+                        <option value="">Todas las categorías</option>
+                        <option value="5">5 estrellas</option>
+                        <option value="4">4 estrellas</option>
+                        <option value="3">3 estrellas</option>
+                        <option value="2">2 estrellas</option>
+                        <option value="1">1 estrella</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="hotels-grid">
+                
+            </div>
         </div>
-    </div>
-</div>
+    </main>
 
 <script>
-document.querySelectorAll('.toggle-status-btn').forEach(btn => {
-    btn.addEventListener('click', async function() {
-        const hotelId = this.getAttribute('data-id');
-        const response = await fetch(`/admin/hotels/${hotelId}/toggle-status`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        if (response.ok) {
-            location.reload();
+document.addEventListener('DOMContentLoaded', function() {
+    const allHotels = <%- JSON.stringify(hotels) %>;
+    const container = document.querySelector('.hotels-grid');
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const categoryFilter = document.getElementById('category-filter');
+
+    function renderHotels(hotelList) {
+        container.innerHTML = '';
+        if (hotelList.length > 0) {
+            hotelList.forEach(hotel => {
+                const hotelCard = `
+                    <div class="hotel-card" data-id="${hotel.id}">
+                        ${hotel.imagen_principal ?
+                            `<img src="${hotel.imagen_principal}" alt="${hotel.nombre}" class="hotel-card-image">` :
+                            `<div class="hotel-card-image default-img"><i class="fas fa-hotel"></i></div>`
+                        }
+                        <div class="hotel-card-status ${hotel.estado}">
+                            ${hotel.estado.replace('_', ' ')}
+                        </div>
+                        <div class="hotel-card-content">
+                            <h3>${hotel.nombre}</h3>
+                            <p><i class="fas fa-map-marker-alt"></i> ${hotel.ciudad || 'Ubicación no disponible'}</p>
+                            <div class="hotel-card-actions">
+                                <a href="/admin/hotels/${hotel.id}/edit" class="action-btn" title="Editar y gestionar habitaciones">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="/hotel-detalle/${hotel.id}" target="_blank" class="action-btn" title="Ver como cliente">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <form action="/admin/hotels/toggle-status/${hotel.id}" method="POST" style="display: inline;">
+                                    <button type="submit" class="action-btn" title="Activar/Desactivar">
+                                        <i class="fas fa-power-off"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += hotelCard;
+            });
         } else {
-            alert('Error al cambiar el estado del hotel');
+            container.innerHTML = '<p>No se encontraron hoteles que coincidan con los filtros.</p>';
         }
-    });
+    }
+
+    function filterAndRender() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const status = statusFilter.value;
+        const category = categoryFilter.value;
+
+        let filteredHotels = allHotels;
+
+        if (searchTerm) {
+            filteredHotels = filteredHotels.filter(hotel => hotel.nombre.toLowerCase().includes(searchTerm));
+        }
+
+        if (status) {
+            filteredHotels = filteredHotels.filter(hotel => hotel.estado === status);
+        }
+
+        if (category) {
+            filteredHotels = filteredHotels.filter(hotel => hotel.categoria_id == category);
+        }
+
+        renderHotels(filteredHotels);
+    }
+
+    searchInput.addEventListener('input', filterAndRender);
+    statusFilter.addEventListener('change', filterAndRender);
+    categoryFilter.addEventListener('change', filterAndRender);
+    
+    // Initial render
+    renderHotels(allHotels);
 });
 </script>
+</body>
+</html>
 

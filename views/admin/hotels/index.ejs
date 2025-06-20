@@ -8,68 +8,144 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin-dashboard.css">
     <link rel="stylesheet" href="/css/admin-hotels.css">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .btn-nuevo-hotel {
+            background: linear-gradient(90deg, #ffb300 0%, #ff9800 100%);
+            color: #fff;
+            padding: 0.8rem 1.7rem;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(255,179,0,0.12);
+            transition: background 0.2s, transform 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-nuevo-hotel:hover {
+            background: linear-gradient(90deg, #ffa000 0%, #ffb300 100%);
+            color: #fff;
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 4px 16px rgba(255,179,0,0.18);
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .filters .search-bar {
+            flex-grow: 1;
+            padding: 0.7rem 1.2rem;
+            border-radius: 25px;
+            border: 1.5px solid #ffb300;
+            font-size: 1.05rem;
+            box-shadow: 0 2px 8px rgba(255,179,0,0.07);
+            outline: none;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .filters .search-bar:focus {
+            border: 2px solid #ff9800;
+            box-shadow: 0 4px 16px rgba(255,179,0,0.13);
+        }
+        .filters .status-filter {
+            border-radius: 25px;
+            padding: 0.7rem 1.2rem;
+            border: 1.5px solid #eee;
+            font-size: 1.05rem;
+            background: #fafafa;
+            transition: border 0.2s;
+        }
+        .hotel-card-image.default-img {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #bbb;
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: #f3f3f3;
+            width: 100%;
+            height: 200px; /* Ajusta la altura según necesites */
+        }
+    </style>
 </head>
 <body>
     <%- include('../partials/header') %>
 
     <main class="admin-main">
-        <div class="hotels-header">
+        <div class="page-header">
             <h1>Gestión de Hoteles</h1>
-            <a href="/admin/hotels/new" class="btn-primary">
+            <a href="/admin/hotels/new" class="btn-nuevo-hotel">
                 <i class="fas fa-plus"></i> Nuevo Hotel
             </a>
         </div>
 
-        <div class="hotels-filters">
-            <input type="text" id="searchHotel" placeholder="Buscar hotel...">
-            <select id="filterCity">
-                <option value="">Todas las ciudades</option>
-                <% cities.forEach(function(city) { %>
-                    <option value="<%= city %>"><%= city %></option>
-                <% }); %>
-            </select>
-            <select id="filterStatus">
-                <option value="">Todos los estados</option>
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-                <option value="en_mantenimiento">En mantenimiento</option>
-            </select>
-        </div>
+        <div class="card">
+            <div class="filters">
+                <input type="text" id="searchHotel" class="search-bar" placeholder="Buscar hotel...">
+                <select id="filterCity" class="status-filter">
+                    <option value="">Todas las ciudades</option>
+                    <% cities.forEach(function(city) { %>
+                        <option value="<%= city %>"><%= city %></option>
+                    <% }); %>
+                </select>
+                <select id="filterStatus" class="status-filter">
+                    <option value="">Todos los estados</option>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                    <option value="en_mantenimiento">En mantenimiento</option>
+                </select>
+            </div>
 
-        <div class="hotels-grid">
-            <% hotels.forEach(function(hotel) { %>
-                <div class="hotel-card">
-                    <div class="hotel-image">
-                        <img src="<%= hotel.imagen_principal || '/img/default-hotel.jpg' %>" alt="<%= hotel.nombre %>">
-                        <span class="hotel-stars">
-                            <% for(let i = 0; i < hotel.estrellas; i++) { %>
-                                <i class="fas fa-star"></i>
+            <div class="hotels-grid">
+                <% if(hotels.length > 0) { %>
+                    <% hotels.forEach(function(hotel) { %>
+                        <div class="hotel-card">
+                            <% if (hotel.imagen_principal) { %>
+                                <img src="<%= hotel.imagen_principal %>" alt="Imagen de <%= hotel.nombre %>" class="hotel-card-image">
+                            <% } else { %>
+                                <div class="hotel-card-image default-img">
+                                    <i class="fas fa-hotel"></i>
+                                </div>
                             <% } %>
-                        </span>
-                    </div>
-                    <div class="hotel-info">
-                        <h3><%= hotel.nombre %></h3>
-                        <p class="hotel-location">
-                            <i class="fas fa-map-marker-alt"></i> <%= hotel.ciudad %>
-                        </p>
-                        <p class="hotel-price">
-                            <i class="fas fa-tag"></i> $<%= hotel.precio_base %> /noche
-                        </p>
-                        <span class="hotel-status status-<%= hotel.estado %>">
-                            <%= hotel.estado.replace('_', ' ').toUpperCase() %>
-                        </span>
-                    </div>
-                    <div class="hotel-actions">
-                        <a href="/admin/hotels/<%= hotel.id %>" class="btn-view" title="Ver detalles">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="/admin/hotels/<%= hotel.id %>/edit" class="btn-edit" title="Editar" onclick="console.log('Clic en editar <%= hotel.id %>')">Editar</a>
-                        <button onclick="deleteHotel('<%= hotel.id %>')" class="btn-delete" title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            <% }); %>
+                            <div class="hotel-card-status <%= hotel.estado %>">
+                                <%= hotel.estado.replace('_', ' ') %>
+                            </div>
+                            <div class="hotel-card-content">
+                                <h3 class="hotel-card-title"><%= hotel.nombre %></h3>
+                                <p class="hotel-card-location"><i class="fas fa-map-marker-alt"></i> <%= hotel.ciudad %></p>
+                                <div class="hotel-card-actions">
+                                    <a href="/admin/hotels/<%= hotel.id %>/edit" class="btn-action" title="Editar Hotel">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="/hotel-detalle/<%= hotel.id %>" target="_blank" class="btn-action" title="Ver como cliente">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button onclick="deleteHotel('<%= hotel.id %>')" class="btn-action btn-delete" title="Eliminar Hotel">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p>No se encontraron hoteles.</p>
+                <% } %>
+            </div>
         </div>
     </main>
 
