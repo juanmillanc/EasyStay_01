@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title><%= restaurant.nombre %> - Detalles</title>
+    <link rel="stylesheet" href="/css/search.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: #f7f7f7;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .restaurant-detail-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 40px 0 60px 0;
+            background: #f7f7f7;
+        }
+        .restaurant-detail-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            max-width: 700px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: fadeIn 0.7s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .restaurant-detail-image {
+            width: 100%;
+            height: 320px;
+            object-fit: cover;
+            background: #eee;
+        }
+        .restaurant-detail-info {
+            padding: 32px 28px 24px 28px;
+        }
+        .restaurant-detail-info h1 {
+            margin-top: 0;
+            font-size: 2.2rem;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        .restaurant-detail-info p {
+            margin: 10px 0 0 0;
+            color: #444;
+            font-size: 1.08rem;
+        }
+        .restaurant-detail-info strong {
+            color: #222;
+        }
+        .restaurant-detail-info i {
+            color: #e74c3c;
+            margin-right: 6px;
+        }
+        .restaurant-detail-info a.back-btn {
+            display: inline-block;
+            margin-top: 28px;
+            background: #e74c3c;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .restaurant-detail-info a.back-btn:hover {
+            background: #c0392b;
+        }
+        .restaurant-detail-info a {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        @media (max-width: 800px) {
+            .restaurant-detail-card {
+                max-width: 98vw;
+            }
+            .restaurant-detail-info {
+                padding: 18px 8vw 18px 8vw;
+            }
+        }
+        @media (max-width: 500px) {
+            .restaurant-detail-info {
+                padding: 12px 2vw 18px 2vw;
+            }
+            .restaurant-detail-image {
+                height: 180px;
+            }
+        }
+        .mesas-disponibles-section {
+            margin-top: 32px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 18px 20px;
+        }
+        .mesa-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .mesa-item:last-child {
+            border-bottom: none;
+        }
+        #modal-reserva-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.35); z-index: 1000; backdrop-filter: blur(2px);
+            justify-content: center; align-items: center;
+        }
+        #modal-reserva {
+            background: linear-gradient(135deg, #fff 70%, #ffe5d0 100%);
+            border-radius: 18px;
+            max-width: 420px; width: 90vw;
+            padding: 32px 24px 24px 24px;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 8px rgba(255,81,47,0.08);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            animation: fadeInModal 0.4s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        @keyframes fadeInModal {
+            from { opacity: 0; transform: translateY(40px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        #modal-reserva h3 {
+            font-size: 1.5em;
+            color: #ff512f;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+        #modal-reserva input[type="text"],
+        #modal-reserva input[type="email"],
+        #modal-reserva input[type="tel"],
+        #modal-reserva input[type="date"],
+        #modal-reserva input[type="time"],
+        #modal-reserva select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid #ffd0b0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 1em;
+            background: #fff8f3;
+            transition: border 0.2s;
+        }
+        #modal-reserva input:focus,
+        #modal-reserva select:focus {
+            border: 1.5px solid #ff512f;
+            outline: none;
+            background: #fff;
+        }
+        #modal-reserva label {
+            font-weight: 600;
+            color: #e74c3c;
+            margin-bottom: 4px;
+            display: block;
+        }
+        #modal-reserva .comensal-btn,
+        #modal-reserva .mesa-form-btn,
+        #modal-reserva .tipo-comida-btn,
+        #modal-reserva .preferencia-btn {
+            background: #fff8f3;
+            border: 1.5px solid #ffd0b0;
+            color: #e74c3c;
+            border-radius: 7px;
+            padding: 7px 18px;
+            font-size: 1em;
+            font-weight: 500;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border 0.2s;
+        }
+        #modal-reserva .comensal-btn.active,
+        #modal-reserva .mesa-form-btn.active,
+        #modal-reserva .tipo-comida-btn.active,
+        #modal-reserva .preferencia-btn.active {
+            background: linear-gradient(90deg,#ff512f,#f09819);
+            color: #fff;
+            border: 1.5px solid #ff512f;
+        }
+        #modal-reserva .comensal-btn:hover,
+        #modal-reserva .mesa-form-btn:hover,
+        #modal-reserva .tipo-comida-btn:hover,
+        #modal-reserva .preferencia-btn:hover {
+            background: #ffe5d0;
+            color: #ff512f;
+        }
+        #modal-reserva .reserva-btn {
+            width: 100%;
+            background: linear-gradient(90deg,#ff512f,#f09819);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 0;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(255,81,47,0.08);
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        #modal-reserva .reserva-btn:hover {
+            background: linear-gradient(90deg,#f09819,#ff512f);
+            box-shadow: 0 4px 16px rgba(255,81,47,0.13);
+        }
+        #cerrar-modal-reserva {
+            position: absolute; top: 10px; right: 14px; background: none; border: none; font-size: 1.5em; color: #888; cursor: pointer; transition: color 0.2s;
+        }
+        #cerrar-modal-reserva:hover { color: #ff512f; }
+        #modal-reserva form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+        #modal-reserva .col-form {
+            flex: 1 1 220px;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #modal-reserva .form-row-full {
+            flex-basis: 100%;
+            width: 100%;
+        }
+        @media (max-width: 700px) {
+            #modal-reserva form {
+                flex-direction: column;
+                gap: 0;
+            }
+            #modal-reserva .col-form {
+                width: 100%;
+                margin-right: 0;
+            }
+        }
+        #modal-reserva input[type="checkbox"] { accent-color: #ff512f; }
+        @media (max-width: 600px) {
+            #modal-reserva { padding: 16px 4vw 12px 4vw; }
+        }
+        #comensales-btns {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .comensal-btn,
+        .input-comensal-btn {
+            background: #fff8f3;
+            border: 2px solid #ff512f;
+            color: #e74c3c;
+            border-radius: 8px;
+            padding: 0;
+            font-size: 1.1em;
+            font-weight: 500;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(255,81,47,0.1);
+            position: relative;
+            flex-shrink: 0;
+        }
+        .input-comensal-btn {
+            width: auto;
+            min-width: 120px;
+            padding: 0 12px;
+            gap: 6px;
+        }
+        .input-comensal-btn i.fa-user {
+            font-size: 1em;
+        }
+        .input-comensal-btn input[type="number"] {
+            width: 30px;
+            font-size: 1.1em;
+            margin-left: 2px;
+            padding: 0;
+            border: none;
+            background: none;
+            color: #e74c3c;
+            text-align: center;
+            -webkit-appearance: textfield;
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        .input-comensal-btn input[type="number"]::-webkit-outer-spin-button,
+        .input-comensal-btn input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .input-comensal-btn.active input[type="number"] {
+            background-color: #fff;
+            border: 1.5px solid #fff;
+            color: #ff512f;
+            border-radius: 6px;
+            padding: 0 4px;
+            margin: 0 0 0 4px;
+            width: 40px;
+        }
+        .mesa-form-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            padding: 10px 14px;
+            height: auto;
+            min-width: 150px;
+            gap: 4px;
+        }
+        .mesa-form-btn .mesa-numero {
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+        .mesa-form-btn .mesa-capacidad {
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            opacity: 0.8;
+        }
+        #mesas-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        @media (max-width: 500px) {
+            .comensal-btn, .input-comensal-btn {
+                width: 42px;
+                height: 42px;
+                font-size: 1em;
+            }
+            
+            .input-comensal-btn {
+                min-width: 100px;
+            }
+            
+            .mesa-form-btn {
+                min-width: 100px;
+                font-size: 0.85em;
+            }
+        }
+        .comensal-btn.active,
+        .input-comensal-btn.active {
+            background: linear-gradient(90deg,#ff512f,#f09819);
+            color: #fff;
+            border-color: #ff512f;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255,81,47,0.2);
+        }
+        .comensal-btn:hover,
+        .input-comensal-btn:hover {
+            background: #ffe5d0;
+            color: #ff512f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255,81,47,0.15);
+        }
+        .comensal-btn:active,
+        .input-comensal-btn:active {
+            transform: scale(0.98);
+        }
+        .botones-reserva {
+            display: flex;
+            gap: 18px;
+            justify-content: flex-start;
+            margin: 32px 0 18px 0;
+        }
+        .boton-reserva {
+            min-width: 210px;
+            text-align: center;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 0;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(255,81,47,0.08);
+            outline: none;
+            display: inline-block;
+        }
+        .boton-volver, .boton-volver:visited, .boton-volver:active {
+            background: #e74c3c;
+            color: #fff !important;
+            text-decoration: none;
+        }
+        .boton-volver:hover {
+            background: #c0392b;
+            color: #fff !important;
+            text-decoration: none;
+        }
+        .boton-reservar {
+            background: linear-gradient(90deg,#ff512f,#f09819);
+            color: #fff;
+        }
+        .boton-reservar:hover {
+            background: linear-gradient(90deg,#f09819,#ff512f);
+        }
+        .auth-warning-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #fff8f3;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(255,81,47,0.08);
+            padding: 32px 28px 24px 28px;
+            margin: 0 auto;
+            max-width: 350px;
+            min-width: 260px;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+        .auth-warning-title {
+            font-size: 1.15em;
+            color: #222;
+            margin-bottom: 18px;
+            font-weight: 500;
+            text-align: center;
+        }
+        .auth-warning-title .highlight {
+            color: #ff512f;
+            font-weight: bold;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .auth-warning-btn {
+            background: linear-gradient(90deg,#ff512f,#f09819);
+            color: #fff !important;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 32px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255,81,47,0.08);
+            transition: background 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .auth-warning-btn:hover {
+            background: linear-gradient(90deg,#f09819,#ff512f);
+            color: #fff !important;
+            text-decoration: none;
+        }
+        .boton-reserva-igual {
+            width: 240px;
+            min-width: 240px;
+            max-width: 240px;
+            text-align: center;
+            display: inline-block;
+            box-sizing: border-box;
+        }
+
+        /* Estilos para el nuevo diseño de reserva (no logueado) */
+        .back-link-top {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: color 0.2s;
+        }
+        .back-link-top:hover {
+            color: #ff512f;
+        }
+        .back-link-top i {
+            margin-right: 8px;
+        }
+
+        .auth-warning-container-new {
+            background: #fff8f3;
+            border: 1px solid #ffe5d0;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin-top: 32px;
+        }
+        .auth-warning-container-new .auth-warning-title {
+            font-size: 1.2em;
+            color: #2d3436;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+        }
+        .auth-warning-container-new .auth-warning-subtitle {
+            color: #636e72;
+            margin: 0 0 16px 0;
+            font-size: 0.9em;
+        }
+        .auth-warning-container-new .boton-reservar {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <!-- Puedes incluir tu header aquí -->
+    </header>
+    <main class="restaurant-detail-container">
+        <div class="restaurant-detail-card">
+            <img src="<%= restaurant.imagen_principal || '/img/default-restaurant.jpg' %>" alt="<%= restaurant.nombre %>" class="restaurant-detail-image">
+            <div class="restaurant-detail-info">
+                <a href="/restaurantes" class="back-link-top"><i class="fas fa-arrow-left"></i> Volver al listado</a>
+                <h1><%= restaurant.nombre %></h1>
+                <p><i class="fas fa-map-marker-alt"></i> <%= restaurant.direccion %>, <%= restaurant.ciudad %></p>
+                <p><strong>Tipo de cocina:</strong> <%= restaurant.tipo_cocina || 'No especificado' %></p>
+                <p><strong>Precio promedio:</strong> $<%= restaurant.precio_promedio || 'No especificado' %></p>
+                <p><strong>Descripción:</strong> <%= restaurant.descripcion || 'Sin descripción' %></p>
+                <% if (restaurant.coordenadas_lat && restaurant.coordenadas_lng) { %>
+                    <p><strong>Ubicación:</strong> <a href="https://www.google.com/maps?q=<%= restaurant.coordenadas_lat %>,<%= restaurant.coordenadas_lng %>" target="_blank">Ver en Google Maps</a></p>
+                <% } %>
+                <% if (restaurant.coordenadas_lat && restaurant.coordenadas_lng) { %>
+                    <div style="width:100%;height:350px;margin:24px 0 0 0;border-radius:12px;overflow:hidden;">
+                        <iframe
+                            width="100%"
+                            height="100%"
+                            frameborder="0"
+                            style="border:0"
+                            src="https://www.google.com/maps?q=<%= restaurant.coordenadas_lat %>,<%= restaurant.coordenadas_lng %>&hl=es&z=16&output=embed"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                <% } %>
+                
+                <% if (user) { %>
+                    <div class="botones-reserva">
+                        <button id="mostrar-form-reserva" class="boton-reserva boton-reservar">Reservar mesa</button>
+                    </div>
+                <% } else { %>
+                    <div class="auth-warning-container-new">
+                        <div class="auth-warning-title">
+                            Inicia sesión para reservar
+                        </div>
+                        <p class="auth-warning-subtitle">Guarda tus datos y gestiona tus reservas fácilmente.</p>
+                        <a href="/login?returnTo=/restaurants/<%= restaurant.id %>" class="boton-reserva boton-reservar">Reservar</a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        <!-- Modal de reserva -->
+        <% if (user) { %>
+            <div id="modal-reserva-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.35); z-index:1000; backdrop-filter:blur(2px); justify-content:center; align-items:center;">
+                <div id="modal-reserva" style="background:#fff; border-radius:12px; max-width:420px; width:90vw; padding:24px 18px 18px 18px; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+                    <button id="cerrar-modal-reserva" style="position:absolute; top:10px; right:14px; background:none; border:none; font-size:1.5em; color:#888; cursor:pointer;">&times;</button>
+                    <form id="reserva-form">
+                        <div class="col-form">
+                            <label>Fecha y hora:</label>
+                            <input type="date" id="fecha" name="fecha" required>
+                            <select id="hora" name="hora" required>
+                                <option value="">Selecciona hora</option>
+                                <option value="12:00">12:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                                <option value="17:00">17:00</option>
+                                <option value="18:00">18:00</option>
+                            </select>
+                            <label>Nº COMENSALES:</label>
+                            <div id="comensales-btns">
+                                <button type="button" class="comensal-btn" data-value="2">2</button>
+                                <button type="button" class="comensal-btn" data-value="4">4</button>
+                                <button type="button" class="comensal-btn" data-value="6">6</button>
+                                <button type="button" class="comensal-btn" data-value="8">8</button>
+                                <div class="comensal-btn input-comensal-btn">
+                                    <i class="fa fa-user"></i>
+                                    <input type="number" id="input-comensales" min="1" max="20" value="6" aria-label="Número de comensales">
+                                </div>
+                            </div>
+                            <input type="hidden" id="num_comensales" name="num_comensales" value="6">
+                            <label>LAS MESAS</label>
+                            <div id="mesas-btns" style="display: none;"></div>
+                            <input type="hidden" id="mesa_seleccionada" name="mesa_seleccionada">
+                        </div>
+                        <div class="col-form">
+                            <input type="hidden" id="preferencia" name="preferencia" value="menu">
+                            <label>Nombre para reclamar (opcional):</label>
+                            <input type="text" name="nombre_reclamo" placeholder="¿Quién puede reclamar la reserva?">
+                            <label>OBSERVACIONES:</label>
+                            <input type="text" name="observaciones" placeholder="¿Algo especial?">
+                            <div style="font-size:12px; color:#555;">
+                                <input type="checkbox" required> Acepto los términos y condiciones sobre el manejo de mis datos.
+                            </div>
+                        </div>
+                        <div class="form-row-full">
+                            <button type="submit" class="reserva-btn">RESERVAR</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        <% } %>
+    </main>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const restauranteId = <%- JSON.stringify(restaurant.id) %>;
+        const mesasBtns = document.getElementById('mesas-btns');
+        const mostrarFormBtn = document.getElementById('mostrar-form-reserva');
+        const modalReservaOverlay = document.getElementById('modal-reserva-overlay');
+        const inputComensales = document.getElementById('input-comensales');
+        const fechaInput = document.getElementById('fecha');
+        const horaInput = document.getElementById('hora');
+        let mesasDisponibles = [];
+        let cantidadComensales = 6; // Default value
+        const reservaForm = document.getElementById('reserva-form');
+
+        // Establecer la fecha mínima del input de fecha a hoy
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const day = today.getDate().toString().padStart(2, '0');
+        fechaInput.min = `${year}-${month}-${day}`;
+
+        // Función para validar si la fecha y hora son futuras
+        function isFutureDateTime(fecha, hora) {
+            const selectedDateTime = new Date(`${fecha}T${hora}`);
+            return selectedDateTime > new Date();
+        }
+
+        // Function to load and render available tables
+        function cargarMesasDisponibles() {
+            const fecha = fechaInput.value;
+            const hora = horaInput.value;
+            const numComensales = parseInt(document.getElementById('num_comensales').value);
+
+            // Ocultar sección de mesas por defecto y limpiar selección
+            mesasBtns.style.display = 'none';
+            document.getElementById('mesa_seleccionada').value = '';
+
+            // Validar que la fecha y hora no sean pasadas
+            if (fecha && hora && !isFutureDateTime(fecha, hora)) {
+                mesasBtns.innerHTML = '<p style="color:#e74c3c; padding:10px;">No se pueden realizar reservas en el pasado. Por favor, selecciona una fecha y hora futuras.</p>';
+                mesasBtns.style.display = 'block';
+                return;
+            }
+
+            // Solo buscar mesas si fecha, hora y número de comensales son válidos
+            if (!fecha || !hora || !numComensales || numComensales < 1) {
+                return;
+            }
+
+            fetch(`/api/mesas?restaurante_id=${restauranteId}&fecha=${fecha}&hora=${hora}&num_comensales=${numComensales}`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Respuesta completa de la API /api/mesas (sin filtrar por comensales en cliente):', data.mesas);
+
+                    if (data.success && data.mesas && data.mesas.length > 0) {
+                        // 1. Intentar filtrar por capacidad exacta
+                        let mesasFiltradas = data.mesas.filter(mesa => 
+                            parseInt(mesa.capacidad) === numComensales
+                        );
+                        
+                        // 2. Si no hay mesas con capacidad exacta, buscar en el rango de +2
+                        if (mesasFiltradas.length === 0) {
+                            mesasFiltradas = data.mesas.filter(mesa => 
+                                parseInt(mesa.capacidad) > numComensales && 
+                                parseInt(mesa.capacidad) <= numComensales + 2
+                            );
+                        }
+                        
+                        if (mesasFiltradas.length > 0) {
+                            mesasDisponibles = mesasFiltradas;
+                            renderMesasBtns(mesasFiltradas);
+                            mesasBtns.style.display = 'flex';
+                        } else {
+                            // Si no hay mesas ni exactas ni en el rango, buscar horarios alternativos
+                            buscarHorariosAlternativos();
+                        }
+                    } else {
+                        mesasDisponibles = [];
+                        buscarHorariosAlternativos();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar mesas disponibles:', error);
+                    mesasBtns.innerHTML = '<p style="color:#e74c3c; padding:10px;">Error al cargar las mesas disponibles.</p>';
+                    mesasBtns.style.display = 'block';
+                });
+        }
+
+        // Función auxiliar para buscar horarios y fechas alternativas
+        async function buscarHorariosAlternativos() {
+            const fecha = fechaInput.value;
+            const hora = horaInput.value;
+            const numComensales = parseInt(document.getElementById('num_comensales').value);
+            
+            const horasRango = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+            
+            let sugerenciasEncontradas = [];
+
+            // 1. Buscar en la misma fecha (horarios alternativos)
+            const promisesDiaActual = horasRango.map(horaRango =>
+                fetch(`/api/mesas?restaurante_id=${restauranteId}&fecha=${fecha}&hora=${horaRango}&num_comensales=${numComensales}`).then(res => res.json())
+            );
+
+            const resultsDiaActual = await Promise.all(promisesDiaActual);
+            resultsDiaActual.forEach((res, index) => {
+                const horaRango = horasRango[index];
+                if (res.success && res.mesas && res.mesas.length > 0) {
+                    const mesasDisponiblesEnHora = res.mesas.filter(mesa => 
+                        parseInt(mesa.capacidad) === numComensales || 
+                        (parseInt(mesa.capacidad) > numComensales && parseInt(mesa.capacidad) <= numComensales + 2)
+                    );
+                    if (mesasDisponiblesEnHora.length > 0 && horaRango !== hora) {
+                        sugerenciasEncontradas.push({ fecha: fecha, hora: horaRango });
+                    }
+                }
+            });
+
+            // 2. Si no hay sugerencias en el día actual, buscar en los próximos 3 días
+            if (sugerenciasEncontradas.length === 0) {
+                for (let i = 1; i <= 3; i++) { // Buscar en los próximos 3 días
+                    const nextDate = new Date(fechaInput.value);
+                    nextDate.setDate(nextDate.getDate() + i);
+                    const nextDateFormatted = nextDate.toISOString().split('T')[0];
+
+                    const promisesNextDay = horasRango.map(horaRango =>
+                        fetch(`/api/mesas?restaurante_id=${restauranteId}&fecha=${nextDateFormatted}&hora=${horaRango}&num_comensales=${numComensales}`).then(res => res.json())
+                    );
+
+                    const resultsNextDay = await Promise.all(promisesNextDay);
+                    resultsNextDay.forEach((res, index) => {
+                        const horaRango = horasRango[index];
+                        if (res.success && res.mesas && res.mesas.length > 0) {
+                            const mesasDisponiblesEnHora = res.mesas.filter(mesa => 
+                                parseInt(mesa.capacidad) === numComensales || 
+                                (parseInt(mesa.capacidad) > numComensales && parseInt(mesa.capacidad) <= numComensales + 2)
+                            );
+                            if (mesasDisponiblesEnHora.length > 0) { // No excluimos la hora si ya la teníamos, solo buscamos disponibilidad
+                                sugerenciasEncontradas.push({ fecha: nextDateFormatted, hora: horaRango });
+                            }
+                        }
+                    });
+                    // Si encontramos algo, salimos para no saturar con demasiadas sugerencias
+                    if (sugerenciasEncontradas.length > 0) break;
+                }
+            }
+
+            if (sugerenciasEncontradas.length > 0) {
+                mesasBtns.innerHTML = `
+                    <div style="color:#e74c3c; padding:10px; margin-bottom:10px;">
+                        No hay mesas disponibles para ${numComensales} comensales en el horario seleccionado (${fecha} ${hora}).
+                    </div>
+                    <div style="color:#2c3e50; padding:10px;">
+                        Horarios y Fechas alternativas disponibles:
+                        <div style="margin-top:10px;">
+                            ${sugerenciasEncontradas.map(s => {
+                                const displayDate = new Date(s.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+                                return `<button type="button" class="mesa-form-btn" onclick="seleccionarFechaHoraAlternativa('${s.fecha}', '${s.hora}')">
+                                            ${displayDate} ${s.hora}
+                                        </button>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                mesasBtns.innerHTML = `<p style="color:#e74c3c; padding:10px;">No hay mesas disponibles para ${numComensales} comensales en ningún horario ni en los próximos días.</p>`;
+            }
+            mesasBtns.style.display = 'block';
+        }
+
+        // Function to render table buttons
+        function renderMesasBtns(mesas) {
+            mesasBtns.innerHTML = '';
+            mesas.forEach(mesa => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'mesa-form-btn';
+                btn.dataset.id = mesa.id;
+                btn.dataset.capacidad = mesa.capacidad;
+
+                btn.innerHTML = `
+                    <span class="mesa-numero">Mesa #${mesa.numero_mesa}</span>
+                    <span class="mesa-capacidad">
+                        <i class="fas fa-users"></i>
+                        Para ${mesa.capacidad} personas
+                    </span>
+                `;
+
+                btn.onclick = function() {
+                    document.querySelectorAll('.mesa-form-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('mesa_seleccionada').value = mesa.id;
+                };
+                mesasBtns.appendChild(btn);
+            });
+        }
+
+        // Event listeners for date, time, and comensales changes
+        fechaInput.addEventListener('change', cargarMesasDisponibles);
+        horaInput.addEventListener('change', cargarMesasDisponibles);
+
+        document.querySelectorAll('.comensal-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                document.querySelectorAll('.comensal-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.input-comensal-btn').classList.remove('active');
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                cantidadComensales = parseInt(this.dataset.value) || 1;
+                document.getElementById('num_comensales').value = cantidadComensales;
+                cargarMesasDisponibles();
+            });
+        });
+
+        inputComensales.addEventListener('input', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('.comensal-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.input-comensal-btn').classList.remove('active');
+            
+            // Add active class to input container
+            this.parentElement.classList.add('active');
+            
+            cantidadComensales = parseInt(this.value) || 1;
+            document.getElementById('num_comensales').value = cantidadComensales;
+            cargarMesasDisponibles();
+        });
+
+        // Set default active state when modal opens
+        mostrarFormBtn.addEventListener('click', function() {
+            modalReservaOverlay.style.display = 'flex';
+            reservaForm.reset();
+            mesasBtns.innerHTML = '';
+            mesasBtns.style.display = 'none';
+            document.getElementById('mesa_seleccionada').value = '';
+            
+            // Set default comensales value and active state
+            if (!document.getElementById('num_comensales').value) {
+                document.getElementById('num_comensales').value = 6;
+                document.querySelectorAll('.comensal-btn').forEach(b => {
+                    if (parseInt(b.dataset.value) === 6) {
+                        b.classList.add('active');
+                    } else {
+                        b.classList.remove('active');
+                    }
+                });
+                if (inputComensales && parseInt(inputComensales.value) !== 6) {
+                    inputComensales.value = 6;
+                }
+            }
+        });
+
+        reservaForm.onsubmit = function(e) {
+            e.preventDefault();
+
+            const mesaSeleccionadaId = document.getElementById('mesa_seleccionada').value;
+
+            // Add validation for mesa selection
+            if (!mesaSeleccionadaId) {
+                alert('Por favor, selecciona una mesa disponible.');
+                return; // Stop form submission
+            }
+
+            const data = {
+                restaurante_id: restauranteId,
+                mesa_id: mesaSeleccionadaId, // Use the validated mesa ID
+                fecha: document.getElementById('fecha').value,
+                hora: document.getElementById('hora').value,
+                num_comensales: document.getElementById('num_comensales').value,
+                nombre_reclamo: reservaForm.nombre_reclamo.value,
+                observaciones: reservaForm.observaciones.value
+            };
+            fetch('/api/reservar-mesa', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(resp => {
+                if (resp.success) {
+                    alert('¡Reserva realizada correctamente!\nCódigo de reserva: ' + resp.codigo);
+                    modalReservaOverlay.style.display = 'none';
+                    reservaForm.reset();
+                } else if (resp.sugerencias && resp.sugerencias.length > 0) {
+                    alert('No hay disponibilidad para la hora seleccionada.\nHorarios sugeridos: ' + resp.sugerencias.join(', '));
+                } else {
+                    alert(resp.message || 'Error al reservar');
+                }
+            })
+            .catch(() => alert('Error al reservar'));
+        };
+
+        const cerrarModalBtn = document.getElementById('cerrar-modal-reserva');
+        if (cerrarModalBtn) {
+            cerrarModalBtn.addEventListener('click', function() {
+                document.getElementById('modal-reserva-overlay').style.display = 'none';
+            });
+        }
+
+        const modalOverlay = document.getElementById('modal-reserva-overlay');
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    modalOverlay.style.display = 'none';
+                }
+            });
+        }
+
+        // Función para seleccionar fecha y horario alternativo (global para el onclick)
+        window.seleccionarFechaHoraAlternativa = function(fecha, hora) {
+            fechaInput.value = fecha;
+            horaInput.value = hora;
+            cargarMesasDisponibles();
+        };
+    });
+    </script>
+</body>
+</html>

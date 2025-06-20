@@ -118,9 +118,25 @@ const hotelController = {
 
     // Guardar nuevo hotel
     store: async (req, res) => {
+        const { nombre, descripcion, direccion, ciudad, estrellas, precio_base, estado, coordenadas_lat, coordenadas_lng } = req.body;
+
+        // Validaciones de campos obligatorios
+        if (!nombre || !descripcion || !direccion || !ciudad || !estrellas || !precio_base || !coordenadas_lat || !coordenadas_lng) {
+            req.flash('error', 'Por favor, completa todos los campos obligatorios (*).');
+            return res.redirect('/admin/hotels/new');
+        }
+
+        // Validar si el nombre del hotel ya existe
+        const [existingHotels] = await db.query('SELECT id FROM hoteles WHERE nombre = ?', [nombre]);
+        if (existingHotels.length > 0) {
+            console.log(`[DEBUG] Intentando crear hotel con nombre duplicado: ${nombre}`);
+            req.flash('error', 'Ya existe un hotel con este nombre. Por favor, elige uno diferente.');
+            return res.redirect('/admin/hotels/new');
+        }
+
         // Reemplazar coma por punto en coordenadas
-        const lat = req.body.coordenadas_lat ? req.body.coordenadas_lat.replace(',', '.') : null;
-        const lng = req.body.coordenadas_lng ? req.body.coordenadas_lng.replace(',', '.') : null;
+        const lat = coordenadas_lat ? coordenadas_lat.replace(',', '.') : null;
+        const lng = coordenadas_lng ? coordenadas_lng.replace(',', '.') : null;
         const connection = await db.getConnection();
         try {
             await connection.beginTransaction();
@@ -141,16 +157,16 @@ const hotelController = {
                     estado, creado_por
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
-                req.body.nombre,
-                req.body.descripcion,
-                req.body.direccion,
-                req.body.ciudad,
-                req.body.estrellas,
-                req.body.precio_base,
+                nombre,
+                descripcion,
+                direccion,
+                ciudad,
+                estrellas,
+                precio_base,
                 imagePath,
                 lat,
                 lng,
-                req.body.estado,
+                estado,
                 req.session.user.id
             ]);
 
@@ -214,7 +230,16 @@ const hotelController = {
         try {
             const [hotels] = await db.query(`
                 SELECT h.*, 
-                       c.*,
+                       ANY_VALUE(c.id) as caracteristica_id,
+                       ANY_VALUE(c.wifi) as wifi,
+                       ANY_VALUE(c.parking) as parking,
+                       ANY_VALUE(c.piscina) as piscina,
+                       ANY_VALUE(c.restaurante) as restaurante,
+                       ANY_VALUE(c.aire_acondicionado) as aire_acondicionado,
+                       ANY_VALUE(c.gimnasio) as gimnasio,
+                       ANY_VALUE(c.spa) as spa,
+                       ANY_VALUE(c.bar) as bar,
+                       ANY_VALUE(c.mascotas) as mascotas,
                        GROUP_CONCAT(
                            JSON_OBJECT(
                                'id', hab.id,
@@ -224,9 +249,9 @@ const hotelController = {
                                'precio', hab.precio,
                                'cantidad_disponible', hab.cantidad_disponible,
                                'estado', hab.estado
-                           )
+                           ) SEPARATOR '###'
                        ) as habitaciones
-                FROM hoteles h 
+                FROM hoteles h
                 LEFT JOIN caracteristicas_hotel c ON h.id = c.hotel_id
                 LEFT JOIN habitaciones hab ON h.id = hab.hotel_id
                 WHERE h.id = ?
@@ -240,6 +265,10 @@ const hotelController = {
 
             const hotel = {...hotels[0]};
             
+            // --- DEBUG LOG: Raw habitaciones data from DB ---
+            console.log('DEBUG: Raw habitaciones data from DB:', hotel.habitaciones);
+            // --- END DEBUG LOG ---
+
             // Procesar características
             if (hotel.wifi !== null) {
                 hotel.caracteristicas = {
@@ -257,18 +286,23 @@ const hotelController = {
 
             // Procesar habitaciones
             if (hotel.habitaciones) {
-                hotel.habitaciones = hotel.habitaciones
-                    .split(',')
-                    .map(hab => JSON.parse(hab));
+                try {
+                    hotel.habitaciones = hotel.habitaciones
+                        .split('###')
+                        .map(hab => JSON.parse(hab));
+                } catch (e) {
+                    console.error('Error al parsear habitaciones en edit:', e);
+                    hotel.habitaciones = [];
+                }
             } else {
                 hotel.habitaciones = [];
             }
 
-            // --- DEBUG LOG ---
-            console.log('Habitaciones cargadas para edición:', hotel.habitaciones);
+            // --- DEBUG LOG: Habitaciones after parsing ---
+            console.log('DEBUG: Habitaciones after parsing:', hotel.habitaciones);
             // --- END DEBUG LOG ---
 
-            res.render('admin/hotels/form', { 
+            res.render('admin/hotels/edit', { 
                 hotel,
                 user: req.user,
                 path: `/admin/hotels/${req.params.id}/edit`
@@ -282,6 +316,25 @@ const hotelController = {
 
     // Actualizar hotel
     update: async (req, res) => {
+        const { nombre, descripcion, direccion, ciudad, estrellas, precio_base, estado, coordenadas_lat, coordenadas_lng } = req.body;
+        const hotelId = req.params.id;
+
+        // Validar si el nombre del hotel ya existe, excluyendo el hotel actual
+        try {
+            const [existingHotels] = await db.query(
+                'SELECT id FROM hoteles WHERE nombre = ? AND id != ?',
+                [nombre, hotelId]
+            );
+            if (existingHotels.length > 0) {
+                req.flash('error', 'Ya existe otro hotel con este nombre. Por favor, elige uno diferente.');
+                return res.redirect(`/admin/hotels/${hotelId}/edit`);
+            }
+        } catch (error) {
+            console.error('Error al validar nombre de hotel en update:', error);
+            req.flash('error', 'Error interno al validar el nombre del hotel.');
+            return res.redirect(`/admin/hotels/${hotelId}/edit`);
+        }
+
         const connection = await db.getConnection();
         try {
             await connection.beginTransaction();

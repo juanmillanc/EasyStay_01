@@ -128,18 +128,37 @@
         }
         .estado-badge {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: capitalize;
         }
-        .estado-activa {
-            background-color: #28a745;
+        .estado-activa, .estado-confirmada {
+            background-color: #28a745; /* Verde */
             color: white;
         }
-        .estado-inactiva {
-            background-color: #6c757d;
+        .estado-cancelada, .estado-pendiente, .estado-inactiva {
+            background-color: #6c757d; /* Gris */
             color: white;
+        }
+        .estado-finalizada {
+            background-color: #007bff; /* Azul */
+            color: white;
+        }
+        .estado-abonada {
+            background-color: #ffc107; /* Amarillo */
+            color: #212529;
+        }
+        /* Deshabilitar botones */
+        .disabled-btn {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .disabled-btn:hover {
+            transform: none !important;
+            background-color: inherit !important;
+            color: inherit !important;
         }
         /* Toast notifications */
         .toast {
@@ -196,11 +215,39 @@
         </a>
         <h1><i class="fas fa-calendar-check"></i> Mis Reservas</h1>
         
+        <% if (messages.success_msg) { %>
+            <div class="alert alert-success"><%= messages.success_msg %></div>
+        <% } %>
+        <% if (messages.error_msg) { %>
+            <div class="alert alert-danger"><%= messages.error_msg %></div>
+        <% } %>
+
         <div class="reserva-section">
             <h2><i class="fas fa-hotel icono"></i> Reservas de Hotel</h2>
             <% if (hotelBookings && hotelBookings.length > 0) { %>
                 <ul class="reserva-list">
                     <% hotelBookings.forEach(r => { %>
+                        <% 
+                            const fechaEntrada = new Date(r.fecha_entrada);
+                            const hoy = new Date();
+                            // Poner ambas fechas al inicio del día para una comparación precisa (ignorar la hora)
+                            fechaEntrada.setHours(0, 0, 0, 0);
+                            hoy.setHours(0, 0, 0, 0);
+
+                            const diffTime = fechaEntrada.getTime() - hoy.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Diferencia en días, redondeado hacia arriba
+
+                            const canEditOrCancel = diffDays > 5; // Verdadero si faltan más de 5 días
+                            let cancelWarningText = "Esta acción no se puede deshacer.";
+
+                            if (diffDays <= 0) { // Mismo día o en el pasado
+                                cancelWarningText = "¡Alerta! La cancelación de la reserva no está permitida el mismo día del check-in.";
+                            } else if (diffDays <= 5) {
+                                cancelWarningText = "¡Alerta! La cancelación de la reserva será penalizada si es dentro de los 5 días previos al check-in.";
+                            }
+
+                            const servicioCompletado = (new Date(r.fecha_salida) <= hoy) && (r.estado === 'finalizada');
+                        %>
                         <li class="reserva-card">
                             <div><strong>Hotel:</strong> <%= r.hotel_nombre %></div>
                             <div><strong>Habitación:</strong> <%= r.habitacion_tipo %></div>
@@ -209,7 +256,7 @@
                             <div><strong>Huéspedes:</strong> <%= r.numero_huespedes %></div>
                             <div>
                                 <strong>Estado:</strong> 
-                                <span class="estado-badge <%= r.estado === 'activa' ? 'estado-activa' : 'estado-inactiva' %>">
+                                <span class="estado-badge <%= r.estado === 'activa' ? 'estado-activa' : (r.estado === 'finalizada' ? 'estado-finalizada' : 'estado-inactiva') %>">
                                     <%= r.estado %>
                                 </span>
                             </div>
@@ -217,34 +264,29 @@
                                 <div><strong>Comentarios:</strong> <%= r.comentarios %></div>
                             <% } %>
                             <div class="reserva-actions">
-                                <a href="/hotel/reserva/edit/<%= r.id %>" class="btn btn-edit">
+                                <a href="/hotel/reserva/edit/<%= r.id %>" class="btn btn-edit <%= !canEditOrCancel ? 'disabled-btn' : '' %>" <%= !canEditOrCancel ? 'onclick="return false;"' : '' %>>
                                     <i class="fas fa-edit"></i> Editar
                                 </a>
                                 <% if (r.estado !== 'cancelada' && r.estado !== 'finalizada') { %>
                                     <form action="/hotel/reserva/cancelar/<%= r.id %>" method="POST" style="display:inline;">
-                                        <button type="button" onclick="confirmarCancelacion(this)" class="btn btn-delete">
+                                        <button type="button" onclick="confirmarCancelacion(this, '<%= cancelWarningText %>')" class="btn btn-delete <%= !canEditOrCancel ? 'disabled-btn' : '' %>" <%= !canEditOrCancel ? 'disabled' : '' %>>
                                             <i class="fas fa-ban"></i> Cancelar reserva
                                         </button>
                                     </form>
-                                <% } %>
-                                <% if (r.estado === 'abonada') { %>
-                                    <% 
-                                        const fechaSalida = new Date(r.fecha_salida);
-                                        const hoy = new Date();
-                                        const puedeConfirmar = fechaSalida < hoy;
-                                    %>
-                                    <% if (puedeConfirmar) { %>
-                                        <form action="/hotel/reserva/confirmar-estadia/<%= r.id %>" method="POST" style="display:inline;">
-                                            <button type="button" onclick="confirmarEstadia(this)" class="btn" style="background:#28a745;color:#fff;">
-                                                <i class="fas fa-check-circle"></i> Confirmar estadía
-                                            </button>
-                                        </form>
-                                    <% } %>
                                 <% } %>
                                 <% if (r.estado !== 'abonada' && r.estado !== 'finalizada') { %>
                                     <a href="/hotel/reserva/abonar/<%= r.id %>" class="btn btn-abonar" style="background:#ffb300;color:#fff;">
                                         <i class="fas fa-wallet"></i> Hacer abono
                                     </a>
+                                <% } %>
+                                <% if (servicioCompletado) { %>
+                                    <a href="/calificar-experiencia/<%= r.id %>?tipo=hotel" class="btn btn-calificar" style="background:#4CAF50;color:#fff;">
+                                        <i class="fas fa-star"></i> Calificar
+                                    </a>
+                                <% } else { %>
+                                    <button class="btn btn-calificar disabled-btn" style="background:#4CAF50;color:#fff;" disabled title="Solo puedes calificar una vez finalizada la estadía y el estado sea 'finalizada'.">
+                                        <i class="fas fa-star"></i> Calificar
+                                    </button>
                                 <% } %>
                             </div>
                         </li>
@@ -259,15 +301,23 @@
             <% if (restaurantBookings && restaurantBookings.length > 0) { %>
                 <ul class="reserva-list">
                     <% restaurantBookings.forEach(r => { %>
-                        <li class="reserva-card">
-                            <div><strong>Restaurante ID:</strong> <%= r.restaurante_id %></div>
-                            <div><strong>Fecha:</strong> <span class="fecha"><%= r.fecha %></span></div>
-                            <div><strong>Hora:</strong> <%= r.hora %></div>
-                            <div><strong>Personas:</strong> <%= r.num_personas %></div>
-                            <div><strong>Mesa:</strong> <%= r.num_mesa || 'Por asignar' %></div>
+                        <% 
+                            const fechaReserva = new Date(`${r.fecha}T${r.hora}`);
+                            const hoyRestaurante = new Date();
+                            // Considerar completado si la fecha y hora de la reserva ya pasaron y el estado es 'activa'
+                            const servicioCompletadoRestaurante = (fechaReserva <= hoyRestaurante) && (r.estado === 'activa');
+                        %>
+                        <li class="reserva-card" data-fecha="<%= r.fecha.toISOString().split('T')[0] %>" data-hora="<%= r.hora %>">
+                            <div><strong>Restaurante:</strong> <%= r.restaurante_nombre %></div>
+                            <div><strong>Fecha:</strong> <%= new Date(r.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'numeric', year: 'numeric' }) %> - <strong>Hora:</strong> <%= r.hora %></div>
+                            <div class="tiempo-restante" style="color: #007faf; font-weight: bold;"></div>
+                            <% if (r.nombre_reclamo) { %>
+                                <div><strong>Encargado:</strong> <%= r.nombre_reclamo %></div>
+                            <% } %>
+                            <div><strong>Mesa:</strong> #<%= r.numero_mesa || 'Asignada' %> <% if (r.mesa_capacidad) { %>(<%= r.mesa_capacidad %> sillas)<% } %></div>
                             <div>
                                 <strong>Estado:</strong> 
-                                <span class="estado-badge <%= r.estado === 'activa' ? 'estado-activa' : 'estado-inactiva' %>">
+                                <span class="estado-badge estado-<%= r.estado.toLowerCase() %>">
                                     <%= r.estado %>
                                 </span>
                             </div>
@@ -276,12 +326,23 @@
                             <% } %>
                             
                             <div class="reserva-actions">
-                                <a href="/restaurante/reserva/edit/<%= r.id %>" class="btn btn-edit">
-                                    <i class="fas fa-edit"></i> Editar
-                                </a>
-                                <button onclick="confirmarEliminacionRestaurante('<%= r.id %>')" class="btn btn-delete">
-                                    <i class="fas fa-trash-alt"></i> Eliminar
-                                </button>
+                                <% if (r.estado.toLowerCase() !== 'cancelada') { %>
+                                    <a href="/restaurante/reserva/<%= r.id %>/edit" class="btn btn-edit">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </a>
+                                    <button onclick="confirmarCancelacionRestaurante('<%= r.id %>')" class="btn btn-delete">
+                                        <i class="fas fa-ban"></i> Cancelar
+                                    </button>
+                                <% } %>
+                                <% if (servicioCompletadoRestaurante) { %>
+                                    <a href="/calificar-experiencia/<%= r.id %>?tipo=restaurante" class="btn btn-calificar" style="background:#4CAF50;color:#fff;">
+                                        <i class="fas fa-star"></i> Calificar
+                                    </a>
+                                <% } else { %>
+                                    <button class="btn btn-calificar disabled-btn" style="background:#4CAF50;color:#fff;" disabled title="Solo puedes calificar una vez que la reserva haya sido consumada y el estado sea 'activa'.">
+                                        <i class="fas fa-star"></i> Calificar
+                                    </button>
+                                <% } %>
                             </div>
                         </li>
                     <% }) %>
@@ -310,39 +371,33 @@
         });
     }
 
-    function confirmarEliminacionRestaurante(id) {
+    function confirmarCancelacionRestaurante(id) {
         Swal.fire({
-            title: '¿Estás seguro de eliminar esta reserva?',
-            text: "Esta acción no se puede deshacer y eliminará permanentemente la reserva",
+            title: '¿Estás seguro de cancelar esta reserva?',
+            text: "La reserva se marcará como 'Cancelada' y la mesa se liberará. Esta acción no se puede deshacer.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar permanentemente',
-            cancelButtonText: 'Cancelar',
-            showDenyButton: true,
-            denyButtonText: 'Inactivar en su lugar',
-            denyButtonColor: '#6c757d'
+            confirmButtonText: 'Sí, cancelar reserva',
+            cancelButtonText: 'Volver'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Crear y enviar el formulario de eliminación
+                // Crear y enviar el formulario de cancelación
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/restaurante/reserva/delete/${id}`;
+                form.action = `/restaurante/reserva/cancel/${id}`;
                 document.body.appendChild(form);
                 form.submit();
-            } else if (result.isDenied) {
-                // Redirigir a la página de edición con el estado inactivo
-                window.location.href = `/restaurante/reserva/edit/${id}?estado=inactiva`;
             }
         });
     }
 
     // Función para mostrar SweetAlert de confirmación de cancelación
-    function confirmarCancelacion(button) {
+    function confirmarCancelacion(button, warningText) {
         Swal.fire({
             title: '¿Estás seguro?',
-            text: "Esta acción no se puede deshacer",
+            text: warningText,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
@@ -356,24 +411,7 @@
         });
     }
 
-    function confirmarEstadia(button) {
-        Swal.fire({
-            title: '¿Confirmar estadía?',
-            text: "Al confirmar, se te otorgarán los puntos por tu estadía",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#28a745',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, confirmar',
-            cancelButtonText: 'No, volver'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                button.closest('form').submit();
-            }
-        });
-    }
-
-    // Ocultar los toasts después de 3 segundos
+    // Ocultar los toasts después de 3 segundos y manejar contadores
     document.addEventListener('DOMContentLoaded', () => {
         const toasts = document.querySelectorAll('.toast');
         toasts.forEach(toast => {
@@ -381,6 +419,60 @@
                 toast.style.opacity = '0';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
+        });
+
+        const reservaCards = document.querySelectorAll('.reserva-card[data-fecha]');
+        reservaCards.forEach(card => {
+            const fecha = card.dataset.fecha;
+            const hora = card.dataset.hora;
+            const tiempoRestanteEl = card.querySelector('.tiempo-restante');
+            const editButton = card.querySelector('.btn-edit');
+
+            if (!fecha || !hora || !tiempoRestanteEl) return;
+
+            const targetDate = new Date(`${fecha}T${hora}`).getTime();
+
+            const interval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = targetDate - now;
+
+                if (distance < 0) {
+                    clearInterval(interval);
+                    tiempoRestanteEl.innerHTML = "La reserva ha finalizado.";
+                    if (editButton) {
+                         editButton.classList.add('disabled-btn');
+                         editButton.onclick = (e) => e.preventDefault();
+                    }
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                let countdownText = "Tiempo restante: ";
+                if (days > 0) countdownText += `${days} días `;
+                countdownText += `${hours} horas ${minutes} minutos y ${seconds} segundos`;
+                tiempoRestanteEl.innerHTML = countdownText;
+
+                // Deshabilitar botón de editar si faltan menos de 12 horas
+                if (distance < (12 * 60 * 60 * 1000)) {
+                    if (editButton && !editButton.classList.contains('disabled-btn')) {
+                        editButton.classList.add('disabled-btn');
+                        editButton.onclick = (e) => {
+                            e.preventDefault();
+                            Swal.fire({
+                                title: 'Edición no permitida',
+                                text: 'No puedes editar la reserva porque faltan menos de 12 horas para la cita.',
+                                icon: 'warning',
+                                confirmButtonColor: '#3085d6',
+                                confirmButtonText: 'Entendido'
+                            });
+                        };
+                    }
+                }
+            }, 1000);
         });
     });
     </script>

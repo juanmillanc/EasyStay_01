@@ -7,6 +7,7 @@ const fs = require('fs').promises;
 const hotelController = require('../controllers/hotelController');
 const transporter = require('../mailer');
 const puntosController = require('../controllers/puntosController');
+const { stringify } = require('csv-stringify');
 
 
 // Middleware para verificar si el usuario es administrador
@@ -20,6 +21,7 @@ const isAdmin = (req, res, next) => {
 // Middleware para verificar si el usuario está autenticado
 const isAuthenticated = (req, res, next) => {
     if (!req.session.user) {
+        req.session.returnTo = req.originalUrl; // Guarda la URL a la que el usuario intentaba acceder
         return res.redirect('/login');
     }
     next();
@@ -27,6 +29,9 @@ const isAuthenticated = (req, res, next) => {
 
 // Ruta de login (GET)
 router.get('/login', (req, res) => {
+    if (req.query.returnTo) {
+        req.session.returnTo = req.query.returnTo;
+    }
     res.render('index', { loginForm: true });
 });
 
@@ -135,6 +140,35 @@ router.post('/register', async (req, res) => {
         console.log('ID del nuevo usuario:', result.insertId);
         console.log('=== REGISTRO COMPLETADO ===\n');
 
+        // Enviar correo de activación/bienvenida
+        try {
+            await transporter.sendMail({
+                from: process.env.MAIL_USER || 'easystay.sp@gmail.com',
+                to: email,
+                subject: '¡Bienvenido a EasyStay! Confirma tu registro',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                        <div style="background-color: #ff8c00; padding: 20px; text-align: center;">
+                            <h1 style="color: white; margin: 0;">¡Bienvenido a EasyStay!</h1>
+                        </div>
+                        <div style="padding: 20px;">
+                            <p>Hola ${nombre},</p>
+                            <p>Gracias por registrarte en EasyStay. Tu cuenta ha sido creada exitosamente.</p>
+                            <p>¡Esperamos verte pronto en nuestros hoteles y restaurantes!</p>
+                            <p>Saludos cordiales,<br>El equipo de EasyStay</p>
+                        </div>
+                        <div style="background-color: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #777;">
+                            <p>© ${new Date().getFullYear()} EasyStay. Todos los derechos reservados.</p>
+                            <p>Este es un mensaje automático, por favor no respondas directamente.</p>
+                        </div>
+                    </div>
+                `,
+            });
+            console.log('✅ Correo de bienvenida enviado a:', email);
+        } catch (mailError) {
+            console.error('❌ Error al enviar correo de bienvenida:', mailError);
+        }
+
         res.status(201).json({
             success: true,
             message: 'Usuario registrado exitosamente',
@@ -219,13 +253,16 @@ router.post('/login', async (req, res) => {
             console.log('Usuario autenticado:', req.session.user); // Para debugging
 
             // Redirigir según el rol
-            if (user.rol === 'admin' || user.rol === 'superadmin') {
+            const redirectTo = req.session.returnTo || (user.rol === 'admin' || user.rol === 'superadmin' ? '/admin/dashboard' : '/');
+            if (req.session.returnTo) {
+                console.log(`Redirigiendo a la URL guardada: ${redirectTo}`);
+                delete req.session.returnTo; // Limpiar la URL guardada
+            } else if (user.rol === 'admin' || user.rol === 'superadmin') {
                 console.log('Redirección exitosa: usuario con rol', user.rol, 'redirigido a /admin/dashboard');
-                return res.redirect('/admin/dashboard');
             } else {
                 console.log('Redirección estándar: usuario con rol', user.rol, 'redirigido a /');
-                return res.redirect('/');
             }
+            return res.redirect(redirectTo);
             
         } catch (authError) {
             console.error('Error en autenticación:', authError);
@@ -275,6 +312,26 @@ router.get('/restaurantes', async (req, res) => {
             user: req.session.user,
             error: 'Error al cargar restaurantes'
         });
+    }
+});
+
+// Ruta para mostrar los detalles de un restaurante específico
+router.get('/restaurants/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [rows] = await pool.query('SELECT * FROM restaurantes WHERE id = ?', [id]);
+        
+        if (rows.length === 0) {
+            return res.status(404).render('error', { message: 'Página no encontrada', error: { status: 404, stack: 'Restaurante no encontrado' } });
+        }
+        
+        res.render('restaurants/detail', { 
+            restaurant: rows[0],
+            user: req.session.user
+        });
+    } catch (error) {
+        console.error('Error al cargar detalle del restaurante:', error);
+        res.status(500).render('error', { message: 'Error en el servidor', error });
     }
 });
 
@@ -332,22 +389,20 @@ router.get('/bookings', async (req, res) => {
             [req.session.user.id]
         );
 
-        // --- SIMULACIÓN: Modificar la fecha de salida de la primera reserva para probar el botón de confirmar estadía ---
-        if (hotelBookings.length > 0) {
-            hotelBookings[0].fecha_salida = new Date('2023-01-01'); // Fecha pasada
-            console.log(`[SIMULACIÓN] Fecha de salida de la reserva ${hotelBookings[0].id} modificada a 2023-01-01 para prueba.`);
-        }
-        // --- FIN SIMULACIÓN ---
-
         const [restaurantBookings] = await pool.query(
-            'SELECT * FROM reservas_restaurante WHERE usuario_id = ?',
+            `SELECT rr.*, r.nombre as restaurante_nombre, m.numero_mesa, m.capacidad as mesa_capacidad
+             FROM reservas_restaurante rr
+             JOIN restaurantes r ON rr.restaurante_id = r.id
+             LEFT JOIN mesas m ON rr.mesa_id = m.id
+             WHERE rr.usuario_id = ?`,
             [req.session.user.id]
         );
         res.render('bookings', {
             user: req.session.user,
             hotelBookings,
             restaurantBookings,
-            error: null
+            error: null,
+            messages: req.flash() // Aseguramos que los mensajes flash sean pasados a la vista
         });
     } catch (error) {
         console.error('Error al obtener reservas:', error);
@@ -355,7 +410,136 @@ router.get('/bookings', async (req, res) => {
             user: req.session.user,
             hotelBookings: [],
             restaurantBookings: [],
-            error: 'Error al cargar reservas'
+            error: 'Error al cargar reservas',
+            messages: req.flash() // También pasamos mensajes en caso de error
+        });
+    }
+});
+
+// Ruta para mostrar el formulario de calificación
+router.get('/calificar-experiencia/:id', isAuthenticated, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { tipo } = req.query;
+
+        // Obtener información de la reserva según el tipo
+        let reserva;
+        if (tipo === 'hotel') {
+            const [reservas] = await pool.query(`
+                SELECT rh.*, h.nombre as hotel_nombre 
+                FROM reservas_hotel rh
+                JOIN hoteles h ON rh.hotel_id = h.id
+                WHERE rh.id = ? AND rh.usuario_id = ?
+            `, [id, req.session.user.id]);
+
+            if (reservas.length === 0) {
+                return res.redirect('/bookings');
+            }
+            reserva = reservas[0];
+        } else if (tipo === 'restaurante') {
+            const [reservas] = await pool.query(`
+                SELECT rr.*, r.nombre as restaurante_nombre 
+                FROM reservas_restaurante rr
+                JOIN restaurantes r ON rr.restaurante_id = r.id
+                WHERE rr.id = ? AND rr.usuario_id = ?
+            `, [id, req.session.user.id]);
+
+            if (reservas.length === 0) {
+                return res.redirect('/bookings');
+            }
+            reserva = reservas[0];
+        } else {
+            return res.redirect('/bookings');
+        }
+
+        res.render('calificar-experiencia', {
+            reserva,
+            tipo,
+            error: null
+        });
+    } catch (error) {
+        console.error('Error al cargar formulario de calificación:', error);
+        res.redirect('/bookings');
+    }
+});
+
+// Ruta para procesar la calificación
+router.post('/calificar-experiencia', isAuthenticated, async (req, res) => {
+    try {
+        const { reserva_id, tipo, puntuacion, comentario } = req.body;
+
+        // Validar que la puntuación esté entre 1 y 5
+        if (!puntuacion || puntuacion < 1 || puntuacion > 5) {
+            return res.render('calificar-experiencia', {
+                reserva: { id: reserva_id },
+                tipo,
+                error: 'La puntuación debe estar entre 1 y 5 estrellas'
+            });
+        }
+
+        // Validar que el comentario no esté vacío
+        if (!comentario || comentario.trim().length === 0) {
+            return res.render('calificar-experiencia', {
+                reserva: { id: reserva_id },
+                tipo,
+                error: 'El comentario es obligatorio'
+            });
+        }
+
+        // Insertar la calificación según el tipo
+        if (tipo === 'hotel') {
+            await pool.query(`
+                INSERT INTO resenas_hotel (usuario_id, hotel_id, reserva_id, puntuacion, comentario, estado)
+                SELECT rh.usuario_id, rh.hotel_id, rh.id, ?, ?, 'activa'
+                FROM reservas_hotel rh
+                WHERE rh.id = ? AND rh.usuario_id = ?
+            `, [puntuacion, comentario, reserva_id, req.session.user.id]);
+
+            // Actualizar el promedio de calificación del hotel
+            await pool.query(`
+                UPDATE hoteles h
+                SET calificacion_promedio = (
+                    SELECT AVG(puntuacion)
+                    FROM resenas_hotel
+                    WHERE hotel_id = h.id AND estado = 'activa'
+                )
+                WHERE h.id = (
+                    SELECT hotel_id
+                    FROM reservas_hotel
+                    WHERE id = ?
+                )
+            `, [reserva_id]);
+        } else if (tipo === 'restaurante') {
+            await pool.query(`
+                INSERT INTO resenas_restaurante (usuario_id, restaurante_id, reserva_id, puntuacion, comentario, estado)
+                SELECT rr.usuario_id, rr.restaurante_id, rr.id, ?, ?, 'activa'
+                FROM reservas_restaurante rr
+                WHERE rr.id = ? AND rr.usuario_id = ?
+            `, [puntuacion, comentario, reserva_id, req.session.user.id]);
+
+            // Actualizar el promedio de calificación del restaurante
+            await pool.query(`
+                UPDATE restaurantes r
+                SET calificacion_promedio = (
+                    SELECT AVG(puntuacion)
+                    FROM resenas_restaurante
+                    WHERE restaurante_id = r.id AND estado = 'activa'
+                )
+                WHERE r.id = (
+                    SELECT restaurante_id
+                    FROM reservas_restaurante
+                    WHERE id = ?
+                )
+            `, [reserva_id]);
+        }
+
+        res.redirect('/bookings');
+    } catch (error) {
+        console.error('Error al procesar calificación:', error);
+        res.render('calificar-experiencia', {
+            reserva: { id: req.body.reserva_id },
+            tipo: req.body.tipo,
+            error: 'Error al procesar la calificación'
         });
     }
 });
@@ -377,6 +561,235 @@ router.get('/admin/users', isAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error al obtener usuarios:', error);
         res.render('admin/users', { users: [], error: 'Error al cargar usuarios' });
+    }
+});
+
+// Ruta para mostrar el formulario de edición de usuario
+router.get('/admin/users/edit/:id', isAdmin, async (req, res) => {
+    const userId = req.params.id;
+    try {
+        const [users] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [userId]);
+        if (users.length === 0) {
+            return res.status(404).render('error', { message: 'Usuario no encontrado', user: req.session.user });
+        }
+        res.render('admin/edit-user', { user: req.session.user, userDetails: users[0], error: null, success: null });
+    } catch (error) {
+        console.error('Error al cargar formulario de edición de usuario:', error);
+        res.status(500).render('error', { message: 'Error al cargar datos del usuario', user: req.session.user });
+    }
+});
+
+// Ruta para procesar la edición de usuario (cambio de rol)
+router.post('/admin/users/edit/:id', isAdmin, async (req, res) => {
+    const userId = req.params.id;
+    const { nombre, email, rol, confirmacion, justificacion } = req.body;
+
+    try {
+        // Obtener datos actuales del usuario
+        const [currentUsers] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [userId]);
+        if (currentUsers.length === 0) {
+            return res.status(404).render('error', { message: 'Usuario no encontrado', user: req.session.user });
+        }
+        const currentUser = currentUsers[0];
+
+        // Validar que un superadmin no pueda cambiar su propio rol o el de otro superadmin
+        if (currentUser.rol === 'superadmin' && rol !== 'superadmin') {
+            return res.status(403).render('admin/edit-user', { 
+                user: req.session.user, 
+                userDetails: currentUser, 
+                error: 'No puedes cambiar el rol de un superadministrador.', 
+                success: null 
+            });
+        }
+        if (req.session.user.id == userId && currentUser.rol === 'superadmin' && rol !== 'superadmin') {
+             return res.status(403).render('admin/edit-user', { 
+                 user: req.session.user, 
+                 userDetails: currentUser, 
+                 error: 'No puedes cambiar tu propio rol de superadministrador.', 
+                 success: null 
+             });
+         }
+
+        // Validar confirmación
+        if (confirmacion !== 'CONFIRMAR') {
+            return res.render('admin/edit-user', {
+                user: req.session.user,
+                userDetails: currentUser,
+                error: 'Debes escribir "CONFIRMAR" para guardar los cambios.',
+                success: null
+            });
+        }
+
+        let rolCambiado = false;
+        if (currentUser.rol !== rol) {
+            rolCambiado = true;
+            // Validar justificación si el rol ha cambiado
+            if (!justificacion || justificacion.trim() === '') {
+                return res.render('admin/edit-user', {
+                    user: req.session.user,
+                    userDetails: currentUser,
+                    error: 'La justificación es obligatoria para cambiar el rol.',
+                    success: null
+                });
+            }
+        }
+
+        // Actualizar usuario en la base de datos
+        await pool.query(
+            'UPDATE usuarios SET nombre = ?, rol = ? WHERE id = ?',
+            [nombre, rol, userId]
+        );
+
+        // Si el rol cambió, registrar en log y notificar
+        if (rolCambiado) {
+            // Aquí podrías insertar en una tabla de log de auditoría si existiera
+            console.log(`[AUDITORÍA] Usuario ${req.session.user.email} (${req.session.user.id}) cambió el rol de ${currentUser.email} (${userId}) de ${currentUser.rol} a ${rol}. Justificación: ${justificacion}`);
+
+            // Enviar notificación por correo electrónico al usuario cuyo rol fue cambiado
+            try {
+                await transporter.sendMail({
+                    from: process.env.MAIL_USER || 'easystay.sp@gmail.com',
+                    to: currentUser.email,
+                    subject: 'Notificación Importante: Tu Rol en EasyStay ha Cambiado',
+                    html: `
+                        <h1>Estimado(a) ${currentUser.nombre},</h1>
+                        <p>Le informamos que su rol en la plataforma EasyStay ha sido modificado.</p>
+                        <p>Su nuevo rol es: <b>${rol.toUpperCase()}</b></p>
+                        ${justificacion ? `<p>Motivo del cambio: ${justificacion}</p>` : ''}
+                        <p>Si tiene alguna pregunta o considera que esto es un error, por favor, póngase en contacto con el administrador del sistema.</p>
+                        <p>Saludos cordiales,<br>El equipo de EasyStay</p>
+                    `,
+                });
+                console.log(`✅ Correo de notificación de cambio de rol enviado a: ${currentUser.email}`);
+            } catch (mailError) {
+                console.error('❌ Error al enviar correo de notificación de cambio de rol:', mailError);
+            }
+        }
+
+        // Si el usuario actual edita su propio rol, actualizar la sesión para que vea los cambios
+        if (req.session.user.id == userId) {
+            req.session.user.rol = rol;
+        }
+        
+        res.render('admin/edit-user', {
+            user: req.session.user,
+            userDetails: { ...currentUser, nombre, rol }, // Actualizar userDetails con los nuevos datos
+            error: null,
+            success: 'Usuario actualizado exitosamente!'
+        });
+
+    } catch (error) {
+        console.error('Error al actualizar usuario:', error);
+        // Si hay un error, recargar la página con los datos actuales y el mensaje de error
+        const [currentUsers] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [userId]);
+        res.status(500).render('admin/edit-user', { 
+            user: req.session.user, 
+            userDetails: currentUsers[0], 
+            error: `Error al actualizar el usuario: ${error.message}`, 
+            success: null 
+        });
+    }
+});
+
+// Ruta para exportar usuarios a CSV
+router.get('/admin/users/export-csv', isAdmin, async (req, res) => {
+    try {
+        const [users] = await pool.query('SELECT id, nombre, email, rol, estado, fecha_registro, telefono FROM usuarios');
+        
+        const columns = [
+            { key: 'id', header: 'ID' },
+            { key: 'nombre', header: 'Nombre' },
+            { key: 'email', header: 'Email' },
+            { key: 'rol', header: 'Rol' },
+            { key: 'estado', header: 'Estado' },
+            { key: 'fecha_registro', header: 'Fecha de Registro' },
+            { key: 'telefono', header: 'Teléfono' }
+        ];
+
+        stringify(users, { header: true, columns: columns }, (err, output) => {
+            if (err) {
+                console.error('Error al generar CSV:', err);
+                return res.status(500).send('Error al generar el reporte CSV');
+            }
+            res.header('Content-Type', 'text/csv;charset=utf-8');
+            res.attachment('usuarios.csv');
+            res.send('\uFEFF' + output);
+        });
+
+    } catch (error) {
+        console.error('Error al obtener usuarios para CSV:', error);
+        res.status(500).send('Error al obtener datos de usuarios para el reporte');
+    }
+});
+
+// Inactivar usuario (no eliminar)
+router.post('/admin/users/delete/:id', isAdmin, async (req, res) => {
+    const userId = req.params.id;
+    try {
+        // No permitir inactivar superadmin
+        const [users] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [userId]);
+        if (users.length === 0) {
+            return res.status(404).render('error', { message: 'Usuario no encontrado', user: req.session.user });
+        }
+        if (users[0].rol === 'superadmin') {
+            return res.status(403).render('error', { message: 'No puedes inactivar un superadmin', user: req.session.user });
+        }
+        await pool.query('UPDATE usuarios SET estado = ? WHERE id = ?', ['inactivo', userId]);
+
+        // Enviar notificación al usuario por correo electrónico
+        try {
+            await transporter.sendMail({
+                from: process.env.MAIL_USER || 'easystay.sp@gmail.com',
+                to: users[0].email,
+                subject: 'Notificación Importante: Acceso a EasyStay Suspendido',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                        <div style="background-color: #e74c3c; padding: 20px; text-align: center;">
+                            <h1 style="color: white; margin: 0;">Acceso a EasyStay Suspendido</h1>
+                        </div>
+                        <div style="padding: 20px;">
+                            <p>Estimado(a) ${users[0].nombre},</p>
+                            <p>Le informamos que su cuenta en EasyStay ha sido suspendida temporalmente debido a actividad inusual o sospechosa.</p>
+                            <p>Si cree que esto es un error, por favor, póngase en contacto con el soporte técnico de EasyStay para resolver esta situación.</p>
+                            <p>Agradecemos su comprensión.</p>
+                            <p>Saludos cordiales,<br>El equipo de EasyStay</p>
+                        </div>
+                        <div style="background-color: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #777;">
+                            <p>© ${new Date().getFullYear()} EasyStay. Todos los derechos reservados.</p>
+                            <p>Este es un mensaje automático, por favor no respondas directamente.</p>
+                        </div>
+                    </div>
+                `,
+            });
+            console.log(`✅ Correo de notificación de suspensión enviado a: ${users[0].email}`);
+        } catch (mailError) {
+            console.error('❌ Error al enviar correo de notificación de suspensión:', mailError);
+        }
+
+        res.redirect('/admin/users');
+    } catch (error) {
+        console.error('Error al inactivar usuario:', error);
+        res.status(500).render('error', { message: 'Error al inactivar usuario', user: req.session.user });
+    }
+});
+
+// Activar usuario (no superadmin)
+router.post('/admin/users/activate/:id', isAdmin, async (req, res) => {
+    const userId = req.params.id;
+    try {
+        // No permitir activar superadmin
+        const [users] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [userId]);
+        if (users.length === 0) {
+            return res.status(404).render('error', { message: 'Usuario no encontrado', user: req.session.user });
+        }
+        if (users[0].rol === 'superadmin') {
+            return res.status(403).render('error', { message: 'No puedes activar un superadmin', user: req.session.user });
+        }
+        await pool.query('UPDATE usuarios SET estado = ? WHERE id = ?', ['activo', userId]);
+        res.redirect('/admin/users');
+    } catch (error) {
+        console.error('Error al activar usuario:', error);
+        res.status(500).render('error', { message: 'Error al activar usuario', user: req.session.user });
     }
 });
 
@@ -405,20 +818,19 @@ router.get('/editar-perfil', (req, res) => {
     if (!req.session.user) {
         return res.redirect('/login');
     }
-    
     pool.query(
         'SELECT * FROM usuarios WHERE id = ?', 
         [req.session.user.id],
         (error, results) => {
             if (error) throw error;
-            
+            console.log("Datos usuario:", results[0]);
             res.render('editar-perfil', {
                 user: req.session.user,
                 userDetails: results[0],
                 success: req.query.success,
-                passwordError: null,      // Añade esto
-                passwordSuccess: null,   // Añade esto
-                error: null              // Para consistencia con la ruta POST
+                passwordError: null,
+                passwordSuccess: null,
+                error: null
             });
         }
     );
@@ -587,38 +999,21 @@ router.get('/hotel/:id', async (req, res) => {
 
 // Formulario para nuevo hotel
 router.get('/admin/hotels/new', isAuthenticated, isAdmin, (req, res) => {
-    res.render('admin/hotels/form', { hotel: null, error: null, user: req.session.user });
+    const error = req.flash('error');
+    const success = req.flash('success');
+    console.log('[DEBUG GET /admin/hotels/new] Error flash message:', error);
+    console.log('[DEBUG GET /admin/hotels/new] Success flash message:', success);
+    res.render('admin/hotels/form', { hotel: null, error: error.length ? error : null, success: success.length ? success : null, user: req.session.user });
 });
 
 // Guardar nuevo hotel usando el controlador correcto
 router.post('/admin/hotels', isAuthenticated, isAdmin, hotelController.store);
 
 // Mostrar formulario de edición de hotel
-router.get('/admin/hotels/:id/edit', isAdmin, async (req, res) => {
-    try {
-        const [hotels] = await pool.query('SELECT * FROM hoteles WHERE id = ?', [req.params.id]);
-        if (hotels.length === 0) return res.redirect('/admin/hotels');
-        res.render('admin/hotels/edit', { hotel: hotels[0] });
-    } catch (error) {
-        console.error('Error al obtener hotel:', error);
-        res.redirect('/admin/hotels');
-    }
-});
+router.get('/admin/hotels/:id/edit', isAdmin, hotelController.edit);
 
 // Guardar edición de hotel
-router.post('/admin/hotels/:id/edit', isAdmin, async (req, res) => {
-    const { nombre, descripcion, direccion, ciudad, estrellas, precio_base, imagen_principal } = req.body;
-    try {
-        await pool.query(
-            'UPDATE hoteles SET nombre=?, descripcion=?, direccion=?, ciudad=?, estrellas=?, precio_base=?, imagen_principal=?, modificado_por=? WHERE id=?',
-            [nombre, descripcion, direccion, ciudad, estrellas, precio_base, imagen_principal, req.session.user.id, req.params.id]
-        );
-        res.redirect('/admin/hotels');
-    } catch (error) {
-        console.error('Error al editar hotel:', error);
-        res.redirect('/admin/hotels');
-    }
-});
+router.post('/admin/hotels/:id/edit', isAdmin, hotelController.update);
 
 // Cambiar estado de hotel (activo/inactivo)
 router.post('/admin/hotels/:id/toggle-status', isAdmin, async (req, res) => {
@@ -679,56 +1074,55 @@ router.post('/admin/restaurants', isAuthenticated, isAdmin, async (req, res) => 
     }
 });
 
-// Inactivar usuario (no eliminar)
-router.post('/admin/users/delete/:id', isAdmin, async (req, res) => {
-    const userId = req.params.id;
-    try {
-        // No permitir inactivar superadmin
-        const [users] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [userId]);
-        if (users.length === 0) {
-            return res.status(404).render('error', { message: 'Usuario no encontrado', user: req.session.user });
-        }
-        if (users[0].rol === 'superadmin') {
-            return res.status(403).render('error', { message: 'No puedes inactivar un superadmin', user: req.session.user });
-        }
-        await pool.query('UPDATE usuarios SET estado = ? WHERE id = ?', ['inactivo', userId]);
-        res.redirect('/admin/users');
-    } catch (error) {
-        console.error('Error al inactivar usuario:', error);
-        res.status(500).render('error', { message: 'Error al inactivar usuario', user: req.session.user });
-    }
-});
-
-// Activar usuario (no superadmin)
-router.post('/admin/users/activate/:id', isAdmin, async (req, res) => {
-    const userId = req.params.id;
-    try {
-        // No permitir activar superadmin
-        const [users] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [userId]);
-        if (users.length === 0) {
-            return res.status(404).render('error', { message: 'Usuario no encontrado', user: req.session.user });
-        }
-        if (users[0].rol === 'superadmin') {
-            return res.status(403).render('error', { message: 'No puedes activar un superadmin', user: req.session.user });
-        }
-        await pool.query('UPDATE usuarios SET estado = ? WHERE id = ?', ['activo', userId]);
-        res.redirect('/admin/users');
-    } catch (error) {
-        console.error('Error al activar usuario:', error);
-        res.status(500).render('error', { message: 'Error al activar usuario', user: req.session.user });
-    }
-});
-
 // Ruta para procesar la reserva de hotel
 router.post('/reservar-hotel', isAuthenticated, async (req, res) => {
     const connection = await pool.getConnection();
     try {
         // Recibir datos de tarjeta
-        const { hotel_id, habitacion_id, fecha_entrada, fecha_salida, num_personas, precio_total, numero_tarjeta, expiracion_tarjeta, cvv_tarjeta } = req.body;
+        const { hotel_id, habitacion_id, fecha_entrada, fecha_salida, num_personas: num_personas_raw, numero_tarjeta, expiracion_tarjeta, cvv_tarjeta } = req.body;
         const usuario_id = req.session.user.id;
 
+        console.log('DEBUG: Recibiendo datos para reserva de hotel:');
+        console.log('  hotel_id:', hotel_id);
+        console.log('  habitacion_id:', habitacion_id);
+        console.log('  fecha_entrada:', fecha_entrada);
+        console.log('  fecha_salida:', fecha_salida);
+        console.log('  num_personas_raw:', num_personas_raw);
+
+        // Obtener la capacidad de la habitación primero para determinar el número de personas si el campo viene deshabilitado
+        const [habitacionCapData] = await pool.query('SELECT capacidad, estado FROM habitaciones WHERE id = ?', [habitacion_id]);
+        if (habitacionCapData.length === 0) {
+            // Esto no debería pasar si habitacion_id es válido, pero es una buena práctica manejarlo
+            const [hoteles] = await pool.query('SELECT * FROM hoteles WHERE id = ?', [hotel_id]);
+            const [habitaciones] = await pool.query('SELECT * FROM habitaciones WHERE hotel_id = ?', [hotel_id]);
+            return res.render('reservar-hotel', {
+                hotel: hoteles[0],
+                habitaciones,
+                error: 'Habitación no encontrada o inválida.',
+                habitacionSeleccionada: habitacion_id,
+                fechaEntradaParam: fecha_entrada,
+                fechaSalidaParam: fecha_salida,
+                numPersonasParam: num_personas_raw
+            });
+        }
+
+        const capacidadRealHabitacion = habitacionCapData[0].capacidad;
+        // Si num_personas no se recibió (campo deshabilitado) y la capacidad es 1, asumimos 1 persona.
+        // De lo contrario, usamos el valor enviado o 1 si es inválido.
+        const num_personas = (num_personas_raw === undefined && capacidadRealHabitacion === 1) ? 1 : (parseInt(num_personas_raw) || 1);
+
+        const numeroTarjetaLimpio = numero_tarjeta ? numero_tarjeta.replace(/\s/g, '') : '';
+
+        console.log('DEBUG VALIDACIÓN TARJETA:');
+        console.log('  numero_tarjeta (original): ', numero_tarjeta);
+        console.log('  numeroTarjetaLimpio: ', numeroTarjetaLimpio);
+        console.log('  expiracion_tarjeta: ', expiracion_tarjeta);
+        console.log('  cvv_tarjeta: ', cvv_tarjeta);
+        console.log('  num_personas (procesado): ', num_personas);
+        console.log('  capacidadRealHabitacion: ', capacidadRealHabitacion);
+
         // Simulación de validación de tarjeta
-        if (!numero_tarjeta || !expiracion_tarjeta || !cvv_tarjeta || !/^\d{16}$/.test(numero_tarjeta.replace(/\s/g, '')) || !/^\d{3,4}$/.test(cvv_tarjeta)) {
+        if (!numeroTarjetaLimpio || !expiracion_tarjeta || !cvv_tarjeta || !/^\d{13,19}$/.test(numeroTarjetaLimpio) || !/^\d{3,4}$/.test(cvv_tarjeta)) {
             // Datos incompletos o formato incorrecto
             // Obtener datos del hotel y habitaciones para recargar la vista
             const [hoteles] = await pool.query('SELECT * FROM hoteles WHERE id = ?', [hotel_id]);
@@ -737,11 +1131,13 @@ router.post('/reservar-hotel', isAuthenticated, async (req, res) => {
                 hotel: hoteles[0],
                 habitaciones,
                 error: 'Datos de tarjeta inválidos o incompletos. Intenta de nuevo.',
-                habitacionSeleccionada: habitacion_id
+                habitacionSeleccionada: habitacion_id,
+                fechaEntradaParam: fecha_entrada,
+                fechaSalidaParam: fecha_salida,
+                numPersonasParam: num_personas
             });
         }
-        // Permitir espacios en el número de tarjeta para la validación simulada
-        const numeroTarjetaLimpio = numero_tarjeta.replace(/\s/g, '');
+
         if (numeroTarjetaLimpio.endsWith('0')) {
             // Tarjeta inválida simulada
             // Debemos recargar la vista con los datos y un mensaje de error
@@ -752,13 +1148,15 @@ router.post('/reservar-hotel', isAuthenticated, async (req, res) => {
                 hotel: hoteles[0],
                 habitaciones,
                 error: 'La tarjeta es inválida. Por favor, ingresa otra tarjeta.',
-                habitacionSeleccionada: habitacion_id
+                habitacionSeleccionada: habitacion_id,
+                fechaEntradaParam: fecha_entrada,
+                fechaSalidaParam: fecha_salida,
+                numPersonasParam: num_personas
             });
         }
 
-        // Validar capacidad de la habitación
-        const [habitacionCap] = await pool.query('SELECT capacidad, estado FROM habitaciones WHERE id = ?', [habitacion_id]);
-        if (habitacionCap.length === 0 || parseInt(num_personas) > habitacionCap[0].capacidad) {
+        // Validar capacidad de la habitación (ahora con num_personas ya procesado)
+        if (num_personas > capacidadRealHabitacion) {
              // Obtener datos del hotel y habitaciones para recargar la vista
              const [hoteles] = await pool.query('SELECT * FROM hoteles WHERE id = ?', [hotel_id]);
              const [habitaciones] = await pool.query('SELECT * FROM habitaciones WHERE hotel_id = ?', [hotel_id]);
@@ -766,7 +1164,10 @@ router.post('/reservar-hotel', isAuthenticated, async (req, res) => {
                  hotel: hoteles[0],
                  habitaciones,
                  error: 'La cantidad de personas excede la capacidad permitida para la habitación seleccionada.',
-                 habitacionSeleccionada: habitacion_id
+                 habitacionSeleccionada: habitacion_id,
+                 fechaEntradaParam: fecha_entrada,
+                 fechaSalidaParam: fecha_salida,
+                 numPersonasParam: num_personas
              });
          }
 
@@ -777,6 +1178,8 @@ router.post('/reservar-hotel', isAuthenticated, async (req, res) => {
             'SELECT * FROM habitaciones WHERE id = ? AND hotel_id = ? AND estado = \'disponible\'',
             [habitacion_id, hotel_id]
         );
+
+        console.log('DEBUG: Resultado de la consulta de disponibilidad de habitación:', habitacion);
 
         if (!habitacion[0]) {
             // Buscar habitaciones alternativas disponibles para las mismas fechas
@@ -805,7 +1208,10 @@ router.post('/reservar-hotel', isAuthenticated, async (req, res) => {
                 error: 'La habitación seleccionada no está disponible. Por favor, elige una alternativa o prueba con otras fechas.',
                 alternativas,
                 fechasAlternativas,
-                habitacionSeleccionada: habitacion_id
+                habitacionSeleccionada: habitacion_id,
+                fechaEntradaParam: fecha_entrada,
+                fechaSalidaParam: fecha_salida,
+                numPersonasParam: num_personas
             });
         }
 
@@ -1028,12 +1434,102 @@ router.get('/hotel/reserva/edit/:id', isAuthenticated, async (req, res) => {
 // Guardar cambios de edición de reserva de hotel
 router.post('/hotel/reserva/edit/:id', isAuthenticated, async (req, res) => {
     const reservaId = req.params.id;
-    const { fecha_entrada, fecha_salida, num_personas, habitacion_id } = req.body;
+    const { fecha_entrada, fecha_salida, num_personas, habitacion_id, numero_tarjeta, expiracion_tarjeta, cvv_tarjeta, pagar_diferencia } = req.body;
+
+    // 1. Obtener la reserva original
+    const [reservas] = await pool.query('SELECT * FROM reservas_hotel WHERE id = ?', [reservaId]);
+    if (reservas.length === 0) {
+        return res.status(404).render('error', { message: 'Reserva no encontrada', user: req.session.user });
+    }
+    const reservaOriginal = reservas[0];
+
+    // 2. Verificar plazo (4 días antes del check-in)
+    const hoy = new Date();
+    const nuevaFechaEntrada = new Date(fecha_entrada);
+    const diffTime = nuevaFechaEntrada.getTime() - hoy.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays < 4) {
+        return res.render('editar-reserva-hotel', {
+            reserva: { ...reservaOriginal, ...req.body },
+            habitaciones: await pool.query('SELECT * FROM habitaciones WHERE hotel_id = ?', [reservaOriginal.hotel_id]).then(r => r[0]),
+            user: req.session.user,
+            error: 'No puedes modificar la reserva con menos de 4 días de antelación. Cancela y realiza una nueva reserva.'
+        });
+    }
+
+    // 3. Calcular nuevo precio y abono
+    const [habitacion] = await pool.query('SELECT * FROM habitaciones WHERE id = ?', [habitacion_id]);
+    if (!habitacion[0]) {
+        return res.render('editar-reserva-hotel', {
+            reserva: { ...reservaOriginal, ...req.body },
+            habitaciones: await pool.query('SELECT * FROM habitaciones WHERE hotel_id = ?', [reservaOriginal.hotel_id]).then(r => r[0]),
+            user: req.session.user,
+            error: 'Habitación no encontrada.'
+        });
+    }
+    const precioPorNoche = habitacion[0].precio;
+    const fechaIn = new Date(fecha_entrada);
+    const fechaOut = new Date(fecha_salida);
+    const noches = Math.ceil((fechaOut - fechaIn) / (1000 * 60 * 60 * 24));
+    const nuevoPrecioTotal = precioPorNoche * noches;
+    const nuevoAbono = nuevoPrecioTotal / 2;
+
+    // 4. Lógica según estado de la reserva
+    if (reservaOriginal.estado === 'abonada') {
+        const abonoPagado = reservaOriginal.precio_total / 2;
+        if (nuevoAbono > abonoPagado && !pagar_diferencia) {
+            // Debe abonar la diferencia
+            const diferencia = nuevoAbono - abonoPagado;
+            return res.render('editar-reserva-hotel', {
+                reserva: { ...reservaOriginal, ...req.body },
+                habitaciones: await pool.query('SELECT * FROM habitaciones WHERE hotel_id = ?', [reservaOriginal.hotel_id]).then(r => r[0]),
+                user: req.session.user,
+                diferencia,
+                nuevoPrecioTotal,
+                nuevoAbono,
+                abonoPagado,
+                datosNuevos: { fecha_entrada, fecha_salida, num_personas, habitacion_id }
+            });
+        }
+        if (nuevoAbono > abonoPagado && pagar_diferencia) {
+            // Validar pago simulado
+            if (!numero_tarjeta || !expiracion_tarjeta || !cvv_tarjeta || !/^\d{13,19}$/.test(numero_tarjeta.replace(/\s/g, '')) || !/^\d{3,4}$/.test(cvv_tarjeta)) {
+                return res.render('editar-reserva-hotel', {
+                    reserva: { ...reservaOriginal, ...req.body },
+                    habitaciones: await pool.query('SELECT * FROM habitaciones WHERE hotel_id = ?', [reservaOriginal.hotel_id]).then(r => r[0]),
+                    user: req.session.user,
+                    diferencia: nuevoAbono - abonoPagado,
+                    nuevoPrecioTotal,
+                    nuevoAbono,
+                    abonoPagado,
+                    error: 'Datos de tarjeta inválidos o incompletos.',
+                    datosNuevos: { fecha_entrada, fecha_salida, num_personas, habitacion_id }
+                });
+            }
+            if (numero_tarjeta.replace(/\s/g, '').endsWith('0')) {
+                return res.render('editar-reserva-hotel', {
+                    reserva: { ...reservaOriginal, ...req.body },
+                    habitaciones: await pool.query('SELECT * FROM habitaciones WHERE hotel_id = ?', [reservaOriginal.hotel_id]).then(r => r[0]),
+                    user: req.session.user,
+                    diferencia: nuevoAbono - abonoPagado,
+                    nuevoPrecioTotal,
+                    nuevoAbono,
+                    abonoPagado,
+                    error: 'La tarjeta es inválida. Por favor, ingresa otra tarjeta.',
+                    datosNuevos: { fecha_entrada, fecha_salida, num_personas, habitacion_id }
+                });
+            }
+            // Aquí podrías guardar el pago simulado en la base de datos si lo deseas
+        }
+        // Si el nuevo abono es menor o igual, permite el cambio y muestra mensaje (no hay devolución automática)
+    }
+
+    // 5. Actualizar la reserva con los nuevos datos y precio total
     await pool.query(
-        'UPDATE reservas_hotel SET fecha_entrada=?, fecha_salida=?, numero_huespedes=?, habitacion_id=? WHERE id=?',
-        [fecha_entrada, fecha_salida, num_personas, habitacion_id, reservaId]
+        'UPDATE reservas_hotel SET fecha_entrada=?, fecha_salida=?, numero_huespedes=?, habitacion_id=?, precio_total=? WHERE id=?',
+        [fecha_entrada, fecha_salida, num_personas, habitacion_id, nuevoPrecioTotal, reservaId]
     );
-    res.redirect('/bookings');
+    return res.redirect('/bookings');
 });
 
 // Mostrar formulario para hacer abono de una reserva de hotel
@@ -1333,12 +1829,7 @@ router.post('/hotel/reserva/cancelar/:id', isAuthenticated, async (req, res) => 
 });
 
 // Mostrar formulario de reserva de hotel
-router.get('/hotel/reservar/:id', (req, res, next) => {
-    if (!req.session.user) {
-        return res.redirect('/login');
-    }
-    next();
-}, async (req, res) => {
+router.get('/hotel/reservar/:id', isAuthenticated, async (req, res) => {
     const hotelId = req.params.id;
     const habitacionSeleccionada = req.query.habitacion || null;
     try {
@@ -1677,6 +2168,254 @@ router.post('/hotel/reserva/confirmar-estadia/:id', isAuthenticated, async (req,
         res.redirect('/bookings?error=Error al confirmar la estadía');
     } finally {
         connection.release();
+    }
+});
+
+// Función para normalizar fechas a 'YYYY-MM-DD'
+function toDateInputValue(date) {
+    if (!date) return '';
+    if (typeof date === 'string') return date;
+    return date.toISOString().split('T')[0];
+}
+
+// API para obtener mesas disponibles
+router.get('/api/mesas', async (req, res) => {
+    try {
+        const { restaurante_id, fecha, hora, num_comensales } = req.query;
+
+        if (!restaurante_id || !fecha || !hora || !num_comensales) {
+            return res.json({ success: false, message: 'Faltan parámetros requeridos.' });
+        }
+
+        // Mesas que están reservadas en esa fecha y hora
+        const [reservas] = await pool.query(
+            `SELECT mesa_id FROM reservas_restaurante WHERE restaurante_id = ? AND fecha = ? AND hora = ? AND estado = 'activa'`,
+            [restaurante_id, fecha, hora]
+        );
+        const mesasReservadasIds = reservas.map(r => r.mesa_id);
+
+        // Buscar todas las mesas del restaurante con capacidad suficiente que NO estén reservadas
+        let query = 'SELECT * FROM mesas WHERE restaurante_id = ? AND capacidad >= ?';
+        const queryParams = [restaurante_id, num_comensales];
+
+        if (mesasReservadasIds.length > 0) {
+            query += ' AND id NOT IN (?)';
+            queryParams.push(mesasReservadasIds);
+        }
+
+        const [mesasDisponibles] = await pool.query(query, queryParams);
+        
+        res.json({ success: true, mesas: mesasDisponibles });
+
+    } catch (error) {
+        console.error("Error en /api/mesas:", error);
+        res.status(500).json({ success: false, message: 'Error al obtener las mesas.' });
+    }
+});
+
+// API para crear una reserva de mesa
+router.post('/api/reservar-mesa', isAuthenticated, async (req, res) => {
+    try {
+        const { restaurante_id, mesa_id, fecha, hora, num_comensales, observaciones } = req.body;
+        const usuario_id = req.session.user.id;
+
+        // Aquí iría la lógica de validación (ej: que la mesa no esté ya reservada)
+        
+        const codigo_reserva = `RES-${Date.now()}`;
+
+        const [result] = await pool.query(
+            `INSERT INTO reservas_restaurante 
+            (usuario_id, restaurante_id, mesa_id, fecha, hora, num_personas, notas, codigo_reserva, estado) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'activa')`,
+            [usuario_id, restaurante_id, mesa_id, fecha, hora, num_comensales, observaciones, codigo_reserva]
+        );
+
+        res.json({ success: true, message: '¡Reserva realizada con éxito!', codigo: codigo_reserva, reservaId: result.insertId });
+
+    } catch (error) {
+        console.error("Error en /api/reservar-mesa:", error);
+        res.status(500).json({ success: false, message: 'No se pudo completar la reserva.' });
+    }
+});
+
+// GET para mostrar el formulario de edición de una reserva de restaurante
+router.get('/restaurante/reserva/:id/edit', isAuthenticated, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [reservaResult] = await pool.query(
+            `SELECT rr.*, r.nombre as nombre_restaurante
+             FROM reservas_restaurante rr 
+             JOIN restaurantes r ON rr.restaurante_id = r.id 
+             WHERE rr.id = ? AND rr.usuario_id = ?`,
+            [id, req.session.user.id]
+        );
+
+        if (reservaResult.length === 0) {
+            req.flash('error', 'Reserva no encontrada o no tienes permiso para editarla.');
+            return res.redirect('/bookings');
+        }
+
+        const reserva = reservaResult[0];
+        const now = new Date();
+        
+        // Corrección: Asegurarse de que `reserva.fecha` es un objeto Date
+        const reservaDate = new Date(reserva.fecha);
+        const reservaDateTime = new Date(reservaDate.toISOString().split('T')[0] + 'T' + reserva.hora);
+        
+        const isPastReservation = reservaDateTime < now;
+
+        const hoursDifference = (reservaDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+        const isModificationRestrictedFields = hoursDifference < 12 && !isPastReservation;
+        
+        res.render('bookings/edit_restaurant_booking', {
+            reserva: reserva,
+            isPastReservation: isPastReservation,
+            isModificationRestrictedFields: isModificationRestrictedFields,
+            error: req.flash('error')[0],
+            success: req.flash('success')[0],
+            user: req.session.user
+        });
+    } catch (error) {
+        console.error("Error al cargar la página de edición de reserva:", error);
+        req.flash('error', 'Hubo un error al cargar la página de edición.');
+        res.redirect('/bookings');
+    }
+});
+
+// POST para actualizar una reserva de restaurante
+router.post('/restaurante/reserva/:id/edit', isAuthenticated, async (req, res) => {
+    const { id } = req.params; // Mover la declaración de 'id' aquí
+    try {
+        const { fecha, hora, num_comensales, mesa_seleccionada, nombre_reclamo, observaciones } = req.body;
+        const usuarioId = req.session.user.id;
+
+        const [reservaOriginalResult] = await pool.query('SELECT * FROM reservas_restaurante WHERE id = ?', [id]);
+        if(reservaOriginalResult.length === 0) {
+            req.flash('error', 'No se encontró la reserva original.');
+            return res.redirect('/bookings');
+        }
+        const reservaOriginal = reservaOriginalResult[0];
+        // Corrección: Asegurarse de que `reservaOriginal.fecha` es un objeto Date
+        const reservaDate = new Date(reservaOriginal.fecha);
+        const reservaDateTime = new Date(reservaDate.toISOString().split('T')[0] + 'T' + reservaOriginal.hora);
+        const hoursDifference = (reservaDateTime.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+
+        if (hoursDifference < 12 && reservaDateTime > new Date()) {
+            req.flash('error', 'No puedes modificar la reserva porque está dentro del plazo restringido de 12 horas.');
+            return res.redirect(`/restaurante/reserva/${id}/edit`);
+        }
+
+        await pool.query(
+            `UPDATE reservas_restaurante SET fecha = ?, hora = ?, num_personas = ?, mesa_id = ?, nombre_reclamo = ?, notas = ? WHERE id = ? AND usuario_id = ?`,
+            [fecha, hora, num_comensales, mesa_seleccionada, nombre_reclamo, observaciones, id, usuarioId]
+        );
+
+        req.flash('success', 'Reserva actualizada con éxito');
+        res.redirect('/bookings');
+    } catch (error) {
+        console.error("Error al actualizar la reserva:", error);
+        req.flash('error', 'Error al actualizar la reserva.');
+        res.redirect(`/restaurante/reserva/${id}/edit`);
+    }
+});
+
+// POST para eliminar una reserva de restaurante
+router.post('/restaurante/reserva/delete/:id', isAuthenticated, async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+        const { id } = req.params;
+        const usuarioId = req.session.user.id;
+
+        await connection.beginTransaction();
+
+        // 1. Obtener la reserva para verificar propiedad y obtener mesa_id
+        const [reservas] = await connection.query(
+            'SELECT * FROM reservas_restaurante WHERE id = ? AND usuario_id = ?',
+            [id, usuarioId]
+        );
+
+        if (reservas.length === 0) {
+            await connection.rollback();
+            req.flash('error', 'Reserva no encontrada o no tienes permiso para eliminarla.');
+            return res.redirect('/bookings');
+        }
+
+        const reserva = reservas[0];
+        const mesaId = reserva.mesa_id;
+
+        // 2. Eliminar la reserva
+        await connection.query(
+            'DELETE FROM reservas_restaurante WHERE id = ?', [id]
+        );
+
+        // 3. Poner la mesa como disponible nuevamente (si tenía una mesa asignada)
+        if (mesaId) {
+            await connection.query(
+                "UPDATE mesas SET estado = 'disponible' WHERE id = ?", [mesaId]
+            );
+        }
+
+        await connection.commit();
+        req.flash('success', 'La reserva ha sido eliminada permanentemente.');
+        res.redirect('/bookings');
+
+    } catch (error) {
+        await connection.rollback();
+        console.error("Error al eliminar la reserva de restaurante:", error);
+        req.flash('error', 'Hubo un error al eliminar la reserva.');
+        res.redirect('/bookings');
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// POST para cancelar una reserva de restaurante
+router.post('/restaurante/reserva/cancel/:id', isAuthenticated, async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+        const { id } = req.params;
+        const usuarioId = req.session.user.id;
+
+        await connection.beginTransaction();
+
+        // 1. Obtener la reserva para verificar propiedad y obtener mesa_id
+        const [reservas] = await connection.query(
+            'SELECT * FROM reservas_restaurante WHERE id = ? AND usuario_id = ?',
+            [id, usuarioId]
+        );
+
+        if (reservas.length === 0) {
+            await connection.rollback();
+            req.flash('error', 'Reserva no encontrada o no tienes permiso para cancelarla.');
+            return res.redirect('/bookings');
+        }
+
+        const reserva = reservas[0];
+        const mesaId = reserva.mesa_id;
+
+        // 2. Actualizar el estado de la reserva a 'cancelada'
+        await connection.query(
+            "UPDATE reservas_restaurante SET estado = 'cancelada' WHERE id = ?", [id]
+        );
+
+        // 3. Poner la mesa como disponible nuevamente (si tenía una mesa asignada)
+        if (mesaId) {
+            await connection.query(
+                "UPDATE mesas SET estado = 'disponible' WHERE id = ?", [mesaId]
+            );
+        }
+
+        await connection.commit();
+        req.flash('success', 'La reserva ha sido cancelada correctamente.');
+        res.redirect('/bookings');
+
+    } catch (error) {
+        await connection.rollback();
+        console.error("Error al cancelar la reserva de restaurante:", error);
+        req.flash('error', 'Hubo un error al cancelar la reserva.');
+        res.redirect('/bookings');
+    } finally {
+        if (connection) connection.release();
     }
 });
 

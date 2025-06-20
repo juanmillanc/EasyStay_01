@@ -1,0 +1,851 @@
+-- Crear la base de datos si no existe
+CREATE DATABASE IF NOT EXISTS easystay_p;
+USE easystay_p;
+
+-- Tabla de usuarios con roles mejorados
+CREATE TABLE usuarios (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    telefono VARCHAR(20),
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    estado ENUM('activo', 'inactivo', 'suspendido') DEFAULT 'activo',
+    rol ENUM('usuario', 'admin', 'superadmin') DEFAULT 'usuario',
+    ultimo_login DATETIME,
+    intentos_login INT DEFAULT 0,
+    bloqueado_hasta DATETIME NULL,
+    INDEX idx_email (email)
+);
+
+-- Crear usuario administrador inicial (contraseña encriptada con bcrypt: admin123)
+INSERT INTO usuarios (nombre, email, password, rol, estado) 
+VALUES ('Administrador Principal', 'admin@easystay.com', '$2b$10$XURzP5o8b1Y5y1z9k9lM4uL6z7f8g9h0i1j2k3l4m5n6o7p8q9r0s', 'superadmin', 'activo');
+
+-- Tabla de niveles de usuario
+CREATE TABLE niveles_usuario (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL,
+    puntos_requeridos INT NOT NULL,
+    beneficios TEXT,
+    multiplicador_puntos DECIMAL(3,2) DEFAULT 1.00,
+    icono VARCHAR(100),
+    color VARCHAR(20),
+    INDEX idx_puntos_requeridos (puntos_requeridos)
+);
+
+-- Tabla de hoteles
+CREATE TABLE hoteles (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    direccion VARCHAR(255) NOT NULL,
+    ciudad VARCHAR(100) NOT NULL,
+    estrellas INT CHECK (estrellas BETWEEN 1 AND 5),
+    precio_base DECIMAL(10,2) NOT NULL,
+    imagen_principal VARCHAR(255),
+    coordenadas_lat DECIMAL(10,8),
+    coordenadas_lng DECIMAL(10,8),
+    estado ENUM('activo', 'inactivo', 'en_mantenimiento') DEFAULT 'activo',
+    creado_por INT,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modificado_por INT,
+    fecha_modificacion DATETIME ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    FOREIGN KEY (modificado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_ciudad (ciudad)
+);
+
+-- Tabla de características de hoteles
+CREATE TABLE caracteristicas_hotel (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    hotel_id INT,
+    wifi BOOLEAN DEFAULT FALSE,
+    parking BOOLEAN DEFAULT FALSE,
+    piscina BOOLEAN DEFAULT FALSE,
+    restaurante BOOLEAN DEFAULT FALSE,
+    aire_acondicionado BOOLEAN DEFAULT FALSE,
+    gimnasio BOOLEAN DEFAULT FALSE,
+    spa BOOLEAN DEFAULT FALSE,
+    bar BOOLEAN DEFAULT FALSE,
+    mascotas BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (hotel_id) REFERENCES hoteles(id) ON DELETE CASCADE
+);
+
+-- Tabla de habitaciones
+CREATE TABLE habitaciones (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    hotel_id INT,
+    tipo VARCHAR(50) NOT NULL,
+    descripcion TEXT,
+    capacidad INT NOT NULL,
+    precio DECIMAL(10,2) NOT NULL,
+    cantidad_disponible INT NOT NULL,
+    imagen_principal VARCHAR(255),
+    estado ENUM('disponible', 'no_disponible') DEFAULT 'disponible',
+    FOREIGN KEY (hotel_id) REFERENCES hoteles(id) ON DELETE CASCADE,
+    INDEX idx_hotel_id (hotel_id)
+);
+
+-- Tabla de restaurantes
+CREATE TABLE restaurantes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    direccion VARCHAR(255) NOT NULL,
+    ciudad VARCHAR(100) NOT NULL,
+    tipo_cocina VARCHAR(50),
+    precio_promedio DECIMAL(10,2),
+    imagen_principal VARCHAR(255),
+    coordenadas_lat DECIMAL(10,8),
+    coordenadas_lng DECIMAL(10,8),
+    estado ENUM('activo', 'inactivo', 'cerrado_temporalmente') DEFAULT 'activo',
+    creado_por INT,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    modificado_por INT,
+    fecha_modificacion DATETIME ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    FOREIGN KEY (modificado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_ciudad (ciudad)
+);
+
+-- Tabla de reservas de hotel
+CREATE TABLE reservas_hotel (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT,
+    hotel_id INT,
+    habitacion_id INT,
+    fecha_entrada DATE NOT NULL,
+    fecha_salida DATE NOT NULL,
+    numero_huespedes INT NOT NULL,
+    precio_total DECIMAL(10,2) NOT NULL,
+    puntos_ganados INT DEFAULT 0,
+    puntos_redimidos INT DEFAULT 0,
+    estado ENUM('pendiente', 'confirmada', 'cancelada', 'completada', 'no_show') DEFAULT 'pendiente',
+    fecha_reserva DATETIME DEFAULT CURRENT_TIMESTAMP,
+    creado_por INT COMMENT 'Usuario o admin que realizó la reserva',
+    metodo_pago VARCHAR(50),
+    notas TEXT,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    FOREIGN KEY (hotel_id) REFERENCES hoteles(id) ON DELETE SET NULL,
+    FOREIGN KEY (habitacion_id) REFERENCES habitaciones(id) ON DELETE SET NULL,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_usuario_id (usuario_id),
+    INDEX idx_hotel_id (hotel_id)
+);
+
+-- Tabla de reservas de restaurante
+CREATE TABLE reservas_restaurante (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT,
+    restaurante_id INT,
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
+    numero_personas INT NOT NULL,
+    puntos_ganados INT DEFAULT 0,
+    puntos_redimidos INT DEFAULT 0,
+    estado ENUM('pendiente', 'confirmada', 'cancelada', 'completada', 'no_show') DEFAULT 'pendiente',
+    fecha_reserva DATETIME DEFAULT CURRENT_TIMESTAMP,
+    creado_por INT COMMENT 'Usuario o admin que realizó la reserva',
+    mesa VARCHAR(20),
+    notas TEXT,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE SET NULL,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_usuario_id (usuario_id),
+    INDEX idx_restaurante_id (restaurante_id)
+);
+
+-- Tabla de reseñas de hotel
+CREATE TABLE resenas_hotel (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT,
+    hotel_id INT,
+    reserva_id INT,
+    puntuacion INT CHECK (puntuacion BETWEEN 1 AND 5),
+    comentario TEXT,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    estado ENUM('activa', 'pendiente_moderacion', 'oculta') DEFAULT 'pendiente_moderacion',
+    moderado_por INT,
+    fecha_moderacion DATETIME,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    FOREIGN KEY (hotel_id) REFERENCES hoteles(id) ON DELETE CASCADE,
+    FOREIGN KEY (reserva_id) REFERENCES reservas_hotel(id) ON DELETE SET NULL,
+    FOREIGN KEY (moderado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_usuario_id (usuario_id),
+    INDEX idx_hotel_id (hotel_id)
+);
+
+-- Tabla de reseñas de restaurante
+CREATE TABLE resenas_restaurante (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT,
+    restaurante_id INT,
+    reserva_id INT,
+    puntuacion INT CHECK (puntuacion BETWEEN 1 AND 5),
+    comentario TEXT,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    estado ENUM('activa', 'pendiente_moderacion', 'oculta') DEFAULT 'pendiente_moderacion',
+    moderado_por INT,
+    fecha_moderacion DATETIME,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE CASCADE,
+    FOREIGN KEY (reserva_id) REFERENCES reservas_restaurante(id) ON DELETE SET NULL,
+    FOREIGN KEY (moderado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_usuario_id (usuario_id),
+    INDEX idx_restaurante_id (restaurante_id)
+);
+
+-- Tabla de imágenes de hotel
+CREATE TABLE imagenes_hotel (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    hotel_id INT,
+    url VARCHAR(255) NOT NULL,
+    descripcion VARCHAR(255),
+    es_principal BOOLEAN DEFAULT FALSE,
+    orden INT DEFAULT 0,
+    subido_por INT,
+    fecha_subida DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (hotel_id) REFERENCES hoteles(id) ON DELETE CASCADE,
+    FOREIGN KEY (subido_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_hotel_id (hotel_id)
+);
+
+-- Tabla de imágenes de restaurante
+CREATE TABLE imagenes_restaurante (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    restaurante_id INT,
+    url VARCHAR(255) NOT NULL,
+    descripcion VARCHAR(255),
+    es_principal BOOLEAN DEFAULT FALSE,
+    orden INT DEFAULT 0,
+    subido_por INT,
+    fecha_subida DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE CASCADE,
+    FOREIGN KEY (subido_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_restaurante_id (restaurante_id)
+);
+
+-- Tabla de puntos de usuario
+CREATE TABLE puntos_usuario (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    puntos_disponibles INT DEFAULT 0,
+    puntos_totales INT DEFAULT 0,
+    nivel_id INT DEFAULT 1,
+    ultima_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (nivel_id) REFERENCES niveles_usuario(id) ON DELETE SET NULL,
+    INDEX idx_usuario_id (usuario_id)
+);
+
+-- Tabla de recompensas disponibles
+CREATE TABLE recompensas (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    tipo ENUM('descuento_hotel', 'descuento_restaurante', 'comida_gratis', 'upgrade_habitacion', 'beneficio_especial') NOT NULL,
+    puntos_requeridos INT NOT NULL,
+    valor_descuento DECIMAL(5,2),
+    codigo VARCHAR(20) UNIQUE,
+    fecha_inicio DATE,
+    fecha_fin DATE,
+    estado ENUM('activo', 'inactivo', 'agotado') DEFAULT 'activo',
+    stock INT,
+    imagen VARCHAR(255),
+    creado_por INT,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_estado (estado)
+);
+
+-- Tabla de recompensas redimidas
+CREATE TABLE recompensas_redimidas (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    recompensa_id INT,
+    puntos_usados INT NOT NULL,
+    fecha_redencion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    codigo_usado VARCHAR(20),
+    estado ENUM('pendiente', 'usado', 'expirado', 'cancelado') DEFAULT 'pendiente',
+    fecha_uso DATETIME,
+    reserva_asociada INT COMMENT 'Reserva donde se aplicó la recompensa si aplica',
+    administrador_asigno INT COMMENT 'Admin que asignó manualmente si aplica',
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (recompensa_id) REFERENCES recompensas(id) ON DELETE SET NULL,
+    FOREIGN KEY (reserva_asociada) REFERENCES reservas_hotel(id) ON DELETE SET NULL,
+    FOREIGN KEY (administrador_asigno) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_usuario_id (usuario_id),
+    INDEX idx_recompensa_id (recompensa_id)
+);
+
+-- Tabla de historial de puntos
+CREATE TABLE historial_puntos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    tipo_operacion ENUM('ganado', 'redimido', 'expirado', 'ajuste') NOT NULL,
+    puntos INT NOT NULL,
+    descripcion TEXT,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    reserva_hotel_id INT,
+    reserva_restaurante_id INT,
+    recompensa_redimida_id INT,
+    administrador_id INT COMMENT 'Admin que realizó ajuste manual si aplica',
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (reserva_hotel_id) REFERENCES reservas_hotel(id) ON DELETE SET NULL,
+    FOREIGN KEY (reserva_restaurante_id) REFERENCES reservas_restaurante(id) ON DELETE SET NULL,
+    FOREIGN KEY (recompensa_redimida_id) REFERENCES recompensas_redimidas(id) ON DELETE SET NULL,
+    FOREIGN KEY (administrador_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_usuario_id (usuario_id)
+);
+
+-- Tabla de logs de actividades de administrador
+CREATE TABLE logs_administrador (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT NOT NULL COMMENT 'Admin que realizó la acción',
+    accion VARCHAR(255) NOT NULL,
+    tabla_afectada VARCHAR(50),
+    registro_afectado INT,
+    detalles TEXT,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    INDEX idx_usuario_id (usuario_id)
+);
+
+-- Tabla de permisos de administrador
+CREATE TABLE permisos_administrador (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    rol ENUM('admin', 'superadmin') NOT NULL,
+    modulo VARCHAR(50) NOT NULL,
+    puede_ver BOOLEAN DEFAULT TRUE,
+    puede_editar BOOLEAN DEFAULT FALSE,
+    puede_crear BOOLEAN DEFAULT FALSE,
+    puede_eliminar BOOLEAN DEFAULT FALSE,
+    INDEX idx_rol_modulo (rol, modulo)
+);
+
+-- Tabla de configuración del sistema
+CREATE TABLE configuracion_sistema (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    clave VARCHAR(50) UNIQUE NOT NULL,
+    valor TEXT,
+    descripcion VARCHAR(255),
+    modificado_por INT,
+    fecha_modificacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (modificado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_clave (clave)
+);
+
+-- Tabla de tickets de soporte
+CREATE TABLE IF NOT EXISTS tickets_soporte (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NULL, -- Puede ser nulo si el usuario no estaba autenticado o el fallo es general
+    tipo_incidente VARCHAR(50) NOT NULL,
+    descripcion TEXT NOT NULL,
+    detalles_error TEXT, -- Para almacenar detalles técnicos del error
+    estado ENUM('abierto', 'en_progreso', 'cerrado') DEFAULT 'abierto',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reserva_hotel_id INT NULL,
+    reserva_restaurante_id INT NULL,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    FOREIGN KEY (reserva_hotel_id) REFERENCES reservas_hotel(id) ON DELETE SET NULL,
+    FOREIGN KEY (reserva_restaurante_id) REFERENCES reservas_restaurante(id) ON DELETE SET NULL
+);
+
+
+-- Insertar niveles de usuario predeterminados
+INSERT INTO niveles_usuario (nombre, puntos_requeridos, beneficios, multiplicador_puntos, icono, color) VALUES
+('Básico', 0, 'Acumulación de puntos básica', 1.00, 'star', '#9E9E9E'),
+('Plata', 1000, 'Multiplicador de puntos 1.2x, 5% descuento adicional', 1.20, 'star_half', '#C0C0C0'),
+('Oro', 5000, 'Multiplicador de puntos 1.5x, 10% descuento adicional, check-in prioritario', 1.50, 'star', '#FFD700'),
+('Platino', 10000, 'Multiplicador de puntos 2x, 15% descuento adicional, check-in prioritario, upgrades gratuitos', 2.00, 'stars', '#E5E4E2'),
+('Diamante', 25000, 'Multiplicador de puntos 2.5x, 20% descuento adicional, todos los beneficios premium', 2.50, 'diamond', '#B9F2FF');
+
+-- Insertar recompensas de ejemplo
+INSERT INTO recompensas (nombre, descripcion, tipo, puntos_requeridos, valor_descuento, codigo, estado, stock, creado_por) VALUES
+('Descuento 10% Hotel', 'Obtén un 10% de descuento en tu próxima reserva de hotel', 'descuento_hotel', 500, 10.00, 'HOTEL10', 'activo', 100, 1),
+('Cena Gratis', 'Cena gratis para dos personas en restaurantes seleccionados', 'comida_gratis', 1000, NULL, 'CENA1000', 'activo', 50, 1),
+('Upgrade Habitación', 'Mejora gratuita de categoría de habitación', 'upgrade_habitacion', 1500, NULL, 'UPGRADE1500', 'activo', 30, 1),
+('Descuento 20% Restaurante', 'Obtén un 20% de descuento en restaurantes participantes', 'descuento_restaurante', 800, 20.00, 'REST20', 'activo', 75, 1),
+('Desayuno Buffet Gratis', 'Desayuno buffet gratis durante tu estadía', 'beneficio_especial', 300, NULL, 'DESAYUNO300', 'activo', 200, 1),
+('Descuento 30% Hotel', 'Obtén un 30% de descuento en tu próxima reserva de hotel', 'descuento_hotel', 2000, 30.00, 'HOTEL30', 'activo', 40, 1),
+('Late Check-out', 'Check-out tardío hasta las 4 PM', 'beneficio_especial', 400, NULL, 'LATE400', 'activo', 100, 1),
+('Masaje Spa Gratis', 'Sesión de masaje gratis en el spa del hotel', 'beneficio_especial', 1200, NULL, 'SPA1200', 'activo', 25, 1);
+
+-- Insertar configuraciones iniciales
+INSERT INTO configuracion_sistema (clave, valor, descripcion, modificado_por) VALUES
+('max_intentos_login', '5', 'Número máximo de intentos de login antes de bloquear cuenta', 1),
+('tiempo_bloqueo_login', '30', 'Minutos de bloqueo después de exceder intentos máximos', 1),
+('puntos_por_dolar_hotel', '0.05', 'Puntos ganados por cada dólar gastado en hoteles', 1),
+('puntos_por_persona_restaurante', '10', 'Puntos ganados por cada persona en reserva de restaurante', 1),
+('dias_expiracion_puntos', '365', 'Días antes de que los puntos expiren', 1),
+('email_notificaciones', 'notificaciones@easystay.com', 'Email para enviar notificaciones', 1);
+
+-- Insertar permisos básicos para administradores
+INSERT INTO permisos_administrador (rol, modulo, puede_ver, puede_editar, puede_crear, puede_eliminar) VALUES
+('admin', 'usuarios', TRUE, TRUE, FALSE, FALSE),
+('admin', 'hoteles', TRUE, TRUE, TRUE, FALSE),
+('admin', 'restaurantes', TRUE, TRUE, TRUE, FALSE),
+('admin', 'reservas', TRUE, TRUE, TRUE, TRUE),
+('admin', 'recompensas', TRUE, TRUE, TRUE, FALSE),
+('admin', 'reseñas', TRUE, TRUE, FALSE, TRUE),
+('superadmin', 'usuarios', TRUE, TRUE, TRUE, TRUE),
+('superadmin', 'hoteles', TRUE, TRUE, TRUE, TRUE),
+('superadmin', 'restaurantes', TRUE, TRUE, TRUE, TRUE),
+('superadmin', 'reservas', TRUE, TRUE, TRUE, TRUE),
+('superadmin', 'recompensas', TRUE, TRUE, TRUE, TRUE),
+('superadmin', 'reseñas', TRUE, TRUE, TRUE, TRUE),
+('superadmin', 'configuracion', TRUE, TRUE, TRUE, TRUE),
+('superadmin', 'administradores', TRUE, TRUE, TRUE, TRUE);
+
+-- Crear trigger para actualizar puntos_usuario después de una reserva de hotel
+DELIMITER //
+CREATE TRIGGER after_reserva_hotel_insert
+AFTER INSERT ON reservas_hotel
+FOR EACH ROW
+BEGIN
+    DECLARE multiplicador DECIMAL(3,2);
+    DECLARE puntos_id INT;
+
+    -- Verificar o crear registro en puntos_usuario si no existe
+    SELECT id INTO puntos_id FROM puntos_usuario WHERE usuario_id = NEW.usuario_id;
+    IF puntos_id IS NULL THEN
+        INSERT INTO puntos_usuario (usuario_id, nivel_id) VALUES (NEW.usuario_id, 1);
+    END IF;
+
+    -- Obtener multiplicador de puntos según nivel del usuario
+    SELECT n.multiplicador_puntos INTO multiplicador
+    FROM puntos_usuario p
+    JOIN niveles_usuario n ON p.nivel_id = n.id
+    WHERE p.usuario_id = NEW.usuario_id;
+
+    -- Calcular puntos ganados con multiplicador
+    SET @puntos_ganados = FLOOR(NEW.precio_total * 0.05 * IFNULL(multiplicador, 1.00));
+
+    -- Actualizar puntos ganados en la reserva
+  --  UPDATE reservas_hotel SET puntos_ganados = @puntos_ganados WHERE id = NEW.id;
+
+    -- Registrar en historial y actualizar puntos
+    IF @puntos_ganados > 0 THEN
+        INSERT INTO historial_puntos (usuario_id, tipo_operacion, puntos, descripcion, reserva_hotel_id)
+        VALUES (NEW.usuario_id, 'ganado', @puntos_ganados, CONCAT('Puntos por reserva de hotel #', NEW.id), NEW.id);
+
+        UPDATE puntos_usuario 
+        SET puntos_disponibles = puntos_disponibles + @puntos_ganados,
+            puntos_totales = puntos_totales + @puntos_ganados,
+            ultima_actualizacion = NOW()
+        WHERE usuario_id = NEW.usuario_id;
+    END IF;
+
+    -- Actualizar nivel del usuario si corresponde
+    UPDATE puntos_usuario p
+    JOIN niveles_usuario n ON (
+        p.puntos_totales >= n.puntos_requeridos AND 
+        n.id = (SELECT MAX(id) FROM niveles_usuario WHERE puntos_requeridos <= p.puntos_totales)
+    )
+    SET p.nivel_id = n.id
+    WHERE p.usuario_id = NEW.usuario_id AND p.nivel_id != n.id;
+END//
+DELIMITER ;
+
+-- Crear trigger para actualizar puntos_usuario después de una reserva de restaurante
+DELIMITER //
+CREATE TRIGGER after_reserva_restaurante_insert
+AFTER INSERT ON reservas_restaurante
+FOR EACH ROW
+BEGIN
+    DECLARE multiplicador DECIMAL(3,2);
+    DECLARE puntos_id INT;
+
+    -- Verificar o crear registro en puntos_usuario si no existe
+    SELECT id INTO puntos_id FROM puntos_usuario WHERE usuario_id = NEW.usuario_id;
+    IF puntos_id IS NULL THEN
+        INSERT INTO puntos_usuario (usuario_id, nivel_id) VALUES (NEW.usuario_id, 1);
+    END IF;
+
+    -- Obtener multiplicador de puntos según nivel del usuario
+    SELECT n.multiplicador_puntos INTO multiplicador
+    FROM puntos_usuario p
+    JOIN niveles_usuario n ON p.nivel_id = n.id
+    WHERE p.usuario_id = NEW.usuario_id;
+
+    -- Calcular puntos ganados con multiplicador (10 puntos por persona)
+    SET @puntos_ganados = FLOOR(NEW.numero_personas * 10 * IFNULL(multiplicador, 1.00));
+
+    -- Actualizar puntos ganados en la reserva
+    UPDATE reservas_restaurante SET puntos_ganados = @puntos_ganados WHERE id = NEW.id;
+
+    -- Registrar en historial y actualizar puntos
+    IF @puntos_ganados > 0 THEN
+        INSERT INTO historial_puntos (usuario_id, tipo_operacion, puntos, descripcion, reserva_restaurante_id)
+        VALUES (NEW.usuario_id, 'ganado', @puntos_ganados, CONCAT('Puntos por reserva de restaurante #', NEW.id), NEW.id);
+
+        UPDATE puntos_usuario 
+        SET puntos_disponibles = puntos_disponibles + @puntos_ganados,
+            puntos_totales = puntos_totales + @puntos_ganados,
+            ultima_actualizacion = NOW()
+        WHERE usuario_id = NEW.usuario_id;
+    END IF;
+
+    -- Actualizar nivel del usuario si corresponde
+    UPDATE puntos_usuario p
+    JOIN niveles_usuario n ON (
+        p.puntos_totales >= n.puntos_requeridos AND 
+        n.id = (SELECT MAX(id) FROM niveles_usuario WHERE puntos_requeridos <= p.puntos_totales)
+    )
+    SET p.nivel_id = n.id
+    WHERE p.usuario_id = NEW.usuario_id AND p.nivel_id != n.id;
+END//
+DELIMITER ;
+
+-- Trigger para registrar actividad de administrador
+DELIMITER //
+CREATE TRIGGER after_admin_action
+AFTER INSERT ON logs_administrador
+FOR EACH ROW
+BEGIN
+    -- Actualizar último login si es una acción de login exitoso
+    IF NEW.accion LIKE '%Login exitoso%' THEN
+        UPDATE usuarios 
+        SET ultimo_login = NOW(),
+            intentos_login = 0,
+            bloqueado_hasta = NULL
+        WHERE id = NEW.usuario_id;
+    END IF;
+
+    -- Registrar intentos fallidos si es un intento de login fallido
+    IF NEW.accion LIKE '%Intento de login fallido%' THEN
+        UPDATE usuarios 
+        SET intentos_login = intentos_login + 1,
+            bloqueado_hasta = CASE 
+                WHEN intentos_login >= (SELECT CAST(valor AS UNSIGNED) FROM configuracion_sistema WHERE clave = 'max_intentos_login') 
+                THEN DATE_ADD(NOW(), INTERVAL (SELECT CAST(valor AS UNSIGNED) FROM configuracion_sistema WHERE clave = 'tiempo_bloqueo_login') MINUTE) 
+                ELSE NULL 
+            END
+        WHERE id = NEW.usuario_id;
+    END IF;
+END//
+DELIMITER ;
+
+-- Trigger para prevenir eliminación de superadmin
+DELIMITER //
+CREATE TRIGGER before_usuario_delete
+BEFORE DELETE ON usuarios
+FOR EACH ROW
+BEGIN
+    IF OLD.rol = 'superadmin' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'No se puede eliminar un usuario superadmin';
+    END IF;
+END//
+DELIMITER ;
+
+-- Procedimiento para crear un nuevo usuario administrador
+DELIMITER //
+CREATE PROCEDURE crear_administrador(
+    IN p_nombre VARCHAR(100),
+    IN p_email VARCHAR(100),
+    IN p_password VARCHAR(255),
+    IN p_rol ENUM('admin', 'superadmin')
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    -- Insertar el nuevo usuario
+    INSERT INTO usuarios (nombre, email, password, rol, estado)
+    VALUES (p_nombre, p_email, p_password, p_rol, 'activo');
+    
+    -- Registrar la acción
+    INSERT INTO logs_administrador (usuario_id, accion, tabla_afectada, registro_afectado, detalles)
+    VALUES (LAST_INSERT_ID(), CONCAT('Creación de nuevo ', p_rol), 'usuarios', LAST_INSERT_ID(), p_nombre);
+    
+    COMMIT;
+END//
+DELIMITER ;
+
+-- Procedimiento para autenticar usuario
+DELIMITER //
+
+CREATE PROCEDURE autenticar_usuario(
+    IN p_email VARCHAR(100),
+    IN p_autenticacion_exitosa BOOLEAN,
+    IN p_ip_address VARCHAR(45)
+)
+BEGIN
+    DECLARE v_usuario_id INT;
+    DECLARE v_bloqueado_hasta DATETIME;
+    DECLARE v_intentos INT;
+    DECLARE v_mensaje VARCHAR(255); -- Variable para el mensaje dinámico
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error inesperado al procesar la autenticación';
+    END;
+
+    -- Verificar si el usuario existe y está bloqueado
+    SELECT id, bloqueado_hasta, intentos_login 
+    INTO v_usuario_id, v_bloqueado_hasta, v_intentos
+    FROM usuarios
+    WHERE email = p_email;
+
+    IF v_usuario_id IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Usuario no encontrado';
+    ELSEIF v_bloqueado_hasta IS NOT NULL AND v_bloqueado_hasta > NOW() THEN
+        SET v_mensaje = CONCAT('Cuenta bloqueada hasta ', v_bloqueado_hasta);
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_mensaje;
+    ELSE
+        IF p_autenticacion_exitosa THEN
+            -- Autenticación exitosa
+            UPDATE usuarios 
+            SET ultimo_login = NOW(),
+                intentos_login = 0,
+                bloqueado_hasta = NULL
+            WHERE id = v_usuario_id;
+
+            -- Registrar login exitoso
+            INSERT INTO logs_administrador (usuario_id, accion, detalles)
+            VALUES (v_usuario_id, 'Login exitoso', CONCAT('IP: ', IFNULL(p_ip_address, 'desconocida')));
+
+            -- Devolver datos del usuario
+            SELECT id, nombre, email, rol, estado 
+            FROM usuarios 
+            WHERE id = v_usuario_id;
+        ELSE
+            -- Autenticación fallida
+            UPDATE usuarios 
+            SET intentos_login = intentos_login + 1,
+                bloqueado_hasta = CASE 
+                    WHEN intentos_login >= (SELECT CAST(valor AS UNSIGNED) FROM configuracion_sistema WHERE clave = 'max_intentos_login') 
+                    THEN DATE_ADD(NOW(), INTERVAL (SELECT CAST(valor AS UNSIGNED) FROM configuracion_sistema WHERE clave = 'tiempo_bloqueo_login') MINUTE) 
+                    ELSE NULL 
+                END
+            WHERE id = v_usuario_id;
+
+            -- Registrar intento fallido
+            INSERT INTO logs_administrador (usuario_id, accion, detalles)
+            VALUES (v_usuario_id, 'Intento de login fallido', CONCAT('IP: ', IFNULL(p_ip_address, 'desconocida')));
+
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Credenciales incorrectas';
+        END IF;
+    END IF;
+END //
+
+DELIMITER ;
+
+-- Procedimiento para redimir recompensa
+DELIMITER //
+
+CREATE PROCEDURE redimir_recompensa(
+    IN p_usuario_id INT,
+    IN p_recompensa_id INT,
+    IN p_admin_id INT
+)
+BEGIN
+    DECLARE v_puntos_requeridos INT;
+    DECLARE v_puntos_disponibles INT;
+    DECLARE v_codigo VARCHAR(20);
+    DECLARE v_stock INT;
+    DECLARE v_estado VARCHAR(20);
+    DECLARE puntos_id INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    -- Verificar o crear registro en puntos_usuario si no existe
+    SELECT id INTO puntos_id FROM puntos_usuario WHERE usuario_id = p_usuario_id;
+    IF puntos_id IS NULL THEN
+        INSERT INTO puntos_usuario (usuario_id, nivel_id) VALUES (p_usuario_id, 1);
+    END IF;
+
+    -- Verificar si la recompensa existe y está disponible
+    SELECT puntos_requeridos, codigo, stock, estado 
+    INTO v_puntos_requeridos, v_codigo, v_stock, v_estado
+    FROM recompensas
+    WHERE id = p_recompensa_id;
+    
+    IF v_puntos_requeridos IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recompensa no encontrada';
+    ELSEIF v_estado != 'activo' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recompensa no disponible';
+    ELSEIF v_stock IS NOT NULL AND v_stock <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recompensa agotada';
+    END IF;
+    
+    -- Verificar si el usuario tiene puntos suficientes (si no es asignación por admin)
+    IF p_admin_id IS NULL THEN
+        SELECT puntos_disponibles INTO v_puntos_disponibles
+        FROM puntos_usuario
+        WHERE usuario_id = p_usuario_id;
+        
+        IF v_puntos_disponibles < v_puntos_requeridos THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Puntos insuficientes';
+        END IF;
+    END IF;
+    
+    -- Reducir stock si aplica
+    IF v_stock IS NOT NULL THEN
+        UPDATE recompensas 
+        SET stock = stock - 1,
+            estado = CASE WHEN stock - 1 <= 0 THEN 'agotado' ELSE estado END
+        WHERE id = p_recompensa_id;
+    END IF;
+    
+    -- Registrar la redención
+    INSERT INTO recompensas_redimidas (
+        usuario_id, 
+        recompensa_id, 
+        puntos_usados, 
+        codigo_usado,
+        administrador_asigno
+    ) VALUES (
+        p_usuario_id,
+        p_recompensa_id,
+        v_puntos_requeridos,
+        v_codigo,
+        p_admin_id
+    );
+    
+    -- Descontar puntos si no es asignación por admin
+    IF p_admin_id IS NULL THEN
+        UPDATE puntos_usuario 
+        SET puntos_disponibles = puntos_disponibles - v_puntos_requeridos
+        WHERE usuario_id = p_usuario_id;
+        
+        -- Registrar en historial
+        INSERT INTO historial_puntos (
+            usuario_id, 
+            tipo_operacion, 
+            puntos, 
+            descripcion, 
+            recompensa_redimida_id
+        ) VALUES (
+            p_usuario_id,
+            'redimido',
+            v_puntos_requeridos,
+            CONCAT('Redención de recompensa: ', (SELECT nombre FROM recompensas WHERE id = p_recompensa_id)),
+            LAST_INSERT_ID()
+        );
+    END IF;
+    
+    -- Registrar acción si fue asignada por admin
+    IF p_admin_id IS NOT NULL THEN
+        INSERT INTO logs_administrador (
+            usuario_id, 
+            accion, 
+            tabla_afectada, 
+            registro_afectado, 
+            detalles
+        ) VALUES (
+            p_admin_id,
+            'Asignación manual de recompensa',
+            'recompensas_redimidas',
+            LAST_INSERT_ID(),
+            CONCAT('Recompensa ID ', p_recompensa_id, ' asignada a usuario ID ', p_usuario_id)
+        );
+    END IF;
+    
+    COMMIT;
+    
+    -- Devolver datos de la recompensa redimida
+    SELECT rr.id, r.nombre, rr.codigo_usado, rr.fecha_redencion, rr.estado
+    FROM recompensas_redimidas rr
+    JOIN recompensas r ON rr.recompensa_id = r.id
+    WHERE rr.id = LAST_INSERT_ID();
+END //
+
+DELIMITER ;
+
+-- Procedimiento para expirar puntos (opcional)
+DELIMITER //
+CREATE PROCEDURE expirar_puntos()
+BEGIN
+    DECLARE v_dias_expiracion INT;
+    DECLARE v_fecha_expiracion DATETIME;
+
+    -- Obtener días de expiración
+    SELECT CAST(valor AS UNSIGNED) INTO v_dias_expiracion
+    FROM configuracion_sistema
+    WHERE clave = 'dias_expiracion_puntos';
+
+    SET v_fecha_expiracion = DATE_SUB(NOW(), INTERVAL v_dias_expiracion DAY);
+
+    -- Expirar puntos antiguos
+    UPDATE puntos_usuario p
+    JOIN historial_puntos h ON p.usuario_id = h.usuario_id
+    SET p.puntos_disponibles = p.puntos_disponibles - h.puntos,
+        p.ultima_actualizacion = NOW()
+    WHERE h.tipo_operacion = 'ganado'
+    AND h.fecha < v_fecha_expiracion
+    AND h.puntos > 0
+    AND NOT EXISTS (
+        SELECT 1 FROM historial_puntos h2
+        WHERE h2.usuario_id = h.usuario_id
+        AND h2.tipo_operacion = 'redimido'
+        AND h2.fecha > h.fecha
+    );
+
+    -- Registrar puntos expirados
+    INSERT INTO historial_puntos (usuario_id, tipo_operacion, puntos, descripcion)
+    SELECT p.usuario_id, 'expirado', h.puntos, CONCAT('Puntos expirados desde ', h.fecha)
+    FROM puntos_usuario p
+    JOIN historial_puntos h ON p.usuario_id = h.usuario_id
+    WHERE h.tipo_operacion = 'ganado'
+    AND h.fecha < v_fecha_expiracion
+    AND h.puntos > 0
+    AND NOT EXISTS (
+        SELECT 1 FROM historial_puntos h2
+        WHERE h2.usuario_id = h.usuario_id
+        AND h2.tipo_operacion = 'redimido'
+        AND h2.fecha > h.fecha
+    );
+END//
+DELIMITER ;
+
+
+UPDATE usuarios
+SET password = '$2b$10$KfZrSxTAyy6mhS.u96.w4eq2N8mRiZQdHuWc1QtWamj.n5uTUdhi'
+WHERE email = 'admin@easystay.com';
+
+   SELECT email, password FROM usuarios WHERE email = 'admin@easystay.com';
+   
+SELECT * FROM  reservas_hotel;
+
+SELECT * FROM hoteles ORDER BY id DESC LIMIT 1;
+
+SELECT * FROM caracteristicas_hotel;
+
+select * from habitaciones;
+
+select * from tickets_soporte;
+
+use easystay_p;
+DELETE FROM hoteles;
+
+SHOW TRIGGERS WHERE `Table` = 'reservas_hotel';
+
+DROP TRIGGER IF EXISTS after_reserva_hotel_insert;
+
+SHOW CREATE TABLE habitaciones;
+
+ALTER TABLE reservas_hotel 
+MODIFY estado ENUM('pendiente', 'confirmada', 'abonada', 'cancelada', 'completada', 'no_show') DEFAULT 'pendiente';
+
+  UPDATE habitaciones SET estado = 'disponible', cantidad_disponible = 3 WHERE id = 3;
+
+ALTER TABLE reservas_hotel
+ADD COLUMN fecha_actualizacion TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE reservas_hotel
+ADD COLUMN precio_total DECIMAL(10, 2) NULL;

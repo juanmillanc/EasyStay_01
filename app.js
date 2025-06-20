@@ -21,10 +21,6 @@ app.use(flash());
 // Middleware para pasar variables a vistas
 app.use((req, res, next) => {
     res.locals.user = req.session.user || null;
-    res.locals.messages = {
-        success: req.flash('success'),
-        error: req.flash('error')
-    };
     next();
 });
 
@@ -35,7 +31,7 @@ app.set('views', path.join(__dirname, 'views'));
 // Middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Configuración de express-fileupload
 app.use(fileUpload({
@@ -43,11 +39,10 @@ app.use(fileUpload({
     createParentPath: true
 }));
 
-// Rutas
-const authRouter = require('./router/auth');
-const adminRouter = require('./router/admin');
-app.use('/', authRouter);
-app.use('/admin', adminRouter);
+// Configuración de rutas
+app.use('/', require('./router/auth')); // Rutas de autenticación y de usuario
+app.use('/admin', require('./router/admin')); // Rutas de admin
+app.use('/', require('./router')); // Rutas generales (debe ir al final)
 
 // Rutas de hoteles (ejemplo)
 app.get('/hotels/marina-resort', (req, res) => {

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Restaurante - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <style>
+        .container {
+            padding: 2rem;
+        }
+        .edit-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+            padding: 0.8rem 1.5rem;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            padding: 0.6rem 1.2rem;
+        }
+        .mesas-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 2rem;
+        }
+        .mesas-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .delete-mesa-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .delete-mesa-btn:hover {
+            background-color: #c0392b;
+        }
+        .page-header {
+            margin-bottom: 2rem;
+        }
+        .page-header h1 {
+            margin: 0;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="container">
+        <div class="page-header">
+            <h1>Editar Restaurante: <%= restaurant.nombre %></h1>
+        </div>
+
+        <% if (success && success.length > 0) { %>
+            <div class="alert alert-success"><%= success %></div>
+        <% } %>
+        <% if (error && error.length > 0) { %>
+            <div class="alert alert-danger"><%= error %></div>
+        <% } %>
+
+        <div class="edit-layout">
+            <div class="card">
+                <h2>Datos del Restaurante</h2>
+                <form action="/admin/restaurants/edit/<%= restaurant.id %>" method="POST">
+                    <div class="form-group">
+                        <label for="nombre">Nombre</label>
+                        <input type="text" id="nombre" name="nombre" value="<%= restaurant.nombre %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <textarea id="descripcion" name="descripcion" rows="4"><%= restaurant.descripcion %></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="direccion">Dirección</label>
+                        <input type="text" id="direccion" name="direccion" value="<%= restaurant.direccion %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ciudad">Ciudad</label>
+                        <input type="text" id="ciudad" name="ciudad" value="<%= restaurant.ciudad %>" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Gestionar Mesas</h2>
+                <form action="/admin/restaurants/<%= restaurant.id %>/mesas" method="POST">
+                    <div class="form-group">
+                        <label for="numero_mesa">Número de Mesa</label>
+                        <input type="text" id="numero_mesa" name="numero_mesa" placeholder="Ej: 1A, Terraza 5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="capacidad">Capacidad</label>
+                        <input type="number" id="capacidad" name="capacidad" min="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Agregar Mesa</button>
+                </form>
+
+                <% if (mesas && mesas.length > 0) { %>
+                    <ul class="mesas-list">
+                        <% mesas.forEach(mesa => { %>
+                            <li>
+                                <span><i class="fas fa-chair"></i> Mesa #<%= mesa.numero_mesa %> (Capacidad: <%= mesa.capacidad %>)</span>
+                                <form action="/admin/mesas/delete/<%= mesa.id %>" method="POST" onsubmit="return confirm('¿Seguro que quieres eliminar esta mesa?');">
+                                    <button type="submit" class="delete-mesa-btn" title="Eliminar mesa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </li>
+                        <% }); %>
+                    </ul>
+                <% } else { %>
+                    <p style="text-align:center; margin-top:2rem; color:#888;">Este restaurante aún no tiene mesas asignadas.</p>
+                <% } %>
+            </div>
+        </div>
+
+        <a href="/admin/restaurants" class="btn btn-secondary back-link">
+            <i class="fas fa-arrow-left"></i> Volver al Listado
+        </a>
+    </main>
+</body>
+</html> 

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Usuario | EasyStay Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <style>
+        .edit-user-container {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(255,179,0,0.08);
+            padding: 2rem;
+            margin-top: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .edit-user-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .edit-user-form input[type="text"],
+        .edit-user-form input[type="email"],
+        .edit-user-form select,
+        .edit-user-form textarea {
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box; /* Ensures padding doesn't add to the width */
+        }
+        .edit-user-form button {
+            background: #ffb300;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.8rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 1rem;
+        }
+        .edit-user-form button:hover {
+            background: #e6a100;
+        }
+        .message.error {
+            background-color: #ffe6e6;
+            color: #cc0000;
+            border: 1px solid #cc0000;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+        .message.success {
+            background-color: #e6ffe6;
+            color: #008000;
+            border: 1px solid #008000;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/header', { user: user }) %>
+    <main class="admin-main">
+        <h1>Editar Usuario: <%= userDetails.nombre %></h1>
+
+        <% if (error) { %>
+            <div class="message error"><%= error %></div>
+        <% } %>
+        <% if (success) { %>
+            <div class="message success"><%= success %></div>
+        <% } %>
+
+        <div class="edit-user-container">
+            <form action="/admin/users/edit/<%= userDetails.id %>" method="POST" class="edit-user-form">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" value="<%= userDetails.nombre %>" required>
+
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="<%= userDetails.email %>" readonly title="El email no puede ser modificado"><br>
+
+                <label for="rol">Rol:</label>
+                <select id="rol" name="rol" onchange="toggleJustification()" required>
+                    <option value="usuario" <%= userDetails.rol === 'usuario' ? 'selected' : '' %>>Usuario</option>
+                    <option value="admin" <%= userDetails.rol === 'admin' ? 'selected' : '' %>>Administrador</option>
+                    <% if (user.rol === 'superadmin') { %>
+                        <option value="superadmin" <%= userDetails.rol === 'superadmin' ? 'selected' : '' %>>Super Administrador</option>
+                    <% } %>
+                </select>
+
+                <div id="justificationSection" style="display:none;">
+                    <label for="justificacion">Justificación del cambio de rol:</label>
+                    <textarea id="justificacion" name="justificacion" rows="4"></textarea>
+                </div>
+
+                <label for="confirmacion">Escribe "CONFIRMAR" para aplicar los cambios:</label>
+                <input type="text" id="confirmacion" name="confirmacion" required>
+
+                <button type="submit">Guardar Cambios</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const initialRol = "<%= userDetails.rol %>";
+        const rolSelect = document.getElementById('rol');
+        const justificationSection = document.getElementById('justificationSection');
+        const justificationInput = document.getElementById('justificacion');
+
+        function toggleJustification() {
+            if (rolSelect.value !== initialRol) {
+                justificationSection.style.display = 'block';
+                justificationInput.setAttribute('required', 'true');
+            } else {
+                justificationSection.style.display = 'none';
+                justificationInput.removeAttribute('required');
+            }
+        }
+
+        // Llamar en carga inicial para establecer el estado correcto
+        toggleJustification();
+    </script>
+
+    <%- include('../partials/footer') %>
+</body>
+</html> 

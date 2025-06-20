@@ -5,4 +5,14 @@ function isAdmin(req, res, next) {
     next();
 }
 
-module.exports = { isAdmin }; 
+function isAuthenticated(req, res, next) {
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+    next();
+}
+
+module.exports = {
+    isAdmin,
+    isAuthenticated
+}; 

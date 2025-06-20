@@ -104,18 +104,20 @@
         <h1>Editar Reserva en <%= reserva.hotel_nombre %></h1>
         <form action="/hotel/reserva/edit/<%= reserva.id %>" method="POST" class="reserva-form">
             <label>Fecha de entrada:
-                <input type="date" name="fecha_entrada" id="fecha_entrada" value="<%= reserva.fecha_entrada.toISOString().split('T')[0] %>" required>
+                <input type="date" name="fecha_entrada" id="fecha_entrada" value="<%= reserva.fecha_entrada %>" required>
             </label>
             <label>Fecha de salida:
-                <input type="date" name="fecha_salida" id="fecha_salida" value="<%= reserva.fecha_salida.toISOString().split('T')[0] %>" required>
+                <input type="date" name="fecha_salida" id="fecha_salida" value="<%= reserva.fecha_salida %>" required>
             </label>
-            <label>Número de personas:
-                <input type="number" name="num_personas" min="1" max="10" value="<%= reserva.numero_huespedes %>" required>
-            </label>
+            <div id="numPersonasContainer">
+                <label>Número de personas:
+                    <input type="number" name="num_personas" id="num_personas" min="1" max="10" value="<%= reserva.numero_huespedes %>" required>
+                </label>
+            </div>
             <label>Habitación:
                 <select name="habitacion_id" id="habitacion_id" required>
                     <% habitaciones.forEach(h => { %>
-                        <option value="<%= h.id %>" <%= (reserva.habitacion_id == h.id) ? 'selected' : '' %>>
+                        <option value="<%= h.id %>" <%= (reserva.habitacion_id == h.id) ? 'selected' : '' %> data-capacidad="<%= h.capacidad %>">
                             <%= h.tipo %> (Capacidad: <%= h.capacidad %> personas, $<%= h.precio %>/noche)
                         </option>
                     <% }) %>
@@ -131,6 +133,30 @@
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('fecha_entrada').setAttribute('min', today);
         document.getElementById('fecha_salida').setAttribute('min', today);
+
+        const habitacionSelect = document.getElementById('habitacion_id');
+        const numPersonasContainer = document.getElementById('numPersonasContainer');
+        const numPersonasInput = document.getElementById('num_personas');
+
+        function toggleNumPersonas() {
+            const selectedOption = habitacionSelect.options[habitacionSelect.selectedIndex];
+            const capacidad = parseInt(selectedOption.dataset.capacidad);
+
+            if (capacidad === 1) {
+                numPersonasContainer.style.display = 'none';
+                numPersonasInput.removeAttribute('required');
+                numPersonasInput.value = '1'; // Establecer a 1 si la capacidad es 1
+            } else {
+                numPersonasContainer.style.display = 'block';
+                numPersonasInput.setAttribute('required', 'required');
+            }
+        }
+
+        // Ejecutar al cargar la página
+        toggleNumPersonas();
+
+        // Ejecutar al cambiar la habitación
+        habitacionSelect.addEventListener('change', toggleNumPersonas);
     </script>
 </body>
 </html> 

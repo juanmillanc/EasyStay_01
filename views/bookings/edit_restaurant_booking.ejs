@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Reserva de Restaurante</title>
+    <link rel="stylesheet" href="/css/search.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: #f7f7f7;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+        }
+        h1 {
+            color: #e74c3c;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group input[type="time"],
+        .form-group input[type="number"],
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid #ffd0b0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1em;
+            background: #fff8f3;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #ff512f;
+            outline: none;
+            background: #fff;
+            box-shadow: 0 0 8px rgba(255,81,47,0.2);
+        }
+        .form-group input:disabled,
+        .form-group select:disabled {
+            background-color: #eee;
+            color: #888;
+            border-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .restriction-message {
+            color: #e74c3c;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .btn {
+            flex-grow: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s ease, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(255,81,47,0.08);
+        }
+        .btn-primary {
+            background: linear-gradient(90deg,#ff512f,#f09819);
+            color: white;
+        }
+        .btn-primary:hover {
+             background: linear-gradient(90deg,#f09819,#ff512f);
+             box-shadow: 0 4px 16px rgba(255,81,47,0.13);
+        }
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .btn-secondary {
+            background-color: #ccc;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background-color: #bbb;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        /* Styles for Mesa Buttons */
+        #mesas-disponibles-title {
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 10px;
+            display: block;
+            margin-top: 20px;
+        }
+
+        #mesas-btns-edit {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .mesa-form-btn-edit {
+            background: #fff8f3;
+            border: 2px solid #ff512f;
+            color: #e74c3c;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(255,81,47,0.1);
+            flex-grow: 1;
+            text-align: center;
+            min-width: 120px;
+        }
+         .mesa-form-btn-edit:disabled {
+            background-color: #eee;
+            color: #888;
+            border-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+             transform: none;
+        }
+        .mesa-form-btn-edit.active {
+            background: linear-gradient(90deg,#ff512f,#f09819);
+            color: #fff;
+            border-color: #ff512f;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(255,81,47,0.2);
+        }
+        .mesa-form-btn-edit:not(:disabled):hover {
+            background: #ffe5d0;
+            color: #ff512f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255,81,47,0.15);
+        }
+        .mesa-form-btn-edit:not(:disabled):active {
+            transform: scale(0.98);
+        }
+
+         /* Style for past reservation message */
+         .past-reservation-message {
+             color: #e74c3c;
+             font-weight: bold;
+             text-align: center;
+             margin-bottom: 20px;
+         }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Editar Reserva</h1>
+
+        <% if (error) { %>
+            <div class="alert alert-danger"><%= error %></div>
+        <% } %>
+        <% if (success) { %>
+            <div class="alert alert-success"><%= success %></div>
+        <% } %>
+
+        <% // Check if the reservation date/time is in the past %>
+        <% const now = new Date(); %>
+        <% const reservaDateTime = new Date(`${reserva.fecha}T${reserva.hora}`); %>
+        <% const isPastReservation = reservaDateTime < now; %>
+
+        <% if (isPastReservation) { %>
+            <div class="past-reservation-message">
+                Esta reserva ya ha pasado. No se puede editar.
+            </div>
+        <% } %>
+
+        <% // Add a div for the countdown %>
+        <% // REMOVED: Countdown div %>
+
+        <form action="/restaurante/reserva/<%= reserva.id %>/edit" method="POST">
+            <div class="form-group">
+                <label>Restaurante:</label>
+                <p><%= reserva.nombre_restaurante %></p>
+            </div>
+
+            <div class="form-group">
+                <label for="fecha">Fecha:</label>
+                <input type="date" id="fecha" name="fecha" value="<%= reserva.fecha.toISOString().split('T')[0] %>" <%= isModificationRestrictedFields || isPastReservation ? 'disabled' : '' %> required min="<%= new Date().toISOString().split('T')[0] %>">
+                <% if (isModificationRestrictedFields && !isPastReservation) { %>
+                    <p class="restriction-message">No es posible modificar la reserva porque está dentro del plazo restringido. Comuníquese directamente con el restaurante.</p>
+                <% } %>
+            </div>
+
+            <div class="form-group">
+                <label for="hora">Hora:</label>
+                 <select id="hora" name="hora" <%= isModificationRestrictedFields || isPastReservation ? 'disabled' : '' %> required>
+                     <option value="">Selecciona hora</option>
+                     <% const horasDisponibles = ['12:00', '14:00', '16:00', '18:00', '20:00', '22:00']; %>
+                     <% horasDisponibles.forEach(h => { %>
+                         <option value="<%= h %>:00" <%= reserva.hora.startsWith(h) ? 'selected' : '' %>><%= h %></option>
+                     <% }); %>
+                 </select>
+                <% if (isModificationRestrictedFields && !isPastReservation) { %>
+                     <p class="restriction-message">No es posible modificar la reserva porque está dentro del plazo restringido. Comuníquese directamente con el restaurante.</p>
+                <% } %>
+            </div>
+
+            <div class="form-group">
+                <label for="num_comensales">Número de Comensales:</label>
+                <input type="number" id="num_comensales" name="num_comensales" value="<%= reserva.numero_personas %>" <%= isModificationRestrictedFields || isPastReservation ? 'disabled' : '' %> min="1" required>
+                 <% if (isModificationRestrictedFields && !isPastReservation) { %>
+                     <p class="restriction-message">No es posible modificar la reserva porque está dentro del plazo restringido. Comuníquese directamente con el restaurante.</p>
+                 <% } %>
+            </div>
+
+            <% if (!isModificationRestrictedFields && !isPastReservation) { %>
+                <label id="mesas-disponibles-title">Mesas Disponibles:</label>
+            <% } %>
+             <div id="mesas-btns-edit" style="<%= isModificationRestrictedFields || isPastReservation ? 'display: none;' : '' %>">
+                 <% if (!isModificationRestrictedFields && !isPastReservation) { %>
+                      <!-- Mesas disponibles se cargarán aquí -->
+                 <% } else if (isPastReservation) { %>
+                      <p style="color:#e74c3c; padding:10px;">No se pueden mostrar mesas disponibles para reservas pasadas.</p>
+                 <% } else if (isModificationRestrictedFields) { %>
+                     <p style="color:#e74c3c; padding:10px;">No se pueden seleccionar mesas dentro del plazo restringido de 12 horas. Comuníquese directamente con el restaurante.</p>
+                 <% } %>
+             </div>
+             <input type="hidden" id="mesa_seleccionada_edit" name="mesa_seleccionada" value="<%= reserva.mesa_id %>" <%= isPastReservation ? 'disabled' : '' %>>
+
+
+            <div class="form-group">
+                <label for="nombre_reclamo">Nombre para reclamar (opcional):</label>
+                <input type="text" id="nombre_reclamo" name="nombre_reclamo" value="<%= reserva.nombre_reclamo || '' %>" <%= isPastReservation ? 'disabled' : '' %>>
+            </div>
+
+            <div class="form-group">
+                <label for="observaciones">Observaciones:</label>
+                <input type="text" id="observaciones" name="observaciones" value="<%= reserva.notas || '' %>" <%= isPastReservation ? 'disabled' : '' %>>
+            </div>
+
+            <div class="btn-container">
+                <button type="submit" class="btn btn-primary" <%= isPastReservation ? 'disabled' : '' %>>Guardar Cambios</button>
+                <a href="/bookings" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const restauranteId = <%= reserva.restaurante_id %>;
+            const fechaInput = document.getElementById('fecha');
+            const horaSelect = document.getElementById('hora');
+            const numComensalesInput = document.getElementById('num_comensales');
+            const mesasBtnsContainer = document.getElementById('mesas-btns-edit');
+            const mesaSeleccionadaInput = document.getElementById('mesa_seleccionada_edit');
+            const isModificationRestrictedFields = <%= isModificationRestrictedFields %>;
+            const isPastReservation = <%= isPastReservation %>;
+            const originalMesaId = mesaSeleccionadaInput.value;
+
+            function validateTime() {
+                const selectedDateStr = fechaInput.value;
+                const horaSelectValue = horaSelect.value; // Get the currently selected value
+                const now = new Date(); // Get the current date and time
+
+                // If no date is selected, disable all time options except the default
+                if (!selectedDateStr) {
+                     Array.from(horaSelect.options).forEach(option => {
+                         if (option.value) {
+                             option.disabled = true;
+                         }
+                     });
+                     horaSelect.value = ''; // Clear selected time
+                     return; // Exit the function
+                }
+
+                // Create a Date object for the *selected date*
+                const selectedDate = new Date(selectedDateStr);
+                // Reset time components to midnight to compare just the date part accurately
+                selectedDate.setHours(0, 0, 0, 0);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+
+                Array.from(horaSelect.options).forEach(option => {
+                    if (option.value) {
+                        const horaOptionStr = option.value; // e.g., "12:00"
+
+                        // Combine selected date and option time strings
+                        // Use the 'T' separator for better parsing of date and time components
+                        const optionDateTimeString = `${selectedDateStr}T${horaOptionStr}:00`;
+
+                        // Create a Date object for the option's date and time
+                        // This will parse in the local timezone if no timezone is specified
+                        const optionDateTime = new Date(optionDateTimeString);
+
+                        // Disable the option if its date-time is in the past relative to now
+                        // Comparing Date objects directly works correctly.
+                        option.disabled = optionDateTime < now;
+                    } else {
+                        // Keep the default "Selecciona hora" option enabled if it exists
+                        option.disabled = false;
+                    }
+                });
+
+                // After disabling options, check if the currently selected value is now disabled.
+                // If it is, or if no time was selected initially, try to select the first available time.
+                const currentSelectedOption = horaSelect.options[horaSelect.selectedIndex];
+
+                if (!horaSelectValue || (currentSelectedOption && currentSelectedOption.disabled)) {
+                     const firstAvailable = Array.from(horaSelect.options).find(opt => !opt.disabled);
+                     if (firstAvailable) {
+                         horaSelect.value = firstAvailable.value;
+                     } else {
+                         // If no time is available at all, clear the selection
+                         horaSelect.value = '';
+                     }
+                 } else {
+                     // If a valid option was already selected and is still valid, keep it selected
+                     horaSelect.value = horaSelectValue;
+                 }
+            }
+
+            async function cargarMesasDisponiblesEdit() {
+                mesasBtnsContainer.innerHTML = '';
+                mesaSeleccionadaInput.value = '';
+
+                if (isModificationRestrictedFields || isPastReservation) return;
+
+                const fecha = fechaInput.value;
+                const hora = horaSelect.value;
+                const numComensales = numComensalesInput.value;
+
+                if (!fecha || !hora || !numComensales || parseInt(numComensales) < 1) return;
+
+                try {
+                    const res = await fetch(`/api/mesas?restaurante_id=${restauranteId}&fecha=${fecha}&hora=${hora}&num_comensales=${numComensales}&reserva_id=<%= reserva.id %>`);
+                    const data = await res.json();
+
+                    if (data.success && data.mesas.length > 0) {
+                        renderMesasBtnsEdit(data.mesas);
+                    } else {
+                        let messageHtml = `<p style="color:#e74c3c; padding:10px;">${data.message || 'No hay mesas disponibles.'}</p>`;
+                        if (data.sugerencias) {
+                            if (data.sugerencias.horas && data.sugerencias.horas.length > 0) {
+                                messageHtml += `
+                                    <div style="color:#2c3e50; padding:10px;">
+                                        Horarios alternativos disponibles para hoy:
+                                        <div style="margin-top:10px; display: flex; flex-wrap: wrap; gap: 8px;">
+                                            ${data.sugerencias.horas.map(h => `
+                                                <button type="button" class="mesa-form-btn-edit" onclick="seleccionarHorarioAlternativoEdit('${h}:00')">${h}</button>
+                                            `).join('')}
+                                        </div>
+                                    </div>`;
+                            } else if (data.sugerencias.proxima_fecha) {
+                                const fechaSugerida = new Date(data.sugerencias.proxima_fecha);
+                                fechaSugerida.setDate(fechaSugerida.getDate() + 1);
+                                const formattedDate = fechaSugerida.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                                messageHtml += `
+                                    <div style="color:#2c3e50; padding:10px;">
+                                        Sugerencia: <button type="button" class="mesa-form-btn-edit" onclick="seleccionarFechaAlternativaEdit('${data.sugerencias.proxima_fecha}')">
+                                            Probar el ${formattedDate}
+                                        </button>
+                                    </div>`;
+                            }
+                        }
+                        mesasBtnsContainer.innerHTML = messageHtml;
+                    }
+                } catch (error) {
+                    console.error('Error al cargar mesas:', error);
+                    mesasBtnsContainer.innerHTML = '<p style="color:#e74c3c; padding:10px;">Error al cargar la disponibilidad.</p>';
+                }
+            }
+
+            function renderMesasBtnsEdit(mesas) {
+                mesasBtnsContainer.innerHTML = '';
+                mesas.forEach(mesa => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'mesa-form-btn-edit';
+                    btn.textContent = `Mesa #${mesa.numero} (${mesa.capacidad} sillas)`;
+                    btn.dataset.id = mesa.id;
+                    btn.onclick = () => seleccionarMesaEdit(mesa.id);
+                    if (mesa.id == originalMesaId) {
+                        btn.classList.add('active');
+                        mesaSeleccionadaInput.value = mesa.id;
+                    }
+                    mesasBtnsContainer.appendChild(btn);
+                });
+            }
+
+            function seleccionarMesaEdit(mesaId) {
+                document.querySelectorAll('.mesa-form-btn-edit').forEach(b => b.classList.remove('active'));
+                const selectedBtn = document.querySelector(`.mesa-form-btn-edit[data-id="${mesaId}"]`);
+                if (selectedBtn) {
+                    selectedBtn.classList.add('active');
+                    mesaSeleccionadaInput.value = mesaId;
+                }
+            }
+            
+            window.seleccionarHorarioAlternativoEdit = function(hora) {
+                 horaSelect.value = hora;
+                 cargarMesasDisponiblesEdit();
+            }
+
+            window.seleccionarFechaAlternativaEdit = function(fecha) {
+                fechaInput.value = fecha;
+                cargarMesasDisponiblesEdit();
+            }
+
+            if (!isPastReservation) {
+                 fechaInput.addEventListener('change', cargarMesasDisponiblesEdit);
+                 horaSelect.addEventListener('change', cargarMesasDisponiblesEdit);
+                 numComensalesInput.addEventListener('input', cargarMesasDisponiblesEdit);
+                 cargarMesasDisponiblesEdit(); // Carga inicial
+            }
+        });
+    </script>
+</body>
+</html> 

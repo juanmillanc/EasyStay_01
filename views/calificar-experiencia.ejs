@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calificar Experiencia - EasyStay</title>
+    <link rel="stylesheet" href="/css/search.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .calificacion-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 32px 24px;
+        }
+        h1 {
+            text-align: center;
+            color: #007faf;
+            margin-bottom: 30px;
+        }
+        .calificacion-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .estrellas {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            font-size: 2em;
+            margin: 20px 0;
+        }
+        .estrella {
+            cursor: pointer;
+            color: #ddd;
+            transition: color 0.2s;
+        }
+        .estrella.activa {
+            color: #ffd700;
+        }
+        .estrella:hover {
+            color: #ffd700;
+        }
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+        }
+        .btn-submit {
+            background: #007faf;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background 0.3s;
+        }
+        .btn-submit:hover {
+            background: #005f8f;
+        }
+        .btn-volver {
+            display: inline-block;
+            margin-top: 20px;
+            color: #666;
+            text-decoration: none;
+        }
+        .btn-volver:hover {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="calificacion-container">
+        <h1><i class="fas fa-star"></i> Calificar Experiencia</h1>
+        
+        <form action="/calificar-experiencia" method="POST" class="calificacion-form">
+            <input type="hidden" name="reserva_id" value="<%= reserva.id %>">
+            <input type="hidden" name="tipo" value="<%= tipo %>">
+            <input type="hidden" name="puntuacion" id="puntuacion" value="0" required>
+            
+            <div class="estrellas">
+                <% for(let i = 1; i <= 5; i++) { %>
+                    <i class="fas fa-star estrella" data-valor="<%= i %>"></i>
+                <% } %>
+            </div>
+            
+            <div>
+                <label for="comentario">Tu comentario:</label>
+                <textarea name="comentario" id="comentario" required 
+                    placeholder="Cuéntanos sobre tu experiencia..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn-submit">Enviar Calificación</button>
+        </form>
+        
+        <a href="/bookings" class="btn-volver">
+            <i class="fas fa-arrow-left"></i> Volver a Mis Reservas
+        </a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const estrellas = document.querySelectorAll('.estrella');
+            const inputPuntuacion = document.getElementById('puntuacion');
+            
+            estrellas.forEach(estrella => {
+                estrella.addEventListener('click', function() {
+                    const valor = this.dataset.valor;
+                    inputPuntuacion.value = valor;
+                    
+                    // Actualizar estrellas
+                    estrellas.forEach(e => {
+                        if (e.dataset.valor <= valor) {
+                            e.classList.add('activa');
+                        } else {
+                            e.classList.remove('activa');
+                        }
+                    });
+                });
+                
+                estrella.addEventListener('mouseover', function() {
+                    const valor = this.dataset.valor;
+                    estrellas.forEach(e => {
+                        if (e.dataset.valor <= valor) {
+                            e.style.color = '#ffd700';
+                        } else {
+                            e.style.color = '#ddd';
+                        }
+                    });
+                });
+                
+                estrella.addEventListener('mouseout', function() {
+                    const valorSeleccionado = inputPuntuacion.value;
+                    estrellas.forEach(e => {
+                        if (e.dataset.valor <= valorSeleccionado) {
+                            e.style.color = '#ffd700';
+                        } else {
+                            e.style.color = '#ddd';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

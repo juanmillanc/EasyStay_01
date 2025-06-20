@@ -7,80 +7,6 @@
     <link rel="stylesheet" href="/css/search.css">
     <link rel="stylesheet" href="/css/restaurantes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-      .todos-restaurantes {
-        margin: 2rem auto;
-        max-width: 1100px;
-        background: #fff;
-        border-radius: 14px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        padding: 2rem 1.5rem;
-      }
-      .todos-restaurantes h2 {
-        color: #000000;
-        text-align: center;
-        margin-bottom: 2rem;
-        font-size: 1.7rem;
-      }
-      .restaurantes-lista {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-        justify-content: center;
-      }
-      .rest-card {
-        background: #fffbe6;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(255,179,0,0.10);
-        padding: 1.2rem 1.5rem;
-        min-width: 240px;
-        max-width: 320px;
-        flex: 1 1 260px;
-        margin-bottom: 1rem;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        transition: box-shadow 0.2s, transform 0.2s;
-      }
-      .rest-card:hover {
-        box-shadow: 0 6px 24px rgba(255,179,0,0.18);
-        transform: translateY(-4px) scale(1.03);
-      }
-      .rest-card h3 {
-        color: #000000;
-        margin: 0 0 0.5rem 0;
-        font-size: 1.2rem;
-        font-weight: 700;
-      }
-      .rest-card p {
-        margin: 0.1rem 0;
-        color: #444;
-        font-size: 1rem;
-      }
-      @media (max-width: 900px) {
-        .todos-restaurantes {
-          padding: 1rem 0.5rem;
-        }
-        .rest-card {
-          min-width: 180px;
-          max-width: 100%;
-        }
-      }
-      .btn-reservar {
-        display: inline-block;
-        margin-top: 0.7rem;
-        background: #ffb300;
-        color: #fff;
-        padding: 0.5rem 1.2rem;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: background 0.2s;
-      }
-      .btn-reservar:hover {
-        background: #e6a100;
-      }
-    </style>
 </head>
 <body>
     <header class="main-header">
@@ -106,7 +32,7 @@
                      <small><%= user.email %></small>
                  </div>
                  <div class="dropdown-divider"></div>
-                  <a href="/mi-perfil" class="dropdown-item"><i class="fas fa-user"></i> Mi perfil</a>
+                  <a href="/account" class="dropdown-item"><i class="fas fa-user"></i> Mi perfil</a>
                   <a href="/bookings" class="dropdown-item"><i class="fas fa-list-alt"></i> Mis reservas</a>
                   <a href="/favorites" class="dropdown-item"><i class="far fa-heart"></i> Favoritos</a>
                  <div class="dropdown-divider"></div>
@@ -198,52 +124,55 @@
                 <div class="guests-rooms">
                     <i class="fas fa-user-friends"></i>
                     <div class="guests-rooms-summary">
-                        <span class="guests-rooms-text">2 personas</span>
+                        <button type="button" id="decreasePeople" class="counter-btn">-</button>
+                        <span class="guests-rooms-text" id="peopleCount">2</span> personas
+                        <button type="button" id="increasePeople" class="counter-btn">+</button>
+                        <input type="hidden" name="personas" id="personasInput" value="2">
                     </div>
+                </div>
 
-                    <!-- Modal para selección de personas -->
-                    <div class="guests-rooms-modal">
-                        <div class="guests-rooms-content">
-                            <div class="guests-section">
-                                <div class="section-header">
-                                    <h3>Personas</h3>
-                                </div>
-                                <div class="counter">
-                                    <button class="counter-btn minus" data-type="people">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                    <span class="counter-value" id="peopleCount">2</span>
-                                    <button class="counter-btn plus" data-type="people">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
+                <!-- Modal para selección de personas -->
+                <div class="guests-rooms-modal">
+                    <div class="guests-rooms-content">
+                        <div class="guests-section">
+                            <div class="section-header">
+                                <h3>Personas</h3>
                             </div>
+                            <div class="counter">
+                                <button class="counter-btn minus" data-type="people">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="counter-value" id="peopleCount">2</span>
+                                <button class="counter-btn plus" data-type="people">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
 
-                            <!-- Filtros adicionales para restaurantes -->
-                            <div class="guests-section">
-                                <div class="section-header">
-                                    <h3>Tipo de cocina</h3>
-                                </div>
-                                <select class="cuisine-select">
-                                    <option value="">Cualquier tipo</option>
-                                    <option value="mexicana">Mexicana</option>
-                                    <option value="italiana">Italiana</option>
-                                    <option value="asiatica">Asiática</option>
-                                    <option value="vegetariana">Vegetariana</option>
-                                </select>
+                        <!-- Filtros adicionales para restaurantes -->
+                        <div class="guests-section">
+                            <div class="section-header">
+                                <h3>Tipo de cocina</h3>
                             </div>
+                            <select class="cuisine-select">
+                                <option value="">Cualquier tipo</option>
+                                <option value="mexicana">Mexicana</option>
+                                <option value="italiana">Italiana</option>
+                                <option value="asiatica">Asiática</option>
+                                <option value="vegetariana">Vegetariana</option>
+                            </select>
+                        </div>
 
-                            <div class="pets-section">
-                                <label class="pets-checkbox">
-                                    <input type="checkbox" id="outdoorSeating">
-                                    <span class="checkbox-text">Terraza exterior</span>
-                                </label>
-                            </div>
+                        <div class="pets-section">
+                            <label class="pets-checkbox">
+                                <input type="checkbox" id="outdoorSeating">
+                                <span class="checkbox-text">Terraza exterior</span>
+                            </label>
+                        </div>
 
-                            <div class="modal-actions">
-                                <button class="reset-btn">Reiniciar</button>
-                                <button class="apply-btn">Aceptar</button>
-                            </div>
+                        <div class="modal-actions">
+                            <button class="reset-btn">Reiniciar</button>
+                            <button class="apply-btn">Aceptar</button>
                         </div>
                     </div>
                 </div>
@@ -262,68 +191,61 @@
         <section class="deals">
             <h2><center>Restaurantes recomendados</center></h2>
             <div class="hotel-cards" id="restaurantes-container">
-                <!-- Ejemplo de restaurante 1 -->
-                <div class="hotel-card">
-                    <a href="/views/restaurantes/mexicana.ejs"></a>
-                    <img src="/img/LaParilla.jpg" alt="La Parrilla Mexicana">
-                    <div class="hotel-info">
-                        <h3>La Parrilla Mexicana</h3>
-                        <p>Playa del Carmen, México</p>
-                        <div class="hotel-details">
-                            <span class="price">4.7 <i class="fas fa-star"></i></span>
-                            <span>Mexicana </span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Ejemplo de restaurante 2 -->
-                <div class="hotel-card">
-                    <img src="/img/vino.jpg" alt="Pasta e Vino">
-                    <div class="hotel-info">
-                        <h3>Pasta e Vino</h3>
-                        <p>Ciudad de México, México</p>
-                        <div class="hotel-details">
-                            <span class="price">4.5 <i class="fas fa-star"></i></span>
-                            <span>Italiana </span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Ejemplo de restaurante 3 -->
-                <div class="hotel-card">
-                    <img src="/img/palace.jpg" alt="Sushi Palace">
-                    <div class="hotel-info">
-                        <h3>Sushi Palace</h3>
-                        <p>Valle de Bravo, México</p>
-                        <div class="hotel-details">
-                            <span class="price">4.8 <i class="fas fa-star"></i></span>
-                            <span>Japonesa </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <section class="todos-restaurantes">
-            <h2>Todos los restaurantes disponibles</h2>
-            <div class="restaurantes-lista">
                 <% if (typeof restaurantes !== 'undefined' && restaurantes.length > 0) { %>
-                    <% restaurantes.forEach(rest => { %>
-                        <div class="rest-card">
-                            <h3><%= rest.nombre %></h3>
-                            <p><strong>Dirección:</strong> <%= rest.direccion %></p>
-                            <p><strong>Ciudad:</strong> <%= rest.ciudad %></p>
-                            <p><strong>Tipo de cocina:</strong> <%= rest.tipo_cocina %></p>
-                            <p><strong>Precio promedio:</strong> $<%= rest.precio_promedio %></p>
-                            <a href="/restaurante/reservar/<%= rest.id %>" class="btn-reservar">Reservar</a>
+                    <% restaurantes.forEach(function(restaurant) { %>
+                        <div class="hotel-card">
+                            <div class="hotel-image-container">
+                                <img src="<%= restaurant.imagen_principal || '/img/restaurante.jpg' %>" 
+                                     alt="<%= restaurant.nombre %>" 
+                                     class="hotel-image">
+                                <div class="hotel-rating">
+                                    <i class="fas fa-star"></i>
+                                    <span>4.5</span>
+                                </div>
+                            </div>
+                            <div class="hotel-info">
+                                <h3 class="hotel-name"><%= restaurant.nombre %></h3>
+                                <p class="hotel-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <%= restaurant.ciudad %>
+                                </p>
+                                <div class="hotel-features">
+                                    <span class="feature">
+                                        <i class="fas fa-utensils"></i>
+                                        <%= restaurant.tipo_cocina %>
+                                    </span>
+                                    <% if (restaurant.precio_promedio) { %>
+                                        <span class="feature">
+                                            <i class="fas fa-tag"></i>
+                                            $<%= restaurant.precio_promedio.toLocaleString() %>
+                                        </span>
+                                    <% } %>
+                                </div>
+                                <div class="hotel-price-container">
+                                    <div class="price-info">
+                                        <span class="price-label">Precio promedio</span>
+                                        <span class="price-amount">$<%= restaurant.precio_promedio ? restaurant.precio_promedio.toLocaleString() : 'N/A' %></span>
+                                    </div>
+                                    <a href="/restaurants/<%= restaurant.id %>" class="view-details-btn">
+                                        Ver detalles
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                    <% }) %>
+                    <% }); %>
                 <% } else { %>
-                    <p>No hay restaurantes registrados.</p>
+                    <div class="no-hotels">
+                        <i class="fas fa-utensils no-hotels-icon"></i>
+                        <p>No hay restaurantes disponibles en este momento.</p>
+                        <% if (user && (user.rol === 'admin' || user.rol === 'superadmin')) { %>
+                            <a href="/admin/restaurants/new" class="add-restaurant-btn">
+                                <i class="fas fa-plus"></i> Agregar Restaurante
+                            </a>
+                        <% } %>
+                    </div>
                 <% } %>
             </div>
         </section>
-
 
         <footer class="site-footer">
             <div class="footer-container">
@@ -382,5 +304,28 @@
     </main>
 
     <script src="/js/restaurantes.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const decreaseBtn = document.getElementById('decreasePeople');
+            const increaseBtn = document.getElementById('increasePeople');
+            const peopleCountSpan = document.getElementById('peopleCount');
+            const personasInput = document.getElementById('personasInput');
+            let peopleCount = 2;
+
+            decreaseBtn.addEventListener('click', function() {
+                if (peopleCount > 1) {
+                    peopleCount--;
+                    peopleCountSpan.textContent = peopleCount;
+                    personasInput.value = peopleCount;
+                }
+            });
+
+            increaseBtn.addEventListener('click', function() {
+                peopleCount++;
+                peopleCountSpan.textContent = peopleCount;
+                personasInput.value = peopleCount;
+            });
+        });
+    </script>
 </body>
 </html>

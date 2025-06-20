@@ -309,92 +309,81 @@
             <input type="hidden" name="hotel_id" value="<%= hotel.id %>">
             
             <label>Fecha de entrada:
-                <input type="date" name="fecha_entrada" id="fecha_entrada" required>
+                <input type="date" name="fecha_entrada" id="fecha_entrada" required min="<%= new Date().toISOString().split('T')[0] %>">
             </label>
             
             <label>Fecha de salida:
                 <input type="date" name="fecha_salida" id="fecha_salida" required>
             </label>
             
-            <label>Número de personas:
-                <input type="number" name="num_personas" min="1" max="10" required>
-            </label>
-            
             <label>Habitación:
-                <select name="habitacion_id" id="habitacion_id" required>
-                    <option value="">Selecciona una habitación</option>
-                    <% habitaciones.forEach(h => { %>
-                        <option value="<%= h.id %>" <%= (habitacionSeleccionada && (habitacionSeleccionada == h.id || habitacionSeleccionada == String(h.id))) ? 'selected' : '' %>>
-                            <%= h.tipo %> (Capacidad: <%= h.capacidad %> personas, $<%= h.precio %>/noche)
+                <select id="habitacionId" name="habitacion_id" required>
+                    <% habitaciones.forEach(function(hab) { %>
+                        <option value="<%= hab.id %>" data-capacidad="<%= hab.capacidad %>" <%= habitacionSeleccionada == hab.id ? 'selected' : '' %>>
+                            <%= hab.tipo %> (Capacidad: <%= hab.capacidad %> personas, $<%= hab.precio.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>/noche)
                         </option>
-                    <% }) %>
+                    <% }); %>
                 </select>
             </label>
             
+            <div id="numeroPersonasGroup">
+                <label for="numPersonas">Número de personas:</label>
+                <input type="number" id="numPersonas" name="numPersonas" min="1" value="1" required>
+            </div>
+            
             <div class="seccion-pago">
                 <h3>Información de Pago</h3>
-                
-                <div class="grupo-tarjeta">
-                    <div class="campo-tarjeta">
-                        <label class="etiqueta-pago">Número de tarjeta</label>
-                        <input type="text" name="numero_tarjeta" maxlength="19" pattern="(\d{4}\s?){3}\d{4}" 
-                               placeholder="1234 5678 9012 3456" required>
-                        
-                    </div>
+                <div class="campo-tarjeta">
+                    <label for="numero_tarjeta" class="etiqueta-pago">Número de tarjeta</label>
+                    <input type="text" id="numero_tarjeta" name="numero_tarjeta" placeholder="XXXX XXXX XXXX XXXX" required maxlength="19" autocomplete="off">
                 </div>
-                
-                <div class="grupo-tarjeta vertical-stack">
+                <div class="grupo-tarjeta">
                     <div class="campo-medio">
-                        <label class="etiqueta-pago">Fecha de expiración</label>
-                        <input type="month" name="expiracion_tarjeta" required 
-                               placeholder="MM/AAAA" min="${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}">
+                        <label for="fecha_expiracion" class="etiqueta-pago">Fecha de expiración</label>
+                        <input type="month" id="fecha_expiracion" name="expiracion_tarjeta" required>
                     </div>
-                    
                     <div class="campo-pequeno grupo-cvv">
-                        <label class="etiqueta-pago">CVV</label>
-                        <input type="text" name="cvv_tarjeta" maxlength="4" pattern="\d{3,4}" 
-                               placeholder="123" required>
-                        <span class="info-cvv">?
-                            <span class="tooltip">Código de 3 o 4 dígitos en el reverso de tu tarjeta</span>
-                        </span>
+                        <label for="cvv" class="etiqueta-pago">CVV</label>
+                        <input type="text" id="cvv" name="cvv_tarjeta" placeholder="123" required maxlength="4">
+                        <i class="fas fa-question-circle info-cvv">
+                            <span class="tooltip">Código de seguridad de 3 o 4 dígitos en el reverso de tu tarjeta.</span>
+                        </i>
                     </div>
                 </div>
             </div>
             
-            <button type="submit" class="btn-confirmar">Confirmar reserva</button>
-            <a href="/" class="btn-volver">Volver</a>
+            <button type="submit" class="btn-confirmar">Confirmar Reserva</button>
+            <a href="/hotel/<%= hotel.id %>" class="btn-volver">Volver</a>
         </form>
 
         <% if (typeof alternativas !== 'undefined' && alternativas.length > 0) { %>
             <div class="alternativas-section">
-                <h2>Habitaciones alternativas disponibles:</h2>
+                <h2>Habitaciones Alternativas Disponibles</h2>
                 <ul class="alternativas-list">
-                    <% alternativas.forEach(function(hab) { %>
+                    <% alternativas.forEach(hab => { %>
                         <li class="alternativa-item">
-                            <div class="alternativa-info">
-                                <span><%= hab.tipo %> (Capacidad: <%= hab.capacidad %> personas)</span>
-                                <span>Precio: $<%= hab.precio %>/noche</span>
+                            <div>
+                                <strong><%= hab.tipo %></strong> (Capacidad: <%= hab.capacidad %> personas) - $<%= hab.precio.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>/noche
                             </div>
-                            <a href="/hotel/reservar/<%= hotel.id %>?habitacion=<%= hab.id %>" class="alternativa-link">Reservar</a>
+                            <a href="/hotel/reservar/<%= hotel.id %>?habitacionId=<%= hab.id %>&fechaEntrada=<%= fechaEntradaParam %>&fechaSalida=<%= fechaSalidaParam %>&numPersonas=<%= numPersonasParam %>" class="btn-alternativa">Seleccionar</a>
                         </li>
-                    <% }) %>
+                    <% }); %>
                 </ul>
             </div>
         <% } %>
 
         <% if (typeof fechasAlternativas !== 'undefined' && fechasAlternativas.length > 0) { %>
-            <div class="alternativas-section fechas-alternativas">
-                <h2>Fechas alternativas sugeridas:</h2>
+            <div class="alternativas-section">
+                <h2>Fechas Alternativas Disponibles</h2>
                 <ul class="alternativas-list">
-                    <% fechasAlternativas.forEach(function(f) { %>
+                    <% fechasAlternativas.forEach(alt => { %>
                         <li class="alternativa-item">
-                             <div class="alternativa-info">
-                                <span>Entrada: <%= f.fecha_entrada %></span>
-                                <span>Salida: <%= f.fecha_salida %></span>
+                            <div>
+                                <strong>Del <%= new Date(alt.fecha_entrada).toLocaleDateString('es-CO') %> al <%= new Date(alt.fecha_salida).toLocaleDateString('es-CO') %></strong> - $<%= alt.precioTotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                             </div>
-                            <a href="?fecha_entrada=<%= f.fecha_entrada %>&fecha_salida=<%= f.fecha_salida %>" class="alternativa-link">Probar estas fechas</a>
+                            <a href="/hotel/reservar/<%= hotel.id %>?habitacionId=<%= habitacionIdParam %>&fechaEntrada=<%= alt.fecha_entrada %>&fechaSalida=<%= alt.fecha_salida %>&numPersonas=<%= numPersonasParam %>" class="btn-alternativa">Seleccionar</a>
                         </li>
-                    <% }) %>
+                    <% }); %>
                 </ul>
             </div>
         <% } %>
@@ -402,79 +391,87 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
     <script>
-        // Script para poner la fecha mínima de hoy en los campos de fecha
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('fecha_entrada').setAttribute('min', today);
-        document.getElementById('fecha_salida').setAttribute('min', today);
+        document.addEventListener('DOMContentLoaded', function() {
+            const fechaEntradaInput = document.getElementById('fecha_entrada');
+            const fechaSalidaInput = document.getElementById('fecha_salida');
+            const habitacionSelect = document.getElementById('habitacionId');
+            const numPersonasGroup = document.getElementById('numeroPersonasGroup');
+            const numPersonasInput = document.getElementById('numPersonas');
+            const today = new Date();
+            const todayString = today.toISOString().split('T')[0];
 
-        // Script para formato automático del número de tarjeta
-        const numeroTarjetaInput = document.querySelector('input[name="numero_tarjeta"]');
-        
-        numeroTarjetaInput.addEventListener('input', function(e) {
-            // Remover cualquier caracter no numérico
-            let value = e.target.value.replace(/\D/g, '');
-            // Limitar a 16 dígitos
-            value = value.substring(0, 16);
-            // Insertar espacios cada 4 dígitos
-            const formattedValue = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-            // Actualizar el valor del input
-            e.target.value = formattedValue;
-            
-            
-        });
-        
-        // Detectar tipo de tarjeta
-        function detectCardType(number) {
-            const visa = /^4/;
-            const mastercard = /^5[1-5]/;
-            const amex = /^3[47]/;
-            
-            if (visa.test(number)) return 'visa';
-            if (mastercard.test(number)) return 'mastercard';
-            if (amex.test(number)) return 'amex';
-            return '';
-        }
-        
-        // Resaltar icono de tarjeta
-        function highlightCardIcon(type) {
-            const icons = document.querySelectorAll('.iconos-tarjetas img');
-            icons.forEach(icon => {
-                if (icon.alt.toLowerCase().includes(type)) {
-                    icon.style.opacity = '1';
-                    icon.style.transform = 'scale(1.1)';
+            // Set min date for check-in to today
+            fechaEntradaInput.min = todayString;
+
+            // Function to update min date for check-out
+            function updateFechaSalidaMin() {
+                fechaSalidaInput.min = fechaEntradaInput.value;
+                if (fechaSalidaInput.value < fechaEntradaInput.value) {
+                    fechaSalidaInput.value = fechaEntradaInput.value;
+                }
+            }
+
+            // Event listeners for dates
+            fechaEntradaInput.addEventListener('change', updateFechaSalidaMin);
+
+            // Initial call to set min date for check-out correctly on load
+            updateFechaSalidaMin();
+
+            // Function to handle room capacity visibility and value
+            function handleRoomCapacity() {
+                const selectedOption = habitacionSelect.options[habitacionSelect.selectedIndex];
+                const capacidad = parseInt(selectedOption.dataset.capacidad);
+
+                if (capacidad === 1) {
+                    numPersonasInput.value = 1;
+                    numPersonasInput.setAttribute('max', 1);
+                    numPersonasGroup.style.display = 'none';
+                    numPersonasInput.disabled = true;
                 } else {
-                    icon.style.opacity = '0.5';
-                    icon.style.transform = 'scale(1)';
+                    numPersonasGroup.style.display = 'block';
+                    numPersonasInput.disabled = false;
+                    numPersonasInput.setAttribute('max', capacidad);
+                    // If current value exceeds new capacity, adjust it
+                    if (parseInt(numPersonasInput.value) > capacidad) {
+                        numPersonasInput.value = capacidad;
+                    }
+                }
+            }
+
+            // Initial call to set up capacity based on default selected room
+            handleRoomCapacity();
+
+            // Event listener for room selection change
+            habitacionSelect.addEventListener('change', handleRoomCapacity);
+
+            // Client-side validation for number of persons on form submit
+            const reservaForm = document.querySelector('.reserva-form');
+            reservaForm.addEventListener('submit', function(event) {
+                const selectedOption = habitacionSelect.options[habitacionSelect.selectedIndex];
+                const capacidad = parseInt(selectedOption.dataset.capacidad);
+                const numPersonas = parseInt(numPersonasInput.value);
+
+                if (numPersonas > capacidad) {
+                    event.preventDefault(); // Prevent form submission
+                    alert('La cantidad de personas excede la capacidad permitida para la habitación seleccionada.');
                 }
             });
-        }
-        
-        // Tooltip para CVV
-        const cvvInput = document.querySelector('input[name="cvv_tarjeta"]');
-        const cvvTooltip = document.querySelector('.tooltip');
-        
-        cvvInput.addEventListener('focus', function() {
-            cvvTooltip.style.visibility = 'visible';
-            cvvTooltip.style.opacity = '1';
-        });
-        
-        cvvInput.addEventListener('blur', function() {
-            cvvTooltip.style.visibility = 'hidden';
-            cvvTooltip.style.opacity = '0';
-        });
-        
-        // Validación de fecha de expiración
-        const expiracionInput = document.querySelector('input[name="expiracion_tarjeta"]');
-        expiracionInput.addEventListener('change', function() {
-            const [year, month] = this.value.split('-');
-            const expDate = new Date(year, month - 1);
-            const currentDate = new Date();
-            
-            if (expDate < currentDate) {
-                this.setCustomValidity('La fecha de expiración debe ser futura');
-            } else {
-                this.setCustomValidity('');
+
+            // Eliminar cualquier posible autofocus en el campo de tarjeta si existe
+            const numeroTarjetaInput = document.getElementById('numero_tarjeta');
+            if (numeroTarjetaInput) {
+                numeroTarjetaInput.removeAttribute('autofocus');
+
+                // Script para formato automático del número de tarjeta
+                numeroTarjetaInput.addEventListener('input', function(e) {
+                    // Eliminar cualquier caracter que no sea dígito
+                    let value = e.target.value.replace(/\D/g, '');
+                    // Añadir espacios cada 4 dígitos
+                    value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+                    e.target.value = value.trim(); // Usar trim para evitar espacio final si se borra
+                });
             }
+
         });
     </script>
 </body>

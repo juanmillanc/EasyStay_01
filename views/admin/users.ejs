@@ -79,6 +79,14 @@
             <input type="text" name="q" placeholder="Buscar por nombre o correo..." value="<%= typeof q !== 'undefined' ? q : '' %>">
             <button type="submit"><i class="fas fa-search"></i> Buscar</button>
         </form>
+
+        <!-- Botón para exportar a CSV -->
+        <div style="margin-bottom: 1.5rem;">
+            <a href="/admin/users/export-csv" class="btn" style="background: #28a745; color: #fff; border-radius: 6px; padding: 0.8rem 1.5rem; text-decoration: none; font-weight: 600; transition: background 0.2s;">
+                <i class="fas fa-file-csv"></i> Exportar a CSV
+            </a>
+        </div>
+
         <div class="users-table-container">
             <table class="users-table">
                 <thead>
@@ -105,7 +113,10 @@
                             <td><%= user.rol %></td>
                             <td><%= user.estado %></td>
                             <td class="user-actions">
-                                <a href="/admin/users/edit/<%= user.id %>" title="Editar"><i class="fas fa-edit"></i></a>
+                                <a href="/admin/user-bookings/<%= user.id %>" title="Ver reservas"><i class="fas fa-edit"></i></a>
+                                <% if (user.rol !== 'superadmin') { %>
+                                    <a href="/admin/users/edit/<%= user.id %>" title="Editar usuario"><i class="fas fa-user-edit"></i></a>
+                                <% } %>
                                 <% if (user.rol !== 'superadmin' && user.estado !== 'inactivo') { %>
                                     <form action="/admin/users/delete/<%= user.id %>" method="POST" style="display:inline;">
                                         <button type="submit" class="delete-user" title="Inactivar" onclick="return confirm('¿Seguro que deseas poner inactivo este usuario?');"><i class="fas fa-user-slash"></i></button>
