@@ -227,6 +227,25 @@ router.post('/recompensas/add', async (req, res) => {
     }
 });
 
+router.post('/recompensas/toggle/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [recompensa] = await pool.query('SELECT estado FROM recompensas WHERE id = ?', [id]);
+
+        if (recompensa.length > 0) {
+            const nuevoEstado = recompensa[0].estado === 'activa' ? 'inactiva' : 'activa';
+            await pool.query('UPDATE recompensas SET estado = ? WHERE id = ?', [nuevoEstado, id]);
+            req.flash('success_msg', 'Estado de la recompensa actualizado correctamente.');
+        } else {
+            req.flash('error_msg', 'No se encontró la recompensa.');
+        }
+    } catch (error) {
+        console.error("Error al cambiar estado de la recompensa:", error);
+        req.flash('error_msg', 'Error al actualizar el estado.');
+    }
+    res.redirect('/admin/recompensas');
+});
+
 // Ruta para mostrar el formulario de edición de recompensa
 router.get('/recompensas/edit/:id', async (req, res) => {
     try {
@@ -484,6 +503,32 @@ router.post('/hotels/toggle-status/:id', async (req, res) => {
         req.flash('error', 'Error al cambiar el estado del hotel.');
     }
     res.redirect('/admin/hotels');
+});
+
+// Ruta para mostrar el formulario de edición de un hotel
+router.get('/hotels/:id/edit', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [hotelResult] = await pool.query('SELECT * FROM hoteles WHERE id = ?', [id]);
+
+        if (hotelResult.length === 0) {
+            req.flash('error', 'Hotel no encontrado.');
+            return res.redirect('/admin/hotels');
+        }
+
+        const [habitacionesResult] = await pool.query('SELECT * FROM habitaciones WHERE hotel_id = ? ORDER BY id ASC', [id]);
+        
+        const hotel = hotelResult[0];
+        hotel.habitaciones = habitacionesResult;
+
+        res.render('admin/hotels/edit', {
+            hotel,
+            user: req.session.user
+        });
+    } catch (error) {
+        console.error("Error al cargar la página de edición del hotel:", error);
+        res.status(500).send("Error interno del servidor");
+    }
 });
 
 module.exports = router; 

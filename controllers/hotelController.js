@@ -97,7 +97,7 @@ const hotelController = {
             res.render('admin/hotels/index', {
                 hotels: processedHotels,
                 cities: cities.map(row => row.ciudad),
-                user: req.user,
+                user: req.session.user,
                 path: '/admin/hotels'
             });
         } catch (error) {
@@ -111,7 +111,7 @@ const hotelController = {
     create: (req, res) => {
         res.render('admin/hotels/form', { 
             hotel: null,
-            user: req.user,
+            user: req.session.user,
             path: '/admin/hotels/new'
         });
     },
@@ -304,7 +304,7 @@ const hotelController = {
 
             res.render('admin/hotels/edit', { 
                 hotel,
-                user: req.user,
+                user: req.session.user,
                 path: `/admin/hotels/${req.params.id}/edit`
             });
         } catch (error) {
@@ -384,7 +384,7 @@ const hotelController = {
                 req.body.coordenadas_lat || null,
                 req.body.coordenadas_lng || null,
                 req.body.estado,
-                req.user.id,
+                req.session.user.id,
                 req.params.id
             ]);
 

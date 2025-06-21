@@ -69,18 +69,18 @@
     </style>
 </head>
 <body>
-    <%- include('../partials/header', { user: user }) %>
+    <%- include('partials/header', { activeMenu: 'users' }) %>
     <main class="admin-main">
-        <h1>Editar Usuario: <%= userDetails.nombre %></h1>
-
-        <% if (error) { %>
-            <div class="message error"><%= error %></div>
-        <% } %>
-        <% if (success) { %>
-            <div class="message success"><%= success %></div>
-        <% } %>
-
         <div class="edit-user-container">
+            <h1>Editar Usuario: <%= userDetails.nombre %></h1>
+
+            <% if (error) { %>
+                <div class="message error"><%= error %></div>
+            <% } %>
+            <% if (success) { %>
+                <div class="message success"><%= success %></div>
+            <% } %>
+
             <form action="/admin/users/edit/<%= userDetails.id %>" method="POST" class="edit-user-form">
                 <label for="nombre">Nombre:</label>
                 <input type="text" id="nombre" name="nombre" value="<%= userDetails.nombre %>" required>

@@ -8,176 +8,182 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin-dashboard.css">
     <style>
-        .edit-recompensa-container {
+        :root {
+            --primary-color: #ffb300;
+            --primary-dark: #e6a100;
+            --secondary-color: #333;
+            --light-grey: #f4f7f6;
+            --border-color: #ddd;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+        body {
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--light-grey);
+        }
+        .admin-main {
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .edit-container {
             background: #fff;
             border-radius: 14px;
-            box-shadow: 0 2px 8px rgba(255,179,0,0.08);
-            padding: 2rem;
-            margin-top: 2rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 2.5rem;
+            margin-top: 1rem;
         }
-        .edit-recompensa-container h2 {
-            color: #ffb300;
-            margin-bottom: 1.5rem;
+        h1, h2 {
+            color: var(--secondary-color);
+            font-weight: 700;
             text-align: center;
         }
-        .form-recompensa label {
+        h1 {
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem 2rem;
+            margin-bottom: 2rem;
+        }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .form-group label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             font-weight: 600;
             color: #555;
         }
-        .form-recompensa input[type="text"],
-        .form-recompensa input[type="number"],
-        .form-recompensa input[type="date"],
-        .form-recompensa textarea,
-        .form-recompensa select {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 1rem;
+            box-sizing: border-box;
         }
-        .form-recompensa button {
-            background: #007bff;
-            color: white;
+        .form-actions {
+            display: flex;
+            justify-content: flex-start;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .btn {
             border: none;
             border-radius: 8px;
-            padding: 12px 25px;
-            font-size: 1.1rem;
+            padding: 14px 30px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-        .form-recompensa button:hover {
-            background: #0056b3;
-        }
-        .back-button {
-            background: #6c757d;
-            color: white;
-            border-radius: 8px;
-            padding: 12px 25px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.2s;
             text-decoration: none;
-            display: inline-block;
-            margin-left: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        .back-button:hover {
-            background: #5a6268;
+        .btn:hover {
+            transform: translateY(-2px);
         }
-        .message.success {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 1rem;
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
         }
-        .message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 1rem;
+        .btn-primary:hover {
+            background: var(--primary-dark);
         }
+        .btn-secondary {
+            background: #f1f1f1;
+            color: var(--secondary-color);
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background: #e9e9e9;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        .message.success { background-color: #e8f5e9; color: #388e3c; }
+        .message.error { background-color: #ffebee; color: #d32f2f; }
     </style>
 </head>
 <body>
-    <%- include('../partials/header', { user: user }) %>
+    <%- include('partials/header', { activeMenu: 'recompensas' }) %>
     <main class="admin-main">
-        <h1>Editar Recompensa</h1>
-        <div class="edit-recompensa-container">
-            <h2>Editar Recompensa: <%= recompensa.nombre %></h2>
-
-            <% if (messages && messages.length > 0) { %>
+        <div class="edit-container">
+            <h1>Editar Recompensa</h1>
+            
+            <% if (locals.success_msg && success_msg.length > 0) { %>
                 <div class="message success">
-                    <%= messages %>
+                    <%= success_msg %>
                 </div>
             <% } %>
-            <% if (error && error.length > 0) { %>
+            <% if (locals.error_msg && error_msg.length > 0) { %>
                 <div class="message error">
-                    <%= error %>
+                    <%= error_msg %>
                 </div>
             <% } %>
 
-            <form action="/admin/recompensas/edit/<%= recompensa.id %>" method="POST" class="form-recompensa">
-                <label for="nombre">Nombre de la Recompensa:</label>
-                <input type="text" id="nombre" name="nombre" value="<%= recompensa.nombre %>" required>
+            <form action="/admin/recompensas/edit/<%= recompensa.id %>" method="POST">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nombre">Nombre</label>
+                        <input type="text" id="nombre" name="nombre" value="<%= recompensa.nombre %>" required>
+                    </div>
 
-                <label for="descripcion">Descripción:</label>
-                <textarea id="descripcion" name="descripcion" rows="3"><%= recompensa.descripcion || '' %></textarea>
+                    <div class="form-group">
+                        <label for="puntos_requeridos">Puntos Requeridos</label>
+                        <input type="number" id="puntos_requeridos" name="puntos_requeridos" min="1" value="<%= recompensa.puntos_requeridos %>" required>
+                    </div>
 
-                <label for="tipo">Tipo de Recompensa:</label>
-                <select id="tipo" name="tipo" required>
-                    <option value="descuento_hotel" <%= recompensa.tipo === 'descuento_hotel' ? 'selected' : '' %>>Descuento en Hotel</option>
-                    <option value="descuento_restaurante" <%= recompensa.tipo === 'descuento_restaurante' ? 'selected' : '' %>>Descuento en Restaurante</option>
-                    <option value="comida_gratis" <%= recompensa.tipo === 'comida_gratis' ? 'selected' : '' %>>Comida Gratis</option>
-                    <option value="upgrade_habitacion" <%= recompensa.tipo === 'upgrade_habitacion' ? 'selected' : '' %>>Upgrade de Habitación</option>
-                    <option value="beneficio_especial" <%= recompensa.tipo === 'beneficio_especial' ? 'selected' : '' %>>Beneficio Especial</option>
-                </select>
+                    <div class="form-group full-width">
+                        <label for="descripcion">Descripción</label>
+                        <textarea id="descripcion" name="descripcion" rows="3"><%= recompensa.descripcion || '' %></textarea>
+                    </div>
 
-                <label for="puntos_requeridos">Puntos Requeridos:</label>
-                <input type="number" id="puntos_requeridos" name="puntos_requeridos" min="1" value="<%= recompensa.puntos_requeridos %>" required>
+                    <div class="form-group">
+                        <label for="tipo">Tipo</label>
+                        <select id="tipo" name="tipo" required>
+                            <option value="descuento_hotel" <%= recompensa.tipo === 'descuento_hotel' ? 'selected' : '' %>>Descuento en Hotel</option>
+                            <option value="descuento_restaurante" <%= recompensa.tipo === 'descuento_restaurante' ? 'selected' : '' %>>Descuento en Restaurante</option>
+                            <option value="comida_gratis" <%= recompensa.tipo === 'comida_gratis' ? 'selected' : '' %>>Comida Gratis</option>
+                            <option value="upgrade_habitacion" <%= recompensa.tipo === 'upgrade_habitacion' ? 'selected' : '' %>>Upgrade de Habitación</option>
+                            <option value="beneficio_especial" <%= recompensa.tipo === 'beneficio_especial' ? 'selected' : '' %>>Beneficio Especial</option>
+                        </select>
+                    </div>
 
-                <label for="valor_descuento">Valor de Descuento (solo para descuentos):</label>
-                <input type="number" id="valor_descuento" name="valor_descuento" step="0.01" min="0" value="<%= recompensa.valor_descuento || '' %>">
+                    <div class="form-group">
+                        <label for="valor_descuento">Valor de Descuento (%)</label>
+                        <input type="number" id="valor_descuento" name="valor_descuento" step="0.01" min="0" value="<%= recompensa.valor_descuento || '' %>">
+                    </div>
 
-                <label for="codigo">Código (opcional):</label>
-                <input type="text" id="codigo" name="codigo" value="<%= recompensa.codigo || '' %>">
+                    <div class="form-group">
+                        <label for="stock">Stock</label>
+                        <input type="number" id="stock" name="stock" min="0" value="<%= recompensa.stock !== null ? recompensa.stock : '0' %>">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="estado">Estado</label>
+                        <select id="estado" name="estado" required>
+                            <option value="activa" <%= recompensa.estado === 'activa' ? 'selected' : '' %>>Activa</option>
+                            <option value="inactiva" <%= recompensa.estado === 'inactiva' ? 'selected' : '' %>>Inactiva</option>
+                        </select>
+                    </div>
+                </div>
 
-                <label for="fecha_inicio">Fecha de Inicio (opcional):</label>
-                <input type="date" id="fecha_inicio" name="fecha_inicio" value="<%= recompensa.fecha_inicio ? recompensa.fecha_inicio.toISOString().split('T')[0] : '' %>">
-
-                <label for="fecha_fin">Fecha de Fin (opcional):</label>
-                <input type="date" id="fecha_fin" name="fecha_fin" value="<%= recompensa.fecha_fin ? recompensa.fecha_fin.toISOString().split('T')[0] : '' %>">
-
-                <label for="stock">Stock (0 para ilimitado, opcional):</label>
-                <input type="number" id="stock" name="stock" min="0" value="<%= recompensa.stock !== null ? recompensa.stock : '' %>">
-
-                <label for="estado">Estado:</label>
-                <select id="estado" name="estado" required>
-                    <option value="activo" <%= recompensa.estado === 'activo' ? 'selected' : '' %>>Activo</option>
-                    <option value="inactivo" <%= recompensa.estado === 'inactivo' ? 'selected' : '' %>>Inactivo</option>
-                    <option value="agotado" <%= recompensa.estado === 'agotado' ? 'selected' : '' %>>Agotado</option>
-                </select>
-
-                <button type="submit"><i class="fas fa-save"></i> Guardar Cambios</button>
-                <a href="/admin/recompensas" class="back-button"><i class="fas fa-arrow-left"></i> Volver</a>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar Cambios</button>
+                    <a href="/admin/recompensas" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver</a>
+                </div>
             </form>
         </div>
     </main>
-    <%- include('../partials/footer') %>
-    <script>
-        const fechaInicioInput = document.getElementById('fecha_inicio');
-        const fechaFinInput = document.getElementById('fecha_fin');
-        const today = new Date().toISOString().split('T')[0];
-
-        if (fechaInicioInput) {
-            // Asegurarse de que la fecha de inicio no sea anterior a hoy al cargar
-            if (fechaInicioInput.value === '' || new Date(fechaInicioInput.value) < new Date(today)) {
-                fechaInicioInput.setAttribute('min', today);
-            }
-
-            fechaInicioInput.addEventListener('change', function() {
-                if (fechaFinInput) {
-                    fechaFinInput.setAttribute('min', this.value);
-                    // Si la fecha de fin es anterior a la de inicio, ajustarla
-                    if (new Date(this.value) > new Date(fechaFinInput.value)) {
-                        fechaFinInput.value = this.value;
-                    }
-                }
-            });
-        }
-
-        if (fechaFinInput) {
-            // Asegurarse de que la fecha de fin no sea anterior a hoy al cargar
-            if (fechaFinInput.value === '' || new Date(fechaFinInput.value) < new Date(today)) {
-                fechaFinInput.setAttribute('min', today);
-            }
-        }
-    </script>
 </body>
 </html> 

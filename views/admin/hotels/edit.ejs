@@ -3,174 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Hotel - EasyStay Admin</title>
+    <title>Editar Hotel | EasyStay Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin-dashboard.css">
-    <link rel="stylesheet" href="/css/admin-hotels.css">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #333;
+            --light-grey: #f8f9fa;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+        body {
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--light-grey);
+        }
+        .admin-main {
+            padding: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .edit-container {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 2.5rem;
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            font-weight: 700;
+        }
+        .form-section {
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .form-section h3 {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: #555;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+        }
+        .form-actions {
+            display: flex;
+            justify-content: flex-start;
+            gap: 1rem;
+            margin-top: 2.5rem;
+        }
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 14px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-danger { background: var(--danger-color); color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .current-image img {
+            max-width: 150px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+            padding: 4px;
+        }
+        #habitaciones-container .habitacion-item {
+            background: #fdfdfd;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .btn-add {
+            width: auto;
+            background: var(--success-color);
+        }
+        .btn-remove {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <%- include('../../partials/head') %>
-    <div class="admin-hotels-container">
-        <%- include('../../partials/header') %>
-        <div class="hotels-dashboard">
-            <div class="dashboard-header">
-                <h1>Editar Hotel</h1>
-                <a href="/admin/hotels" class="add-hotel-btn" style="background:#eee; color:#333;"><i class="fas fa-arrow-left"></i> Volver</a>
-            </div>
-            <form action="/admin/hotels/<%= hotel.id %>/edit" method="POST" enctype="multipart/form-data" class="hotel-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nombre">Nombre del hotel *</label>
-                        <input type="text" id="nombre" name="nombre" value="<%= hotel.nombre %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="ciudad">Ciudad *</label>
-                        <input type="text" id="ciudad" name="ciudad" value="<%= hotel.ciudad %>" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="direccion">Dirección *</label>
-                        <input type="text" id="direccion" name="direccion" value="<%= hotel.direccion %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="estrellas">Estrellas *</label>
-                        <select id="estrellas" name="estrellas" required>
-                            <option value="">Selecciona</option>
-                            <% for(let i=1; i<=5; i++) { %>
-                                <option value="<%= i %>" <%= hotel.estrellas == i ? 'selected' : '' %>><%= i %></option>
+    <%- include('/admin/partials/header.ejs', { activeMenu: 'hotels' }) %>
+    <main class="admin-main">
+        <div class="edit-container">
+            <h1>Editar Hotel</h1>
+            <form action="/admin/hotels/<%= hotel.id %>/edit" method="POST" enctype="multipart/form-data">
+                
+                <div class="form-section">
+                    <h3>Información General</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nombre">Nombre del hotel</label>
+                            <input type="text" id="nombre" name="nombre" value="<%= hotel.nombre %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="estrellas">Estrellas</label>
+                            <select id="estrellas" name="estrellas" required>
+                                <% for(let i=1; i<=5; i++) { %>
+                                    <option value="<%= i %>" <%= hotel.estrellas == i ? 'selected' : '' %>><%= '⭐'.repeat(i) %></option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ciudad">Ciudad</label>
+                            <input type="text" id="ciudad" name="ciudad" value="<%= hotel.ciudad %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="direccion">Dirección</label>
+                            <input type="text" id="direccion" name="direccion" value="<%= hotel.direccion %>" required>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="descripcion">Descripción</label>
+                            <textarea id="descripcion" name="descripcion" rows="4"><%= hotel.descripcion || '' %></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="imagen_principal">Imagen principal</label>
+                            <input type="file" id="imagen_principal" name="imagen_principal" accept="image/*">
+                            <% if (hotel.imagen_principal) { %>
+                                <div class="current-image">
+                                    <p>Actual:</p>
+                                    <img src="<%= hotel.imagen_principal %>" alt="Imagen actual">
+                                </div>
                             <% } %>
-                        </select>
+                        </div>
+                         <div class="form-group">
+                            <label for="estado">Estado</label>
+                            <select id="estado" name="estado">
+                                <option value="activo" <%= hotel.estado === 'activo' ? 'selected' : '' %>>Activo</option>
+                                <option value="inactivo" <%= hotel.estado === 'inactivo' ? 'selected' : '' %>>Inactivo</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="precio_base">Precio base *</label>
-                        <input type="number" step="0.01" id="precio_base" name="precio_base" value="<%= hotel.precio_base %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="estado">Estado</label>
-                        <select id="estado" name="estado">
-                            <option value="activo" <%= hotel.estado === 'activo' ? 'selected' : '' %>>Activo</option>
-                            <option value="inactivo" <%= hotel.estado === 'inactivo' ? 'selected' : '' %>>Inactivo</option>
-                            <option value="en_mantenimiento" <%= hotel.estado === 'en_mantenimiento' ? 'selected' : '' %>>En mantenimiento</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="descripcion">Descripción</label>
-                    <textarea id="descripcion" name="descripcion" rows="3"><%= hotel.descripcion || '' %></textarea>
                 </div>
 
-                <!-- Sección de Habitaciones -->
                 <div class="form-section">
                     <h3>Habitaciones</h3>
                     <div id="habitaciones-container">
                         <% if (hotel.habitaciones && hotel.habitaciones.length > 0) { %>
                             <% hotel.habitaciones.forEach((habitacion, index) => { %>
                                 <div class="habitacion-item">
-                                    <div class="form-row">
+                                    <button type="button" class="btn-remove" onclick="removeHabitacion(this)" title="Eliminar habitación"><i class="fas fa-times-circle"></i></button>
+                                    <div class="form-grid">
                                         <div class="form-group">
-                                            <label>Tipo de Habitación *</label>
+                                            <label>Tipo de Habitación</label>
                                             <input type="text" name="habitaciones[<%= index %>][tipo]" value="<%= habitacion.tipo %>" required>
                                         </div>
                                         <div class="form-group">
-                                            <label>Capacidad *</label>
+                                            <label>Capacidad</label>
                                             <input type="number" name="habitaciones[<%= index %>][capacidad]" value="<%= habitacion.capacidad %>" min="1" required>
                                         </div>
-                                    </div>
-                                    <div class="form-row">
                                         <div class="form-group">
-                                            <label>Precio por Noche *</label>
+                                            <label>Precio por Noche</label>
                                             <input type="number" name="habitaciones[<%= index %>][precio]" value="<%= habitacion.precio %>" step="0.01" required>
                                         </div>
                                         <div class="form-group">
-                                            <label>Cantidad Disponible *</label>
+                                            <label>Cantidad Disponible</label>
                                             <input type="number" name="habitaciones[<%= index %>][cantidad_disponible]" value="<%= habitacion.cantidad_disponible %>" min="0" required>
                                         </div>
+                                        <div class="form-group" style="grid-column: 1 / -1;">
+                                            <label>Descripción</label>
+                                            <textarea name="habitaciones[<%= index %>][descripcion]" rows="2"><%= habitacion.descripcion %></textarea>
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label>Descripción</label>
-                                        <textarea name="habitaciones[<%= index %>][descripcion]"><%= habitacion.descripcion %></textarea>
-                                    </div>
-                                    <button type="button" class="btn-remove" onclick="removeHabitacion(this)">Eliminar Habitación</button>
                                 </div>
                             <% }); %>
                         <% } %>
                     </div>
-                    <button type="button" class="btn-add" onclick="addHabitacion()">Agregar Habitación</button>
+                    <button type="button" class="btn btn-primary btn-add" onclick="addHabitacion()"><i class="fas fa-plus"></i> Agregar Habitación</button>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="imagen_principal">Imagen principal</label>
-                        <input type="file" id="imagen_principal" name="imagen_principal" accept="image/*">
-                        <% if (hotel.imagen_principal) { %>
-                            <div class="current-image">
-                                <p>Imagen actual:</p>
-                                <img src="<%= hotel.imagen_principal %>" alt="Imagen actual del hotel" style="max-width:200px; border-radius:4px;">
-                            </div>
-                        <% } %>
-                    </div>
-                    <div class="form-group">
-                        <label for="coordenadas_lat">Latitud</label>
-                        <input type="text" id="coordenadas_lat" name="coordenadas_lat" value="<%= hotel.coordenadas_lat || '' %>">
-                    </div>
-                    <div class="form-group">
-                        <label for="coordenadas_lng">Longitud</label>
-                        <input type="text" id="coordenadas_lng" name="coordenadas_lng" value="<%= hotel.coordenadas_lng || '' %>">
-                    </div>
-                </div>
                 <div class="form-actions">
-                    <button type="submit" class="add-hotel-btn"><i class="fas fa-save"></i> Guardar Cambios</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar Cambios</button>
+                    <a href="/admin/hotels" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver</a>
                 </div>
             </form>
         </div>
-    </div>
-    <%- include('../../partials/footer') %>
+    </main>
     <script>
-        // Validación del formulario
-        document.querySelector('.hotel-form').addEventListener('submit', function(e) {
-            const precio = parseFloat(document.getElementById('precio_base').value);
-            if (precio <= 0) {
-                e.preventDefault();
-                alert('El precio base debe ser mayor que 0');
-            }
-        });
-
-        // Funciones para manejar habitaciones
         function addHabitacion() {
             const container = document.getElementById('habitaciones-container');
-            const index = container.children.length;
+            const index = container.querySelectorAll('.habitacion-item').length;
             
             const habitacionHTML = `
                 <div class="habitacion-item">
-                    <div class="form-row">
+                     <button type="button" class="btn-remove" onclick="removeHabitacion(this)" title="Eliminar habitación"><i class="fas fa-times-circle"></i></button>
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label>Tipo de Habitación *</label>
+                            <label>Tipo de Habitación</label>
                             <input type="text" name="habitaciones[${index}][tipo]" required>
                         </div>
                         <div class="form-group">
-                            <label>Capacidad *</label>
+                            <label>Capacidad</label>
                             <input type="number" name="habitaciones[${index}][capacidad]" min="1" required>
                         </div>
-                    </div>
-                    <div class="form-row">
                         <div class="form-group">
-                            <label>Precio por Noche *</label>
+                            <label>Precio por Noche</label>
                             <input type="number" name="habitaciones[${index}][precio]" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label>Cantidad Disponible *</label>
+                            <label>Cantidad Disponible</label>
                             <input type="number" name="habitaciones[${index}][cantidad_disponible]" min="0" required>
                         </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Descripción</label>
+                            <textarea name="habitaciones[${index}][descripcion]" rows="2"></textarea>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Descripción</label>
-                        <textarea name="habitaciones[${index}][descripcion]"></textarea>
-                    </div>
-                    <button type="button" class="btn-remove" onclick="removeHabitacion(this)">Eliminar Habitación</button>
                 </div>
             `;
             

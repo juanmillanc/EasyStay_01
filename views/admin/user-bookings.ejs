@@ -137,76 +137,78 @@
     </style>
 </head>
 <body>
-    <%- include('../partials/header', { user: user }) %>
+    <%- include('partials/header', { activeMenu: 'users' }) %>
     <main class="admin-main">
-        <a href="/admin/users" class="back-to-users">
-            <i class="fas fa-arrow-left"></i> Volver a Usuarios
-        </a>
-        <h1>Reservas de <%= userName %></h1>
-        
-        <% function formatFecha(fecha, hora) {
-            if (!fecha) return '';
-            const d = new Date(fecha);
-            const dia = d.getDate().toString().padStart(2, '0');
-            const mes = (d.getMonth() + 1).toString().padStart(2, '0');
-            const anio = d.getFullYear();
-            return `${anio}-${mes}-${dia} ${hora}`;
-        } %>
+        <div class="reserva-container">
+            <a href="/admin/users" class="back-to-users">
+                <i class="fas fa-arrow-left"></i> Volver a Usuarios
+            </a>
+            <h1>Reservas de <%= userName %></h1>
+            
+            <% function formatFecha(fecha, hora) {
+                if (!fecha) return '';
+                const d = new Date(fecha);
+                const dia = d.getDate().toString().padStart(2, '0');
+                const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+                const anio = d.getFullYear();
+                return `${anio}-${mes}-${dia} ${hora}`;
+            } %>
 
-        <div class="reserva-section">
-            <h2><i class="fas fa-hotel icono"></i> Reservas de Hotel</h2>
-            <% if (hotelBookings && hotelBookings.length > 0) { %>
-                <ul class="reserva-list">
-                    <% hotelBookings.forEach(r => { %>
-                        <li class="reserva-card">
-                            <div><strong>Hotel:</strong> <%= r.hotel_nombre %></div>
-                            <div><strong>Habitación:</strong> <%= r.habitacion_tipo %></div>
-                            <div><strong>Check-in:</strong> <span class="fecha"><i class="fas fa-calendar-day"></i> <%= formatFecha(r.fecha_entrada, '15:00 pm') %> </span></div>
-                            <div><strong>Check-out:</strong> <span class="fecha"><i class="fas fa-calendar-day"></i> <%= formatFecha(r.fecha_salida, '10:00 am') %> </span></div>
-                            <div><strong>Huéspedes:</strong> <%= r.numero_huespedes %></div>
-                            <div>
-                                <strong>Estado:</strong> 
-                                <span class="estado-badge estado-<%= r.estado %>">
-                                    <%= r.estado %>
-                                </span>
-                            </div>
-                            <% if (r.comentarios) { %>
-                                <div><strong>Comentarios:</strong> <%= r.comentarios %></div>
-                            <% } %>
-                        </li>
-                    <% }) %>
-                </ul>
-            <% } else { %>
-                <div class="no-reservas">Este usuario no tiene reservas de hotel.</div>
-            <% } %>
-        </div>
+            <div class="reserva-section">
+                <h2><i class="fas fa-hotel icono"></i> Reservas de Hotel</h2>
+                <% if (hotelBookings && hotelBookings.length > 0) { %>
+                    <ul class="reserva-list">
+                        <% hotelBookings.forEach(r => { %>
+                            <li class="reserva-card">
+                                <div><strong>Hotel:</strong> <%= r.hotel_nombre %></div>
+                                <div><strong>Habitación:</strong> <%= r.habitacion_tipo %></div>
+                                <div><strong>Check-in:</strong> <span class="fecha"><i class="fas fa-calendar-day"></i> <%= formatFecha(r.fecha_entrada, '15:00 pm') %> </span></div>
+                                <div><strong>Check-out:</strong> <span class="fecha"><i class="fas fa-calendar-day"></i> <%= formatFecha(r.fecha_salida, '10:00 am') %> </span></div>
+                                <div><strong>Huéspedes:</strong> <%= r.numero_huespedes %></div>
+                                <div>
+                                    <strong>Estado:</strong> 
+                                    <span class="estado-badge estado-<%= r.estado %>">
+                                        <%= r.estado %>
+                                    </span>
+                                </div>
+                                <% if (r.comentarios) { %>
+                                    <div><strong>Comentarios:</strong> <%= r.comentarios %></div>
+                                <% } %>
+                            </li>
+                        <% }) %>
+                    </ul>
+                <% } else { %>
+                    <div class="no-reservas">Este usuario no tiene reservas de hotel.</div>
+                <% } %>
+            </div>
 
-        <div class="reserva-section">
-            <h2><i class="fas fa-utensils icono"></i> Reservas de Restaurante</h2>
-            <% if (restaurantBookings && restaurantBookings.length > 0) { %>
-                <ul class="reserva-list">
-                    <% restaurantBookings.forEach(r => { %>
-                        <li class="reserva-card">
-                            <div><strong>Restaurante ID:</strong> <%= r.restaurante_id %></div>
-                            <div><strong>Fecha:</strong> <span class="fecha"><%= r.fecha %></span></div>
-                            <div><strong>Hora:</strong> <%= r.hora %></div>
-                            <div><strong>Personas:</strong> <%= r.num_personas %></div>
-                            <div><strong>Mesa:</strong> <%= r.num_mesa || 'Por asignar' %></div>
-                            <div>
-                                <strong>Estado:</strong> 
-                                <span class="estado-badge estado-<%= r.estado %>">
-                                    <%= r.estado %>
-                                </span>
-                            </div>
-                            <% if (r.notas) { %>
-                                <div><strong>Notas:</strong> <%= r.notas %></div>
-                            <% } %>
-                        </li>
-                    <% }) %>
-                </ul>
-            <% } else { %>
-                <div class="no-reservas">Este usuario no tiene reservas de restaurante.</div>
-            <% } %>
+            <div class="reserva-section">
+                <h2><i class="fas fa-utensils icono"></i> Reservas de Restaurante</h2>
+                <% if (restaurantBookings && restaurantBookings.length > 0) { %>
+                    <ul class="reserva-list">
+                        <% restaurantBookings.forEach(r => { %>
+                            <li class="reserva-card">
+                                <div><strong>Restaurante ID:</strong> <%= r.restaurante_id %></div>
+                                <div><strong>Fecha:</strong> <span class="fecha"><%= r.fecha %></span></div>
+                                <div><strong>Hora:</strong> <%= r.hora %></div>
+                                <div><strong>Personas:</strong> <%= r.num_personas %></div>
+                                <div><strong>Mesa:</strong> <%= r.num_mesa || 'Por asignar' %></div>
+                                <div>
+                                    <strong>Estado:</strong> 
+                                    <span class="estado-badge estado-<%= r.estado %>">
+                                        <%= r.estado %>
+                                    </span>
+                                </div>
+                                <% if (r.notas) { %>
+                                    <div><strong>Notas:</strong> <%= r.notas %></div>
+                                <% } %>
+                            </li>
+                        <% }) %>
+                    </ul>
+                <% } else { %>
+                    <div class="no-reservas">Este usuario no tiene reservas de restaurante.</div>
+                <% } %>
+            </div>
         </div>
     </main>
     <%- include('../partials/footer') %>

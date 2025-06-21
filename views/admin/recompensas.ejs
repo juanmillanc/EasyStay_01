@@ -7,148 +7,61 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/admin-dashboard.css">
-    <style>
-        .recompensas-container {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 2px 8px rgba(255,179,0,0.08);
-            padding: 2rem;
-            margin-top: 2rem;
-        }
-        .recompensas-container h2 {
-            color: #ffb300;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-        .form-recompensa label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #555;
-        }
-        .form-recompensa input[type="text"],
-        .form-recompensa input[type="number"],
-        .form-recompensa input[type="date"],
-        .form-recompensa textarea,
-        .form-recompensa select {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        .form-recompensa button {
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 25px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .form-recompensa button:hover {
-            background: #218838;
-        }
-        .recompensas-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 2rem;
-        }
-        .recompensas-table th, .recompensas-table td {
-            padding: 0.8rem;
-            border-bottom: 1px solid #eee;
-            text-align: left;
-            font-size: 0.95rem;
-        }
-        .recompensas-table th {
-            background: #fffbe6;
-            color: #ffb300;
-            font-weight: 700;
-        }
-        .recompensas-table tbody tr:hover {
-            background: #fff3cd;
-        }
-        .no-recompensas {
-            text-align: center;
-            color: #888;
-            padding: 20px;
-        }
-        .message.success {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-        }
-        .message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-        }
-    </style>
 </head>
 <body>
-    <%- include('../partials/header', { user: user }) %>
+    <%- include('partials/header', { activeMenu: 'recompensas' }) %>
     <main class="admin-main">
-        <h1>Gestionar Recompensas</h1>
+        <h1 style="color: #ffb300; text-align: center; margin-bottom: 2rem;">Gestionar Recompensas</h1>
         <div class="recompensas-container">
             <h2>Agregar Nueva Recompensa</h2>
-
-            <% if (messages && messages.length > 0) { %>
+            <% if (locals.success_msg && success_msg.length > 0) { %>
                 <div class="message success">
-                    <%= messages %>
+                    <%= success_msg %>
                 </div>
             <% } %>
-            <% if (error && error.length > 0) { %>
+            <% if (locals.error_msg && error_msg.length > 0) { %>
                 <div class="message error">
-                    <%= error %>
+                    <%= error_msg %>
                 </div>
             <% } %>
-
             <form action="/admin/recompensas/add" method="POST" class="form-recompensa">
-                <label for="nombre">Nombre de la Recompensa:</label>
-                <input type="text" id="nombre" name="nombre" required>
-
-                <label for="descripcion">Descripción:</label>
-                <textarea id="descripcion" name="descripcion" rows="3"></textarea>
-
-                <label for="tipo">Tipo de Recompensa:</label>
-                <select id="tipo" name="tipo" required>
-                    <option value="">Seleccione un tipo</option>
-                    <option value="descuento_hotel">Descuento en Hotel</option>
-                    <option value="descuento_restaurante">Descuento en Restaurante</option>
-                    <option value="comida_gratis">Comida Gratis</option>
-                    <option value="upgrade_habitacion">Upgrade de Habitación</option>
-                    <option value="beneficio_especial">Beneficio Especial</option>
-                </select>
-
-                <label for="puntos_requeridos">Puntos Requeridos:</label>
-                <input type="number" id="puntos_requeridos" name="puntos_requeridos" min="1" required>
-
-                <label for="valor_descuento">Valor de Descuento (solo para descuentos):</label>
-                <input type="number" id="valor_descuento" name="valor_descuento" step="0.01" min="0">
-
-                <label for="codigo">Código (opcional):</label>
-                <input type="text" id="codigo" name="codigo">
-
-                <label for="fecha_inicio">Fecha de Inicio (opcional):</label>
-                <input type="date" id="fecha_inicio" name="fecha_inicio">
-
-                <label for="fecha_fin">Fecha de Fin (opcional):</label>
-                <input type="date" id="fecha_fin" name="fecha_fin">
-
-                <label for="stock">Stock (0 para ilimitado, opcional):</label>
-                <input type="number" id="stock" name="stock" min="0">
-
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nombre">Nombre de la Recompensa:</label>
+                        <input type="text" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="puntos_requeridos">Puntos Requeridos:</label>
+                        <input type="number" id="puntos_requeridos" name="puntos_requeridos" min="1" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="descripcion">Descripción:</label>
+                        <textarea id="descripcion" name="descripcion" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="tipo">Tipo:</label>
+                        <select id="tipo" name="tipo" required>
+                            <option value="">Seleccione un tipo</option>
+                            <option value="descuento_hotel">Descuento en Hotel</option>
+                            <option value="descuento_restaurante">Descuento en Restaurante</option>
+                            <option value="comida_gratis">Comida Gratis</option>
+                            <option value="upgrade_habitacion">Upgrade de Habitación</option>
+                            <option value="beneficio_especial">Beneficio Especial</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="valor_descuento">Valor de Descuento (%):</label>
+                        <input type="number" id="valor_descuento" name="valor_descuento" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="stock">Stock (0 para ilimitado):</label>
+                        <input type="number" id="stock" name="stock" min="0" value="0">
+                    </div>
+                </div>
                 <button type="submit"><i class="fas fa-plus-circle"></i> Agregar Recompensa</button>
             </form>
-
-            <hr style="margin: 2.5rem 0; border: 0; border-top: 1px solid #eee;">
-
+        </div>
+        <div class="recompensas-container">
             <h2>Recompensas Existentes</h2>
             <% if (recompensas && recompensas.length > 0) { %>
                 <table class="recompensas-table">
@@ -158,9 +71,6 @@
                             <th>Nombre</th>
                             <th>Tipo</th>
                             <th>Puntos</th>
-                            <th>Descuento</th>
-                            <th>Código</th>
-                            <th>Stock</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -170,16 +80,23 @@
                             <tr>
                                 <td><%= r.id %></td>
                                 <td><%= r.nombre %></td>
-                                <td><%= r.tipo %></td>
+                                <td><%= r.tipo.replace('_', ' ') %></td>
                                 <td><%= r.puntos_requeridos %></td>
-                                <td><%= r.valor_descuento ? `${r.valor_descuento}%` : 'N/A' %></td>
-                                <td><%= r.codigo || 'N/A' %></td>
-                                <td><%= r.stock !== null ? r.stock : 'Ilimitado' %></td>
-                                <td><%= r.estado %></td>
                                 <td>
-                                    <!-- Acciones como editar/inactivar se agregarán más adelante -->
-                                    <a href="/admin/recompensas/edit/<%= r.id %>" title="Editar"><i class="fas fa-edit"></i></a>
-                                    <a href="#" title="Cambiar Estado"><i class="fas fa-toggle-on"></i></a>
+                                    <span class="status-badge <%= r.estado === 'activa' ? 'status-active' : 'status-inactive' %>">
+                                        <%= r.estado %>
+                                    </span>
+                                </td>
+                                <td class="actions">
+                                    <form action="/admin/recompensas/toggle/<%= r.id %>" method="POST" style="display:inline;">
+                                        <button type="submit" class="action-btn toggle-btn <%= r.estado === 'activa' ? 'active' : '' %>" title="Activar/Desactivar">
+                                            <i class="fas fa-toggle-on"></i>
+                                        </button>
+                                    </form>
+                                    <a href="/admin/recompensas/edit/<%= r.id %>" class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></a>
+                                    <form action="/admin/recompensas/delete/<%= r.id %>" method="POST" style="display:inline;" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta recompensa?');">
+                                        <button type="submit" class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                         <% }) %>
@@ -190,34 +107,147 @@
             <% } %>
         </div>
     </main>
-    <%- include('../partials/footer') %>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        const fechaInicioInput = document.getElementById('fecha_inicio');
-        const fechaFinInput = document.getElementById('fecha_fin');
-        const today = new Date().toISOString().split('T')[0];
-
-        if (fechaInicioInput) {
-            fechaInicioInput.setAttribute('min', today);
-
-            fechaInicioInput.addEventListener('change', function() {
-                if (fechaFinInput) {
-                    fechaFinInput.setAttribute('min', this.value);
-                    // Si la fecha de fin es anterior a la de inicio, ajustarla
-                    if (new Date(this.value) > new Date(fechaFinInput.value)) {
-                        fechaFinInput.value = this.value;
-                    }
-                }
-            });
-        }
-
-        if (fechaFinInput) {
-            // Asegurarse de que la fecha de fin no sea anterior a hoy al cargar
-            if (fechaFinInput.value === '' || new Date(fechaFinInput.value) < new Date(today)) {
-                fechaFinInput.setAttribute('min', today);
-            }
-        }
-
-    </script>
 </body>
-</html> 
+</html>
+<style>
+    :root {
+        --primary-color: #ffb300;
+        --primary-dark: #e6a100;
+        --secondary-color: #333;
+        --light-grey: #f4f7f6;
+        --border-color: #ddd;
+        --success-color: #28a745;
+        --danger-color: #dc3545;
+    }
+    body {
+        margin: 0;
+        font-family: 'Montserrat', sans-serif;
+        background-color: var(--light-grey);
+    }
+    .admin-main {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .recompensas-container {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        padding: 2rem;
+        margin-top: 1rem;
+    }
+    h1, h2 {
+        color: var(--secondary-color);
+        font-weight: 700;
+    }
+    .form-recompensa {
+        display: flex;
+        flex-direction: column;
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #555;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+    .form-recompensa button {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 14px 30px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        align-self: flex-start;
+    }
+    .form-recompensa button:hover {
+        background: var(--primary-dark);
+    }
+    .recompensas-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 2rem;
+    }
+    .recompensas-table th, .recompensas-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        text-align: left;
+        vertical-align: middle;
+    }
+    .recompensas-table th {
+        background: #fffaf0;
+        font-weight: 700;
+        text-transform: capitalize;
+    }
+    .recompensas-table tbody tr:hover {
+        background: #fdfdfd;
+    }
+    .no-recompensas {
+        text-align: center;
+        color: #888;
+        padding: 20px;
+    }
+    .message {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-weight: 600;
+    }
+    .message.success { background-color: #e8f5e9; color: #388e3c; }
+    .message.error { background-color: #ffebee; color: #d32f2f; }
+    
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-badge.status-active {
+        background-color: #e8f5e9;
+        color: #388e3c;
+    }
+    .status-badge.status-inactive {
+        background-color: #fce4ec;
+        color: #c2185b;
+    }
+    td.actions {
+        display: flex;
+        gap: 10px;
+    }
+    .action-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: #aaa;
+        transition: color 0.2s;
+        padding: 5px;
+    }
+    .edit-btn:hover { color: var(--primary-color); }
+    .delete-btn:hover { color: var(--danger-color); }
+    .toggle-btn { color: #ccc; }
+    .toggle-btn.active { color: var(--success-color); }
+    .toggle-btn.active:hover { color: #1e7e34; }
+    .toggle-btn:not(.active):hover { color: #888; }
+</style> 
