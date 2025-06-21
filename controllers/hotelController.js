@@ -228,88 +228,39 @@ const hotelController = {
     // Mostrar formulario de edición
     edit: async (req, res) => {
         try {
-            const [hotels] = await db.query(`
-                SELECT h.*, 
-                       ANY_VALUE(c.id) as caracteristica_id,
-                       ANY_VALUE(c.wifi) as wifi,
-                       ANY_VALUE(c.parking) as parking,
-                       ANY_VALUE(c.piscina) as piscina,
-                       ANY_VALUE(c.restaurante) as restaurante,
-                       ANY_VALUE(c.aire_acondicionado) as aire_acondicionado,
-                       ANY_VALUE(c.gimnasio) as gimnasio,
-                       ANY_VALUE(c.spa) as spa,
-                       ANY_VALUE(c.bar) as bar,
-                       ANY_VALUE(c.mascotas) as mascotas,
-                       GROUP_CONCAT(
-                           JSON_OBJECT(
-                               'id', hab.id,
-                               'tipo', hab.tipo,
-                               'descripcion', hab.descripcion,
-                               'capacidad', hab.capacidad,
-                               'precio', hab.precio,
-                               'cantidad_disponible', hab.cantidad_disponible,
-                               'estado', hab.estado
-                           ) SEPARATOR '###'
-                       ) as habitaciones
+            const { id } = req.params;
+
+            // 1. Obtener datos principales del hotel y sus características
+            const [hotelResult] = await db.query(`
+                SELECT h.*, c.* 
                 FROM hoteles h
                 LEFT JOIN caracteristicas_hotel c ON h.id = c.hotel_id
-                LEFT JOIN habitaciones hab ON h.id = hab.hotel_id
                 WHERE h.id = ?
-                GROUP BY h.id
-            `, [req.params.id]);
-
-            if (hotels.length === 0) {
-                req.flash('error', 'Hotel no encontrado');
+            `, [id]);
+            
+            if (hotelResult.length === 0) {
+                req.flash('error', 'Hotel no encontrado.');
                 return res.redirect('/admin/hotels');
             }
-
-            const hotel = {...hotels[0]};
             
-            // --- DEBUG LOG: Raw habitaciones data from DB ---
-            console.log('DEBUG: Raw habitaciones data from DB:', hotel.habitaciones);
-            // --- END DEBUG LOG ---
+            // 2. Obtener las habitaciones del hotel
+            const [habitacionesResult] = await db.query(
+                'SELECT * FROM habitaciones WHERE hotel_id = ? ORDER BY id ASC', 
+                [id]
+            );
 
-            // Procesar características
-            if (hotel.wifi !== null) {
-                hotel.caracteristicas = {
-                    wifi: hotel.wifi,
-                    parking: hotel.parking,
-                    piscina: hotel.piscina,
-                    restaurante: hotel.restaurante,
-                    aire_acondicionado: hotel.aire_acondicionado,
-                    gimnasio: hotel.gimnasio,
-                    spa: hotel.spa,
-                    bar: hotel.bar,
-                    mascotas: hotel.mascotas
-                };
-            }
+            const hotel = hotelResult[0];
+            hotel.habitaciones = habitacionesResult;
 
-            // Procesar habitaciones
-            if (hotel.habitaciones) {
-                try {
-                    hotel.habitaciones = hotel.habitaciones
-                        .split('###')
-                        .map(hab => JSON.parse(hab));
-                } catch (e) {
-                    console.error('Error al parsear habitaciones en edit:', e);
-                    hotel.habitaciones = [];
-                }
-            } else {
-                hotel.habitaciones = [];
-            }
-
-            // --- DEBUG LOG: Habitaciones after parsing ---
-            console.log('DEBUG: Habitaciones after parsing:', hotel.habitaciones);
-            // --- END DEBUG LOG ---
-
-            res.render('admin/hotels/edit', { 
+            res.render('admin/hotels/edit', {
                 hotel,
                 user: req.session.user,
-                path: `/admin/hotels/${req.params.id}/edit`
+                path: '/admin/hotels' // Añadir path para la navegación activa
             });
+
         } catch (error) {
-            console.error('Error al cargar hotel:', error);
-            req.flash('error', 'Error al cargar el hotel');
+            console.error('Error al cargar la página de edición del hotel:', error);
+            req.flash('error', 'Error al cargar los datos del hotel para edición.');
             res.redirect('/admin/hotels');
         }
     },

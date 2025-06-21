@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../databases/db');
 const puntosController = require('../controllers/puntosController');
+const hotelController = require('../controllers/hotelController');
 const { isAdmin, isAuthenticated } = require('../middleware/auth');
 
 // Middleware para este router
@@ -51,17 +52,16 @@ router.get('/puntos', async (req, res) => {
     }
 });
 
-router.post('/puntos/agregar', async (req, res) => {
+router.post('/puntos/agregar', isAdmin, async (req, res) => {
+    const { usuario_id, puntos, descripcion } = req.body;
     try {
-        const { usuario_id, puntos, descripcion } = req.body;
-        await puntosController.agregarPuntos(usuario_id, parseInt(puntos), descripcion);
+        await puntosController.agregarPuntosManualmente(usuario_id, puntos, descripcion);
+        req.flash('success', 'Puntos agregados correctamente.');
         res.redirect('/admin/puntos');
     } catch (error) {
         console.error('Error al agregar puntos:', error);
-        res.status(500).render('error', {
-            message: 'Error al agregar puntos',
-            user: req.session.user
-        });
+        req.flash('error', 'Error al agregar los puntos.');
+        res.redirect(req.header('Referer') || '/admin/users');
     }
 });
 
@@ -506,29 +506,6 @@ router.post('/hotels/toggle-status/:id', async (req, res) => {
 });
 
 // Ruta para mostrar el formulario de edición de un hotel
-router.get('/hotels/:id/edit', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const [hotelResult] = await pool.query('SELECT * FROM hoteles WHERE id = ?', [id]);
-
-        if (hotelResult.length === 0) {
-            req.flash('error', 'Hotel no encontrado.');
-            return res.redirect('/admin/hotels');
-        }
-
-        const [habitacionesResult] = await pool.query('SELECT * FROM habitaciones WHERE hotel_id = ? ORDER BY id ASC', [id]);
-        
-        const hotel = hotelResult[0];
-        hotel.habitaciones = habitacionesResult;
-
-        res.render('admin/hotels/edit', {
-            hotel,
-            user: req.session.user
-        });
-    } catch (error) {
-        console.error("Error al cargar la página de edición del hotel:", error);
-        res.status(500).send("Error interno del servidor");
-    }
-});
+router.get('/hotels/:id/edit', hotelController.edit);
 
 module.exports = router; 

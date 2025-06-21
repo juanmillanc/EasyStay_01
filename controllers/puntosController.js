@@ -213,6 +213,43 @@ const puntosController = {
             console.error('Error al obtener los cupones del usuario:', error);
             throw error;
         }
+    },
+
+    // Agregar puntos manualmente por un administrador
+    agregarPuntosManualmente: async (usuarioId, puntos, descripcion) => {
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // Verificar que el usuario exista en la tabla de puntos
+            const [puntosUsuarios] = await connection.query('SELECT * FROM puntos_usuario WHERE usuario_id = ?', [usuarioId]);
+            if (puntosUsuarios.length === 0) {
+                 // Si no existe, lo creamos con nivel inicial 1
+                await connection.query('INSERT INTO puntos_usuario (usuario_id, nivel_id, puntos_disponibles, puntos_totales) VALUES (?, 1, 0, 0)', [usuarioId]);
+            }
+
+            // Insertar en el historial
+            await connection.query(
+                'INSERT INTO historial_puntos (usuario_id, tipo_operacion, puntos, descripcion, fecha) VALUES (?, ?, ?, ?, NOW())',
+                [usuarioId, 'manual', puntos, descripcion]
+            );
+
+            // Actualizar el total de puntos del usuario
+            await connection.query(
+                'UPDATE puntos_usuario SET puntos_disponibles = puntos_disponibles + ?, puntos_totales = puntos_totales + ? WHERE usuario_id = ?',
+                [puntos, puntos, usuarioId]
+            );
+            
+            await connection.commit();
+            return { success: true };
+
+        } catch (error) {
+            await connection.rollback();
+            console.error("Error al agregar puntos manualmente:", error.message);
+            throw error; 
+        } finally {
+            connection.release();
+        }
     }
 };
 
