@@ -1,0 +1,1 @@
+ALTER TABLE historial_puntos MODIFY COLUMN tipo_operacion ENUM('ganado', 'redimido', 'deducido', 'manual', 'agregado') NOT NULL; 
