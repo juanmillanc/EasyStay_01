@@ -248,15 +248,57 @@ router.get('/restaurantes/:id', async (req, res) => {
             return res.status(404).send('Restaurante no encontrado');
         }
         
-        res.render('restaurants/detail', {
+        // Si el usuario no está logueado, lo mandamos a la vista pero sin user
+        if (!req.session.user) {
+             return res.render('reservar-restaurante', {
+                user: null,
+                restaurant: restaurant[0],
+                error: null,
+                success: null
+            });
+        }
+        
+        req.session.returnTo = req.originalUrl;
+
+        // Si está logueado, pasamos el user
+        res.render('reservar-restaurante', {
             user: req.session.user,
             restaurant: restaurant[0],
-            error: null,
+            error: req.flash('error'),
             success: req.flash('success')
         });
+
     } catch (error) {
-        console.error('Error al cargar detalle del restaurante:', error);
-        res.status(500).send('Error interno del servidor');
+        console.error(error);
+        res.status(500).send('Error en el servidor');
+    }
+});
+
+// Rutas genéricas al final
+router.get('/:page', (req, res) => {
+    const page = req.params.page;
+    const allowedPages = ['index', 'search', 'about', 'contact', 'perfil', 'editar-perfil'];
+    
+    // Evita que /:page maneje /restaurantes
+    if (page === 'restaurantes') {
+        return res.render('error', {
+            message: 'Página no encontrada',
+            user: req.session.user
+        });
+    }
+
+    if (allowedPages.includes(page)) {
+        res.render(page, {
+            user: req.session.user,
+            login: req.session.user ? true : false,
+            name: req.session.user ? req.session.user.name : '',
+            rol: req.session.user ? req.session.user.rol : ''
+        });
+    } else {
+        res.render('error', {
+            message: 'Página no encontrada',
+            user: req.session.user
+        });
     }
 });
 

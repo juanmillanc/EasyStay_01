@@ -251,36 +251,10 @@ router.get('/recompensas/edit/:id', async (req, res) => {
     }
 });
 
-// Ruta para cambiar el estado de una recompensa
-router.post('/recompensas/toggle-status/:id', async (req, res) => {
-    try {
-        const recompensaId = req.params.id;
-        const [recompensa] = await pool.query('SELECT * FROM recompensas WHERE id = ?', [recompensaId]);
-
-        if (recompensa.length === 0) {
-            req.flash('error', 'Recompensa no encontrada.');
-            return res.redirect('/admin/recompensas');
-        }
-
-        const currentStatus = recompensa[0].estado;
-        const newStatus = currentStatus === 'activo' ? 'inactivo' : 'activo';
-
-        await pool.query('UPDATE recompensas SET estado = ? WHERE id = ?', [newStatus, recompensaId]);
-        
-        req.flash('success', `El estado de la recompensa ha sido cambiado a ${newStatus}.`);
-        res.redirect('/admin/recompensas');
-
-    } catch (error) {
-        console.error('Error al cambiar el estado de la recompensa:', error);
-        req.flash('error', `Error al cambiar el estado: ${error.message}`);
-        res.redirect('/admin/recompensas');
-    }
-});
-
-// Ruta para guardar cambios en una recompensa
+// Ruta para manejar la actualización de la recompensa
 router.post('/recompensas/edit/:id', async (req, res) => {
+    const recompensaId = req.params.id; // Asegurarse de que esté definida
     try {
-        const recompensaId = req.params.id;
         const { nombre, descripcion, tipo, puntos_requeridos, valor_descuento, codigo, fecha_inicio, fecha_fin, stock, estado } = req.body;
 
         // Validaciones (similar a la adición)

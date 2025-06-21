@@ -28,230 +28,192 @@ const puntosController = {
                             WHEN hp.reserva_restaurante_id IS NOT NULL THEN 'Restaurante'
                             WHEN hp.recompensa_redimida_id IS NOT NULL THEN 'Recompensa'
                             ELSE 'Otro'
-                        END as tipo_reserva
+                        END as origen,
+                        h.nombre as nombre_hotel,
+                        rest.nombre as nombre_restaurante,
+                        r.nombre as nombre_recompensa,
+                        r_red.codigo as codigo_recompensa
                  FROM historial_puntos hp
+                 LEFT JOIN reservas_hotel rh ON hp.reserva_hotel_id = rh.id
+                 LEFT JOIN hoteles h ON rh.hotel_id = h.id
+                 LEFT JOIN reservas_restaurante rr ON hp.reserva_restaurante_id = rr.id
+                 LEFT JOIN restaurantes rest ON rr.restaurante_id = rest.id
+                 LEFT JOIN recompensas_redimidas r_red ON hp.recompensa_redimida_id = r_red.id
+                 LEFT JOIN recompensas r ON r_red.recompensa_id = r.id
                  WHERE hp.usuario_id = ? 
                  ORDER BY hp.fecha DESC`,
                 [usuarioId]
             );
             return historial;
         } catch (error) {
-            console.error('Error al obtener historial de puntos:', error);
+            console.error('Error al obtener el historial de puntos:', error);
             throw error;
         }
     },
 
-    // Agregar puntos al usuario
-    agregarPuntos: async (usuarioId, puntos, descripcion, reservaId = null, tipoReserva = 'hotel') => {
+    // Sumar puntos por reserva de hotel
+    sumarPuntosReservaHotel: async (usuarioId, reservaHotelId, montoTotal) => {
         const connection = await pool.getConnection();
         try {
             await connection.beginTransaction();
 
-            // Obtener puntos actuales del usuario
-            const [puntosUsuario] = await connection.query(
-                'SELECT * FROM puntos_usuario WHERE usuario_id = ?',
-                [usuarioId]
-            );
-
-            let puntosObj = puntosUsuario[0];
-            if (!puntosObj) {
-                // Si no existe, crear registro con nivel Bronce (id=1)
-                const [result] = await connection.query(
-                    'INSERT INTO puntos_usuario (usuario_id, nivel_id) VALUES (?, 1)',
-                    [usuarioId]
-                );
-                puntosObj = {
-                    id: result.insertId,
-                    usuario_id: usuarioId,
-                    nivel_id: 1,
-                    puntos_totales: 0,
-                    puntos_disponibles: 0
-                };
-            }
-
-            // Actualizar puntos
-            const nuevosPuntosTotales = puntosObj.puntos_totales + puntos;
-            const nuevosPuntosDisponibles = puntosObj.puntos_disponibles + puntos;
+            const [nivel] = await connection.query('SELECT nivel_id FROM puntos_usuario WHERE usuario_id = ?', [usuarioId]);
+            const [multiplicador] = await connection.query('SELECT multiplicador_puntos FROM niveles_usuario WHERE id = ?', [nivel[0].nivel_id]);
+            const puntosGanados = Math.floor(montoTotal * multiplicador[0].multiplicador_puntos);
 
             await connection.query(
-                `UPDATE puntos_usuario 
-                 SET puntos_totales = ?, puntos_disponibles = ?
-                 WHERE usuario_id = ?`,
-                [nuevosPuntosTotales, nuevosPuntosDisponibles, usuarioId]
+                'INSERT INTO historial_puntos (usuario_id, tipo_operacion, puntos, descripcion, reserva_hotel_id, fecha) VALUES (?, ?, ?, ?, ?, NOW())',
+                [usuarioId, 'ganado', puntosGanados, 'Reserva de hotel', reservaHotelId]
             );
-
-            // Registrar en historial
-            const historialData = {
-                usuario_id: usuarioId,
-                tipo_operacion: 'ganado',
-                puntos: puntos,
-                descripcion: descripcion,
-                fecha: new Date()
-            };
-
-            // Agregar el ID de reserva según el tipo
-            if (tipoReserva === 'hotel') {
-                historialData.reserva_hotel_id = reservaId;
-            } else if (tipoReserva === 'restaurante') {
-                historialData.reserva_restaurante_id = reservaId;
-            }
 
             await connection.query(
-                `INSERT INTO historial_puntos 
-                 (usuario_id, tipo_operacion, puntos, descripcion, fecha, 
-                  reserva_hotel_id, reserva_restaurante_id)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    historialData.usuario_id,
-                    historialData.tipo_operacion,
-                    historialData.puntos,
-                    historialData.descripcion,
-                    historialData.fecha,
-                    historialData.reserva_hotel_id || null,
-                    historialData.reserva_restaurante_id || null
-                ]
+                'UPDATE puntos_usuario SET puntos_disponibles = puntos_disponibles + ? WHERE usuario_id = ?',
+                [puntosGanados, usuarioId]
             );
-
-            // Verificar y actualizar nivel si es necesario
-            const [nivelActual] = await connection.query(
-                'SELECT * FROM niveles_usuario WHERE id = ?',
-                [puntosObj.nivel_id]
-            );
-
-            if (!nivelActual || nivelActual.length === 0) {
-                throw new Error('Nivel actual no encontrado');
-            }
-
-            const [siguienteNivel] = await connection.query(
-                'SELECT * FROM niveles_usuario WHERE puntos_requeridos > ? ORDER BY puntos_requeridos ASC LIMIT 1',
-                [nuevosPuntosTotales]
-            );
-
-            if (siguienteNivel && siguienteNivel.length > 0 && nuevosPuntosTotales >= siguienteNivel[0].puntos_requeridos) {
-                await connection.query(
-                    'UPDATE puntos_usuario SET nivel_id = ? WHERE usuario_id = ?',
-                    [siguienteNivel[0].id, usuarioId]
-                );
-            }
 
             await connection.commit();
-            return true;
         } catch (error) {
             await connection.rollback();
-            console.error('Error al agregar puntos:', error);
+            console.error('Error al sumar puntos por reserva de hotel:', error);
+            throw error;
+        } finally {
+            connection.release();
+        }
+    },
+    
+    // Sumar puntos por reserva de restaurante
+    sumarPuntosReservaRestaurante: async (usuarioId, reservaRestauranteId, montoTotal) => {
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const [nivel] = await connection.query('SELECT nivel_id FROM puntos_usuario WHERE usuario_id = ?', [usuarioId]);
+            const [multiplicador] = await connection.query('SELECT multiplicador_puntos FROM niveles_usuario WHERE id = ?', [nivel[0].nivel_id]);
+            const puntosGanados = Math.floor(montoTotal * multiplicador[0].multiplicador_puntos);
+
+            await connection.query(
+                'INSERT INTO historial_puntos (usuario_id, tipo_operacion, puntos, descripcion, reserva_restaurante_id, fecha) VALUES (?, ?, ?, ?, ?, NOW())',
+                [usuarioId, 'ganado', puntosGanados, 'Reserva de restaurante', reservaRestauranteId]
+            );
+
+            await connection.query(
+                'UPDATE puntos_usuario SET puntos_disponibles = puntos_disponibles + ? WHERE usuario_id = ?',
+                [puntosGanados, usuarioId]
+            );
+
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            console.error('Error al sumar puntos por reserva de restaurante:', error);
             throw error;
         } finally {
             connection.release();
         }
     },
 
-    // Redimir puntos
-    redimirPuntos: async (usuarioId, puntos, descripcion, recompensaId = null) => {
-        const connection = await pool.getConnection();
-        try {
-            await connection.beginTransaction();
-
-            // Verificar puntos disponibles
-            const [puntosUsuario] = await connection.query(
-                'SELECT puntos_disponibles FROM puntos_usuario WHERE usuario_id = ?',
-                [usuarioId]
-            );
-
-            if (!puntosUsuario[0] || puntosUsuario[0].puntos_disponibles < puntos) {
-                throw new Error('Puntos insuficientes');
-            }
-
-            // Actualizar puntos disponibles
-            await connection.query(
-                `UPDATE puntos_usuario 
-                 SET puntos_disponibles = puntos_disponibles - ?
-                 WHERE usuario_id = ?`,
-                [puntos, usuarioId]
-            );
-
-            // Registrar en historial
-            await connection.query(
-                `INSERT INTO historial_puntos 
-                 (usuario_id, tipo_operacion, puntos, descripcion, recompensa_redimida_id)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [usuarioId, 'redimido', puntos, descripcion, recompensaId]
-            );
-
-            await connection.commit();
-            return true;
-        } catch (error) {
-            await connection.rollback();
-            console.error('Error al redimir puntos:', error);
-            throw error;
-        } finally {
-            connection.release();
-        }
-    },
-
-    // Deducir puntos al cancelar una reserva
+    // Deducir puntos (ej. cancelación)
     deducirPuntosReserva: async (usuarioId, reservaId, tipoReserva) => {
         const connection = await pool.getConnection();
         try {
             await connection.beginTransaction();
 
-            // 1. Encontrar el registro de historial_puntos donde se ganaron puntos por esta reserva
-            const reservaIdColumn = tipoReserva === 'hotel' ? 'reserva_hotel_id' : 'reserva_restaurante_id';
             const [historial] = await connection.query(
-                `SELECT * FROM historial_puntos 
-                 WHERE usuario_id = ? AND ${reservaIdColumn} = ? AND tipo_operacion = 'ganado'`,
+                `SELECT puntos FROM historial_puntos WHERE usuario_id = ? AND ${tipoReserva === 'hotel' ? 'reserva_hotel_id' : 'reserva_restaurante_id'} = ? AND tipo_operacion = 'ganado'`,
                 [usuarioId, reservaId]
             );
 
-            if (historial.length === 0) {
-                console.warn(`No se encontraron puntos ganados para la reserva ${tipoReserva} ${reservaId} del usuario ${usuarioId}. No se deducen puntos.`);
-                await connection.rollback(); // Aunque no haya puntos, revertir por si acaso
-                return; // No hay puntos que deducir
-            }
-
-            const puntosAGanadosOriginalmente = historial[0].puntos;
-
-            // 2. Deducir los puntos del usuario
-            const [puntosUsuario] = await connection.query(
-                'SELECT puntos_totales, puntos_disponibles FROM puntos_usuario WHERE usuario_id = ?',
-                [usuarioId]
-            );
-
-            if (puntosUsuario.length > 0) {
-                const nuevosPuntosTotales = Math.max(0, puntosUsuario[0].puntos_totales - puntosAGanadosOriginalmente);
-                // Deducir de puntos_disponibles, pero no dejarlo negativo por debajo de 0 (aunque puntos_totales si puede ser mayor que disponibles si se redimen)
-                const nuevosPuntosDisponibles = Math.max(0, puntosUsuario[0].puntos_disponibles - puntosAGanadosOriginalmente);
-
+            if (historial.length > 0) {
+                const puntosADeducir = historial[0].puntos;
                 await connection.query(
-                    `UPDATE puntos_usuario 
-                     SET puntos_totales = ?, puntos_disponibles = ?
-                     WHERE usuario_id = ?`,
-                    [nuevosPuntosTotales, nuevosPuntosDisponibles, usuarioId]
+                    'UPDATE puntos_usuario SET puntos_disponibles = puntos_disponibles - ? WHERE usuario_id = ?',
+                    [puntosADeducir, usuarioId]
+                );
+                await connection.query(
+                    'INSERT INTO historial_puntos (usuario_id, tipo_operacion, puntos, descripcion, fecha) VALUES (?, ?, ?, ?, NOW())',
+                    [usuarioId, 'deducido', puntosADeducir, `Cancelación de reserva de ${tipoReserva}`]
                 );
             }
 
-            // 3. Registrar la deducción en el historial
-             await connection.query(
-                `INSERT INTO historial_puntos 
-                 (usuario_id, tipo_operacion, puntos, descripcion, fecha, 
-                  ${reservaIdColumn}) 
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [usuarioId, 'deducido', -puntosAGanadosOriginalmente, `Puntos deducidos por cancelación de reserva ${tipoReserva} #${reservaId}`, new Date(), reservaId]
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            console.error('Error al deducir puntos por cancelación:', error);
+            throw error;
+        } finally {
+            connection.release();
+        }
+    },
+    
+    // Canjear una recompensa
+    canjearRecompensa: async (usuarioId, recompensaId) => {
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const [recompensas] = await connection.query('SELECT * FROM recompensas WHERE id = ?', [recompensaId]);
+            if (recompensas.length === 0) throw new Error('La recompensa no existe.');
+            const recompensa = recompensas[0];
+
+            const [puntosUsuarios] = await connection.query('SELECT * FROM puntos_usuario WHERE usuario_id = ?', [usuarioId]);
+            if (puntosUsuarios.length === 0) throw new Error('Usuario sin registro de puntos.');
+            const puntosUsuario = puntosUsuarios[0];
+
+            if (puntosUsuario.puntos_disponibles < recompensa.puntos_requeridos) {
+                throw new Error('Puntos insuficientes para canjear esta recompensa.');
+            }
+
+            const codigo = `EASY-${Date.now().toString().slice(-6)}-${usuarioId}`;
+
+            const [result] = await connection.query(
+                'INSERT INTO recompensas_redimidas (usuario_id, recompensa_id, codigo, puntos_usados) VALUES (?, ?, ?, ?)',
+                [usuarioId, recompensaId, codigo, recompensa.puntos_requeridos]
+            );
+            const nuevaRecompensaRedimidaId = result.insertId;
+
+            await connection.query(
+                'INSERT INTO historial_puntos (usuario_id, tipo_operacion, puntos, descripcion, recompensa_redimida_id, fecha) VALUES (?, ?, ?, ?, ?, NOW())',
+                [usuarioId, 'redimido', recompensa.puntos_requeridos, `Canje de recompensa: ${recompensa.nombre}`, nuevaRecompensaRedimidaId]
             );
 
-            // Nota: La actualización de nivel hacia abajo no se implementa aquí por simplicidad, pero podría ser necesaria.
-
+            await connection.query(
+                'UPDATE puntos_usuario SET puntos_disponibles = puntos_disponibles - ? WHERE usuario_id = ?',
+                [recompensa.puntos_requeridos, usuarioId]
+            );
+            
             await connection.commit();
-            console.log(`Puntos deducidos (${puntosAGanadosOriginalmente}) para reserva ${tipoReserva} ${reservaId} del usuario ${usuarioId}.`);
+            return { success: true, codigo: codigo };
 
         } catch (error) {
             await connection.rollback();
-            console.error(`Error al deducir puntos por cancelación de reserva ${tipoReserva} ${reservaId}:`, error);
-            // Propagar el error si es crítico para que la ruta que llamó pueda manejarlo
+            console.error("Error en la lógica de canje:", error.message);
             throw error; 
         } finally {
             connection.release();
         }
+    },
+    
+    getCuponesUsuario: async (usuarioId) => {
+        try {
+            const [cupones] = await pool.query(
+                `SELECT 
+                    rr.codigo, 
+                    rr.fecha_canje, 
+                    rr.estado, 
+                    r.nombre, 
+                    r.descripcion,
+                    DATE_ADD(rr.fecha_canje, INTERVAL 30 DAY) as fecha_expiracion
+                 FROM recompensas_redimidas rr
+                 JOIN recompensas r ON rr.recompensa_id = r.id
+                 WHERE rr.usuario_id = ?
+                 ORDER BY rr.fecha_canje DESC`,
+                [usuarioId]
+            );
+            return cupones;
+        } catch (error) {
+            console.error('Error al obtener los cupones del usuario:', error);
+            throw error;
+        }
     }
 };
 
-module.exports = puntosController; 
+module.exports = puntosController;

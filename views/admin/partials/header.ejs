@@ -1,32 +1,27 @@
 <header class="admin-header">
     <div class="logo">
-        <a href="/admin/dashboard">
-            <img src="/img/6.png" alt="EasyStay" />
-            <span>Admin</span>
-        </a>
+        <i class="fas fa-user-shield"></i>
+        EasyStay Admin
     </div>
     <nav class="admin-nav">
-        <a href="/admin/dashboard" class="<%= locals.path === '/admin/dashboard' ? 'active' : '' %>">
+        <a href="/admin/dashboard" class="<%=- (typeof(activeMenu) !== 'undefined' && activeMenu === 'dashboard') ? 'active' : '' %>">
             <i class="fas fa-tachometer-alt"></i> Dashboard
         </a>
-        <a href="/admin/hotels" class="<%= locals.path === '/admin/hotels' ? 'active' : '' %>">
-            <i class="fas fa-hotel"></i> Hoteles
-        </a>
-        <a href="/admin/users" class="<%= locals.path === '/admin/users' ? 'active' : '' %>">
+        <a href="/admin/users" class="<%= (typeof(activeMenu) !== 'undefined' && activeMenu === 'users') ? 'active' : '' %>">
             <i class="fas fa-users"></i> Usuarios
         </a>
-        <a href="/admin/restaurants" class="<%= locals.path === '/admin/restaurants' ? 'active' : '' %>">
+        <a href="/admin/hotels" class="<%= (typeof(activeMenu) !== 'undefined' && activeMenu === 'hotels') ? 'active' : '' %>">
+            <i class="fas fa-hotel"></i> Hoteles
+        </a>
+        <a href="/admin/restaurants" class="<%= (typeof(activeMenu) !== 'undefined' && activeMenu === 'restaurants') ? 'active' : '' %>">
             <i class="fas fa-utensils"></i> Restaurantes
         </a>
-        <a href="/admin/puntos" class="<%= locals.path === '/admin/puntos' ? 'active' : '' %>">
+        <a href="/admin/puntos" class="<%= (typeof(activeMenu) !== 'undefined' && activeMenu === 'puntos') ? 'active' : '' %>">
             <i class="fas fa-star"></i> Puntos
         </a>
     </nav>
-    <div class="admin-user">
-        <i class="fas fa-user-shield"></i>
-        <span><%= locals.user ? locals.user.nombre : '' %> <small>(<%= locals.user ? locals.user.rol : '' %>)</small></span>
-        <a href="/logout" class="logout-btn" title="Cerrar sesión">
-            <i class="fas fa-sign-out-alt"></i>
-        </a>
+    <div class="admin-user-info">
+        <span><i class="fas fa-user-circle"></i> <%= user.nombre %></span>
+        <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
     </div>
 </header> 
