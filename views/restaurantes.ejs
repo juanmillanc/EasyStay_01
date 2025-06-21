@@ -195,7 +195,7 @@
                     <% restaurantes.forEach(function(restaurant) { %>
                         <div class="hotel-card">
                             <div class="hotel-image-container">
-                                <img src="<%= restaurant.imagen_principal || '/img/restaurante.jpg' %>" 
+                                <img src="<%= restaurant.imagen || '/img/restaurante.jpg' %>" 
                                      alt="<%= restaurant.nombre %>" 
                                      class="hotel-image">
                                 <div class="hotel-rating">
@@ -231,6 +231,7 @@
                                     </a>
                                 </div>
                             </div>
+                            <p style="font-size:10px"><%= restaurant.imagen_principal %></p>
                         </div>
                     <% }); %>
                 <% } else { %>

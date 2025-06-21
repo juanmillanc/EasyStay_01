@@ -248,9 +248,6 @@
         #comensales-btns {
             display: flex;
             gap: 8px;
-            align-items: center;
-            margin-top: 8px;
-            flex-wrap: wrap;
         }
         .comensal-btn,
         .input-comensal-btn {
@@ -502,6 +499,142 @@
         .auth-warning-container-new .boton-reservar {
             width: 100%;
         }
+
+        .mesas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .mesa-disponible-item {
+            border: 1.5px solid #ffd0b0;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff8f3;
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+        .mesa-disponible-item:hover {
+            border-color: #ff512f;
+            background: #ffe5d0;
+        }
+        .mesa-disponible-item.active {
+            background: linear-gradient(90deg,#ff512f,#f09819);
+            color: #fff;
+            border-color: #ff512f;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .mesa-disponible-item i {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+        .alternativa-horario {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .alternativa-horario h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .custom-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid #ffd0b0;
+            border-radius: 8px;
+            margin-top: 5px;
+            font-size: 1em;
+            background: #fff8f3;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23e74c3c' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+
+        .mesas-scroll-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 10px 0;
+            scrollbar-width: thin;
+            scrollbar-color: #ff512f #f9f9f9;
+        }
+
+        .mesas-scroll-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .mesas-scroll-container::-webkit-scrollbar-track {
+            background: #f9f9f9;
+        }
+        .mesas-scroll-container::-webkit-scrollbar-thumb {
+            background-color: #ffd0b0;
+            border-radius: 6px;
+        }
+        .mesas-scroll-container::-webkit-scrollbar-thumb:hover {
+            background-color: #ff512f;
+        }
+
+        .mesa-item-btn {
+            flex: 0 0 auto;
+            background: #fff8f3;
+            border: 1.5px solid #ffd0b0;
+            color: #e74c3c;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .mesa-item-btn:hover {
+            border-color: #ff512f;
+            background: #ffe5d0;
+        }
+        .mesa-item-btn.active {
+            background: linear-gradient(90deg,#ff512f,#f09819);
+            color: #fff;
+            border-color: #ff512f;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .mesa-item-btn .capacidad {
+            font-size: 0.8em;
+            display: block;
+            opacity: 0.8;
+        }
+
+        .alternativas-horarios-btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .btn-horario-alternativo {
+            background: #fff8f3;
+            border: 1.5px solid #ffd0b0;
+            color: #e74c3c;
+            border-radius: 7px;
+            padding: 7px 18px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-horario-alternativo:hover {
+            border-color: #ff512f;
+            background: #ffe5d0;
+        }
     </style>
 </head>
 <body>
@@ -510,7 +643,7 @@
     </header>
     <main class="restaurant-detail-container">
         <div class="restaurant-detail-card">
-            <img src="<%= restaurant.imagen_principal || '/img/default-restaurant.jpg' %>" alt="<%= restaurant.nombre %>" class="restaurant-detail-image">
+            <img src="<%= restaurant.imagen || '/img/default-restaurant.jpg' %>" alt="<%= restaurant.nombre %>" class="restaurant-detail-image">
             <div class="restaurant-detail-info">
                 <a href="/restaurantes" class="back-link-top"><i class="fas fa-arrow-left"></i> Volver al listado</a>
                 <h1><%= restaurant.nombre %></h1>
@@ -548,13 +681,38 @@
                     </div>
                 <% } %>
             </div>
+            <!-- Sección de reseñas de clientes -->
+            <div class="restaurant-reviews-section" style="margin:32px 0 0 0; padding:24px 18px; background:#f9f9f9; border-radius:12px;">
+                <h2 style="color:#e67e22;"><i class="fas fa-star"></i> Reseñas de clientes</h2>
+                <% if (reviews && reviews.length > 0) { %>
+                    <% reviews.forEach(r => { %>
+                        <div class="review-card" style="margin-bottom:18px; padding:12px 0; border-bottom:1px solid #eee;">
+                            <div style="font-weight:bold; color:#e74c3c; font-size:1.1em;">
+                                <%= r.nombre %>
+                                <span style="margin-left:10px;">
+                                    <% for(let i=0; i<r.puntuacion; i++) { %>
+                                        <i class="fas fa-star" style="color:#FFD700"></i>
+                                    <% } %>
+                                    <% for(let i=r.puntuacion; i<5; i++) { %>
+                                        <i class="far fa-star" style="color:#FFD700"></i>
+                                    <% } %>
+                                </span>
+                            </div>
+                            <div style="font-size:0.98em;color:#444;margin:6px 0 4px 0;"><%= r.comentario %></div>
+                            <div style="font-size:0.85em;color:#888;"><%= new Date(r.fecha_creacion).toLocaleString('es-ES') %></div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div style="color:#888;">Este restaurante aún no tiene reseñas.</div>
+                <% } %>
+            </div>
         </div>
         <!-- Modal de reserva -->
         <% if (user) { %>
             <div id="modal-reserva-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.35); z-index:1000; backdrop-filter:blur(2px); justify-content:center; align-items:center;">
                 <div id="modal-reserva" style="background:#fff; border-radius:12px; max-width:420px; width:90vw; padding:24px 18px 18px 18px; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
                     <button id="cerrar-modal-reserva" style="position:absolute; top:10px; right:14px; background:none; border:none; font-size:1.5em; color:#888; cursor:pointer;">&times;</button>
-                    <form id="reserva-form">
+                    <form id="reserva-form" action="/restaurantes/<%= restaurant.id %>/reservar" method="POST">
                         <div class="col-form">
                             <label>Fecha y hora:</label>
                             <input type="date" id="fecha" name="fecha" required>
@@ -579,10 +737,17 @@
                                     <input type="number" id="input-comensales" min="1" max="20" value="6" aria-label="Número de comensales">
                                 </div>
                             </div>
+                            <div class="form-row-full">
                             <input type="hidden" id="num_comensales" name="num_comensales" value="6">
                             <label>LAS MESAS</label>
-                            <div id="mesas-btns" style="display: none;"></div>
+                                <div id="mesas-container">
+                                    <!-- Dropdown or alternatives will be rendered here -->
+                                </div>
+                                <div id="no-mesas-disponibles" style="display: none; color: #e74c3c; margin-top: 15px;">
+                                    No hay mesas disponibles para los criterios seleccionados.
+                                </div>
                             <input type="hidden" id="mesa_seleccionada" name="mesa_seleccionada">
+                            </div>
                         </div>
                         <div class="col-form">
                             <input type="hidden" id="preferencia" name="preferencia" value="menu">
@@ -603,318 +768,182 @@
         <% } %>
     </main>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', () => {
         const restauranteId = <%- JSON.stringify(restaurant.id) %>;
-        const mesasBtns = document.getElementById('mesas-btns');
-        const mostrarFormBtn = document.getElementById('mostrar-form-reserva');
-        const modalReservaOverlay = document.getElementById('modal-reserva-overlay');
-        const inputComensales = document.getElementById('input-comensales');
+        const modalOverlay = document.getElementById('modal-reserva-overlay');
+        const modal = document.getElementById('modal-reserva');
+        const abrirModalBtn = document.getElementById('mostrar-form-reserva');
+        const cerrarModalBtn = document.getElementById('cerrar-modal-reserva');
+        
         const fechaInput = document.getElementById('fecha');
         const horaInput = document.getElementById('hora');
-        let mesasDisponibles = [];
-        let cantidadComensales = 6; // Default value
-        const reservaForm = document.getElementById('reserva-form');
+        const comensalesBtnsContainer = document.getElementById('comensales-btns');
+        const numComensalesInput = document.getElementById('input-comensales');
 
-        // Establecer la fecha mínima del input de fecha a hoy
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = (today.getMonth() + 1).toString().padStart(2, '0');
-        const day = today.getDate().toString().padStart(2, '0');
-        fechaInput.min = `${year}-${month}-${day}`;
+        const mesasContainer = document.getElementById('mesas-container');
+        const noMesasMsg = document.getElementById('no-mesas-disponibles');
+        const loadingEl = document.getElementById('loading-mesas');
 
-        // Función para validar si la fecha y hora son futuras
-        function isFutureDateTime(fecha, hora) {
-            const selectedDateTime = new Date(`${fecha}T${hora}`);
-            return selectedDateTime > new Date();
-        }
+        const hoy = new Date();
+        const fechaHoy = hoy.toISOString().split('T')[0];
+        fechaInput.value = fechaHoy;
+        fechaInput.min = fechaHoy;
 
-        // Function to load and render available tables
-        function cargarMesasDisponibles() {
+        const poblarHorarios = () => {
+            horaInput.innerHTML = '';
+            for(let i = 12; i <= 22; i += 2) {
+                const hora = `${i.toString().padStart(2, '0')}:00`;
+                const option = new Option(hora, hora);
+                horaInput.add(option);
+            }
+        };
+
+        const checkAvailability = async () => {
             const fecha = fechaInput.value;
             const hora = horaInput.value;
-            const numComensales = parseInt(document.getElementById('num_comensales').value);
+            const numComensales = document.getElementById('num_comensales').value || '2';
 
-            // Ocultar sección de mesas por defecto y limpiar selección
-            mesasBtns.style.display = 'none';
-            document.getElementById('mesa_seleccionada').value = '';
+            mesasContainer.innerHTML = '';
+            noMesasMsg.style.display = 'none';
+            if(loadingEl) loadingEl.style.display = 'block';
 
-            // Validar que la fecha y hora no sean pasadas
-            if (fecha && hora && !isFutureDateTime(fecha, hora)) {
-                mesasBtns.innerHTML = '<p style="color:#e74c3c; padding:10px;">No se pueden realizar reservas en el pasado. Por favor, selecciona una fecha y hora futuras.</p>';
-                mesasBtns.style.display = 'block';
-                return;
-            }
-
-            // Solo buscar mesas si fecha, hora y número de comensales son válidos
-            if (!fecha || !hora || !numComensales || numComensales < 1) {
-                return;
-            }
-
-            fetch(`/api/mesas?restaurante_id=${restauranteId}&fecha=${fecha}&hora=${hora}&num_comensales=${numComensales}`)
-                .then(res => res.json())
-                .then(data => {
-                    console.log('Respuesta completa de la API /api/mesas (sin filtrar por comensales en cliente):', data.mesas);
-
-                    if (data.success && data.mesas && data.mesas.length > 0) {
-                        // 1. Intentar filtrar por capacidad exacta
-                        let mesasFiltradas = data.mesas.filter(mesa => 
-                            parseInt(mesa.capacidad) === numComensales
-                        );
-                        
-                        // 2. Si no hay mesas con capacidad exacta, buscar en el rango de +2
-                        if (mesasFiltradas.length === 0) {
-                            mesasFiltradas = data.mesas.filter(mesa => 
-                                parseInt(mesa.capacidad) > numComensales && 
-                                parseInt(mesa.capacidad) <= numComensales + 2
-                            );
-                        }
-                        
-                        if (mesasFiltradas.length > 0) {
-                            mesasDisponibles = mesasFiltradas;
-                            renderMesasBtns(mesasFiltradas);
-                            mesasBtns.style.display = 'flex';
-                        } else {
-                            // Si no hay mesas ni exactas ni en el rango, buscar horarios alternativos
-                            buscarHorariosAlternativos();
-                        }
-                    } else {
-                        mesasDisponibles = [];
-                        buscarHorariosAlternativos();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al cargar mesas disponibles:', error);
-                    mesasBtns.innerHTML = '<p style="color:#e74c3c; padding:10px;">Error al cargar las mesas disponibles.</p>';
-                    mesasBtns.style.display = 'block';
-                });
-        }
-
-        // Función auxiliar para buscar horarios y fechas alternativas
-        async function buscarHorariosAlternativos() {
-            const fecha = fechaInput.value;
-            const hora = horaInput.value;
-            const numComensales = parseInt(document.getElementById('num_comensales').value);
-            
-            const horasRango = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
-            
-            let sugerenciasEncontradas = [];
-
-            // 1. Buscar en la misma fecha (horarios alternativos)
-            const promisesDiaActual = horasRango.map(horaRango =>
-                fetch(`/api/mesas?restaurante_id=${restauranteId}&fecha=${fecha}&hora=${horaRango}&num_comensales=${numComensales}`).then(res => res.json())
-            );
-
-            const resultsDiaActual = await Promise.all(promisesDiaActual);
-            resultsDiaActual.forEach((res, index) => {
-                const horaRango = horasRango[index];
-                if (res.success && res.mesas && res.mesas.length > 0) {
-                    const mesasDisponiblesEnHora = res.mesas.filter(mesa => 
-                        parseInt(mesa.capacidad) === numComensales || 
-                        (parseInt(mesa.capacidad) > numComensales && parseInt(mesa.capacidad) <= numComensales + 2)
-                    );
-                    if (mesasDisponiblesEnHora.length > 0 && horaRango !== hora) {
-                        sugerenciasEncontradas.push({ fecha: fecha, hora: horaRango });
-                    }
-                }
-            });
-
-            // 2. Si no hay sugerencias en el día actual, buscar en los próximos 3 días
-            if (sugerenciasEncontradas.length === 0) {
-                for (let i = 1; i <= 3; i++) { // Buscar en los próximos 3 días
-                    const nextDate = new Date(fechaInput.value);
-                    nextDate.setDate(nextDate.getDate() + i);
-                    const nextDateFormatted = nextDate.toISOString().split('T')[0];
-
-                    const promisesNextDay = horasRango.map(horaRango =>
-                        fetch(`/api/mesas?restaurante_id=${restauranteId}&fecha=${nextDateFormatted}&hora=${horaRango}&num_comensales=${numComensales}`).then(res => res.json())
-                    );
-
-                    const resultsNextDay = await Promise.all(promisesNextDay);
-                    resultsNextDay.forEach((res, index) => {
-                        const horaRango = horasRango[index];
-                        if (res.success && res.mesas && res.mesas.length > 0) {
-                            const mesasDisponiblesEnHora = res.mesas.filter(mesa => 
-                                parseInt(mesa.capacidad) === numComensales || 
-                                (parseInt(mesa.capacidad) > numComensales && parseInt(mesa.capacidad) <= numComensales + 2)
-                            );
-                            if (mesasDisponiblesEnHora.length > 0) { // No excluimos la hora si ya la teníamos, solo buscamos disponibilidad
-                                sugerenciasEncontradas.push({ fecha: nextDateFormatted, hora: horaRango });
-                            }
-                        }
-                    });
-                    // Si encontramos algo, salimos para no saturar con demasiadas sugerencias
-                    if (sugerenciasEncontradas.length > 0) break;
-                }
-            }
-
-            if (sugerenciasEncontradas.length > 0) {
-                mesasBtns.innerHTML = `
-                    <div style="color:#e74c3c; padding:10px; margin-bottom:10px;">
-                        No hay mesas disponibles para ${numComensales} comensales en el horario seleccionado (${fecha} ${hora}).
-                    </div>
-                    <div style="color:#2c3e50; padding:10px;">
-                        Horarios y Fechas alternativas disponibles:
-                        <div style="margin-top:10px;">
-                            ${sugerenciasEncontradas.map(s => {
-                                const displayDate = new Date(s.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
-                                return `<button type="button" class="mesa-form-btn" onclick="seleccionarFechaHoraAlternativa('${s.fecha}', '${s.hora}')">
-                                            ${displayDate} ${s.hora}
-                                        </button>`;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            } else {
-                mesasBtns.innerHTML = `<p style="color:#e74c3c; padding:10px;">No hay mesas disponibles para ${numComensales} comensales en ningún horario ni en los próximos días.</p>`;
-            }
-            mesasBtns.style.display = 'block';
-        }
-
-        // Function to render table buttons
-        function renderMesasBtns(mesas) {
-            mesasBtns.innerHTML = '';
-            mesas.forEach(mesa => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'mesa-form-btn';
-                btn.dataset.id = mesa.id;
-                btn.dataset.capacidad = mesa.capacidad;
-
-                btn.innerHTML = `
-                    <span class="mesa-numero">Mesa #${mesa.numero_mesa}</span>
-                    <span class="mesa-capacidad">
-                        <i class="fas fa-users"></i>
-                        Para ${mesa.capacidad} personas
-                    </span>
-                `;
-
-                btn.onclick = function() {
-                    document.querySelectorAll('.mesa-form-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    document.getElementById('mesa_seleccionada').value = mesa.id;
-                };
-                mesasBtns.appendChild(btn);
-            });
-        }
-
-        // Event listeners for date, time, and comensales changes
-        fechaInput.addEventListener('change', cargarMesasDisponibles);
-        horaInput.addEventListener('change', cargarMesasDisponibles);
-
-        document.querySelectorAll('.comensal-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Remove active class from all buttons
-                document.querySelectorAll('.comensal-btn').forEach(b => b.classList.remove('active'));
-                document.querySelector('.input-comensal-btn').classList.remove('active');
+            try {
+                const res = await fetch(`/api/mesas?restaurante_id=${restauranteId}&fecha=${fecha}&hora=${hora}&num_comensales=${numComensales}`);
+                if (!res.ok) throw new Error('Error al buscar mesas');
                 
-                // Add active class to clicked button
-                this.classList.add('active');
+                const data = await res.json();
                 
-                cantidadComensales = parseInt(this.dataset.value) || 1;
-                document.getElementById('num_comensales').value = cantidadComensales;
-                cargarMesasDisponibles();
-            });
-        });
+                console.log('--- Datos recibidos del servidor ---');
+                console.log(JSON.stringify(data, null, 2));
+                console.log('------------------------------------');
 
-        inputComensales.addEventListener('input', function() {
-            // Remove active class from all buttons
-            document.querySelectorAll('.comensal-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.input-comensal-btn').classList.remove('active');
-            
-            // Add active class to input container
-            this.parentElement.classList.add('active');
-            
-            cantidadComensales = parseInt(this.value) || 1;
-            document.getElementById('num_comensales').value = cantidadComensales;
-            cargarMesasDisponibles();
-        });
+                if(loadingEl) loadingEl.style.display = 'none';
 
-        // Set default active state when modal opens
-        mostrarFormBtn.addEventListener('click', function() {
-            modalReservaOverlay.style.display = 'flex';
-            reservaForm.reset();
-            mesasBtns.innerHTML = '';
-            mesasBtns.style.display = 'none';
-            document.getElementById('mesa_seleccionada').value = '';
-            
-            // Set default comensales value and active state
-            if (!document.getElementById('num_comensales').value) {
-                document.getElementById('num_comensales').value = 6;
-                document.querySelectorAll('.comensal-btn').forEach(b => {
-                    if (parseInt(b.dataset.value) === 6) {
-                        b.classList.add('active');
-                    } else {
-                        b.classList.remove('active');
-                    }
-                });
-                if (inputComensales && parseInt(inputComensales.value) !== 6) {
-                    inputComensales.value = 6;
-                }
-            }
-        });
-
-        reservaForm.onsubmit = function(e) {
-            e.preventDefault();
-
-            const mesaSeleccionadaId = document.getElementById('mesa_seleccionada').value;
-
-            // Add validation for mesa selection
-            if (!mesaSeleccionadaId) {
-                alert('Por favor, selecciona una mesa disponible.');
-                return; // Stop form submission
-            }
-
-            const data = {
-                restaurante_id: restauranteId,
-                mesa_id: mesaSeleccionadaId, // Use the validated mesa ID
-                fecha: document.getElementById('fecha').value,
-                hora: document.getElementById('hora').value,
-                num_comensales: document.getElementById('num_comensales').value,
-                nombre_reclamo: reservaForm.nombre_reclamo.value,
-                observaciones: reservaForm.observaciones.value
-            };
-            fetch('/api/reservar-mesa', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(res => res.json())
-            .then(resp => {
-                if (resp.success) {
-                    alert('¡Reserva realizada correctamente!\nCódigo de reserva: ' + resp.codigo);
-                    modalReservaOverlay.style.display = 'none';
-                    reservaForm.reset();
-                } else if (resp.sugerencias && resp.sugerencias.length > 0) {
-                    alert('No hay disponibilidad para la hora seleccionada.\nHorarios sugeridos: ' + resp.sugerencias.join(', '));
+                if (data.mesas && data.mesas.length > 0) {
+                    displayMesas(data.mesas, mesasContainer, 'Mesas disponibles:');
+                } else if (data.alternativas && Object.keys(data.alternativas).length > 0) {
+                    displayAlternativas(data.alternativas, mesasContainer);
                 } else {
-                    alert(resp.message || 'Error al reservar');
+                    noMesasMsg.textContent = 'No hay mesas disponibles para los criterios seleccionados y no se encontraron alternativas. Por favor, intente con otra fecha.';
+                    noMesasMsg.style.display = 'block';
                 }
-            })
-            .catch(() => alert('Error al reservar'));
+
+            } catch (error) {
+                console.error('Error en checkAvailability:', error);
+                if(loadingEl) loadingEl.style.display = 'none';
+                noMesasMsg.style.display = 'block';
+                noMesasMsg.textContent = 'Error al verificar la disponibilidad. Intente de nuevo.';
+            }
         };
 
-        const cerrarModalBtn = document.getElementById('cerrar-modal-reserva');
-        if (cerrarModalBtn) {
-            cerrarModalBtn.addEventListener('click', function() {
-                document.getElementById('modal-reserva-overlay').style.display = 'none';
+        const displayMesas = (mesas, container, titulo) => {
+            let html = `<h3>${titulo}</h3>`;
+            html += `<div class="mesas-scroll-container">`;
+            mesas.forEach(mesa => {
+                html += `<button type="button" class="mesa-item-btn" onclick="selectMesa(this, '${mesa.id}')">
+                            Mesa ${mesa.numero_mesa}
+                            <span class="capacidad">(${mesa.capacidad} personas)</span>
+                         </button>`;
             });
-        }
-
-        const modalOverlay = document.getElementById('modal-reserva-overlay');
-        if (modalOverlay) {
-            modalOverlay.addEventListener('click', function(e) {
-                if (e.target === modalOverlay) {
-                    modalOverlay.style.display = 'none';
-                }
-            });
-        }
-
-        // Función para seleccionar fecha y horario alternativo (global para el onclick)
-        window.seleccionarFechaHoraAlternativa = function(fecha, hora) {
-            fechaInput.value = fecha;
-            horaInput.value = hora;
-            cargarMesasDisponibles();
+            html += `</div>`;
+            container.innerHTML = html;
         };
+
+        const displayAlternativas = (alternativas, container) => {
+            let html = `<p style="color: #e74c3c; font-weight: 500; margin-bottom: 15px;">No hay mesas disponibles para tu selección.</p>
+                        <p style="margin-top: 0; margin-bottom: 10px; font-weight: 500;">Aquí tienes algunas alternativas:</p>`;
+            
+            for (const fecha in alternativas) {
+                const fechaObj = new Date(fecha + 'T00:00:00');
+                const fechaFormateada = fechaObj.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' });
+                
+                html += `<div class="alternativa-horario"><h4>${fechaFormateada}</h4><div class="alternativas-horarios-btns">`;
+                
+                for (const hora in alternativas[fecha]) {
+                    html += `<button type="button" class="btn-horario-alternativo" data-fecha="${fecha}" data-hora="${hora}">${hora.substring(0, 5)}</button>`;
+                }
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+
+            document.querySelectorAll('.btn-horario-alternativo').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.getElementById('fecha').value = e.target.dataset.fecha;
+                    document.getElementById('hora').value = e.target.dataset.hora.substring(0, 5);
+                    checkAvailability();
+                });
+            });
+        };
+
+        window.selectMesa = (element, mesaId) => {
+            document.querySelectorAll('.mesa-item-btn.active').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('mesa_seleccionada').value = mesaId;
+        };
+        
+        const resetReservationForm = () => {
+            const hoy = new Date();
+            fechaInput.value = hoy.toISOString().split('T')[0];
+
+            horaInput.value = '';
+
+            comensalesBtnsContainer.querySelectorAll('.comensal-btn.active').forEach(btn => btn.classList.remove('active'));
+            const defaultDinerBtn = comensalesBtnsContainer.querySelector('.comensal-btn[data-value="2"]');
+            if (defaultDinerBtn) {
+                defaultDinerBtn.classList.add('active');
+            }
+            document.getElementById('num_comensales').value = '2';
+            if (numComensalesInput) {
+                numComensalesInput.value = '2';
+            }
+
+            mesasContainer.innerHTML = '';
+            noMesasMsg.style.display = 'none';
+
+            document.getElementById('mesa_seleccionada').value = '';
+            const form = document.getElementById('reserva-form');
+            form.querySelector('input[name="nombre_reclamo"]').value = '';
+            form.querySelector('input[name="observaciones"]').value = '';
+        };
+
+        abrirModalBtn.addEventListener('click', () => {
+            resetReservationForm();
+            modalOverlay.style.display = 'flex';
+            checkAvailability();
+        });
+
+        cerrarModalBtn.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+        });
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.style.display = 'none';
+            }
+        });
+
+        fechaInput.addEventListener('change', checkAvailability);
+        horaInput.addEventListener('change', checkAvailability);
+        
+        comensalesBtnsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('comensal-btn')) {
+                comensalesBtnsContainer.querySelectorAll('.comensal-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                if(numComensalesInput) numComensalesInput.value = e.target.dataset.value;
+                document.getElementById('num_comensales').value = e.target.dataset.value;
+                checkAvailability();
+            }
+        });
+
+        document.getElementById('reserva-form').addEventListener('submit', (e) => {
+            const mesaSeleccionada = document.getElementById('mesa_seleccionada').value;
+            if (!mesaSeleccionada) {
+                e.preventDefault();
+                alert('Por favor, seleccione una mesa antes de reservar.');
+            }
+        });
+
+        poblarHorarios();
     });
     </script>
 </body>

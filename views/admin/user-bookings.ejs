@@ -134,6 +134,41 @@
                 width: 100%;
             }
         }
+        .estado-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .estado-form select {
+            border-radius: 6px;
+            padding: 5px 10px;
+            border: 1.5px solid #007faf;
+            font-size: 1em;
+            background: #f7fafd;
+            color: #007faf;
+            font-weight: 600;
+            transition: border 0.2s;
+        }
+        .estado-form select:focus {
+            border: 1.5px solid #ffb300;
+            outline: none;
+        }
+        .estado-form button {
+            background: linear-gradient(90deg,#ffb300,#ff9800);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 16px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(255,179,0,0.08);
+        }
+        .estado-form button:hover {
+            background: linear-gradient(90deg,#ff9800,#ffb300);
+        }
     </style>
 </head>
 <body>
@@ -144,6 +179,12 @@
                 <i class="fas fa-arrow-left"></i> Volver a Usuarios
             </a>
             <h1>Reservas de <%= userName %></h1>
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="alert alert-success"><%= success %></div>
+            <% } %>
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger"><%= error %></div>
+            <% } %>
             
             <% function formatFecha(fecha, hora) {
                 if (!fecha) return '';
@@ -152,6 +193,15 @@
                 const mes = (d.getMonth() + 1).toString().padStart(2, '0');
                 const anio = d.getFullYear();
                 return `${anio}-${mes}-${dia} ${hora}`;
+            } %>
+
+            <% function formatFechaCorta(fecha) {
+                if (!fecha) return '';
+                const d = new Date(fecha);
+                const dia = d.getDate().toString().padStart(2, '0');
+                const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+                const anio = d.getFullYear();
+                return `${dia}/${mes}/${anio}`;
             } %>
 
             <div class="reserva-section">
@@ -188,17 +238,29 @@
                     <ul class="reserva-list">
                         <% restaurantBookings.forEach(r => { %>
                             <li class="reserva-card">
-                                <div><strong>Restaurante ID:</strong> <%= r.restaurante_id %></div>
-                                <div><strong>Fecha:</strong> <span class="fecha"><%= r.fecha %></span></div>
+                                <div><strong>Restaurante:</strong> <%= r.restaurante_nombre %></div>
+                                <div><strong>Fecha:</strong> <span class="fecha"><%= formatFechaCorta(r.fecha) %></span></div>
                                 <div><strong>Hora:</strong> <%= r.hora %></div>
                                 <div><strong>Personas:</strong> <%= r.num_personas %></div>
-                                <div><strong>Mesa:</strong> <%= r.num_mesa || 'Por asignar' %></div>
+                                <div><strong>Mesa:</strong> <%= r.numero_mesa || 'Por asignar' %></div>
+                                <% if (r.nombre_reclamo) { %>
+                                    <div><strong>A nombre de:</strong> <%= r.nombre_reclamo %></div>
+                                <% } %>
                                 <div>
                                     <strong>Estado:</strong> 
                                     <span class="estado-badge estado-<%= r.estado %>">
                                         <%= r.estado %>
                                     </span>
                                 </div>
+                                <form action="/admin/reservas-restaurante/<%= r.id %>/estado" method="POST" class="estado-form">
+                                    <select name="nuevo_estado" required>
+                                        <option value="confirmada" <%= r.estado === 'confirmada' ? 'selected' : '' %>>Confirmada</option>
+                                        <option value="pendiente" <%= r.estado === 'pendiente' ? 'selected' : '' %>>Pendiente</option>
+                                        <option value="cancelada" <%= r.estado === 'cancelada' ? 'selected' : '' %>>Cancelada</option>
+                                        <option value="finalizada" <%= r.estado === 'finalizada' ? 'selected' : '' %>>Finalizada</option>
+                                    </select>
+                                    <button type="submit">Guardar</button>
+                                </form>
                                 <% if (r.notas) { %>
                                     <div><strong>Notas:</strong> <%= r.notas %></div>
                                 <% } %>

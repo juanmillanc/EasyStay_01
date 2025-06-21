@@ -188,6 +188,38 @@
              margin-bottom: 20px;
          }
 
+        /* Estilos para las alternativas */
+        .alternativa-horario {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .alternativa-horario h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .alternativas-horarios-btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .btn-horario-alternativo {
+            background: #fff8f3;
+            border: 1.5px solid #ffd0b0;
+            color: #e74c3c;
+            border-radius: 7px;
+            padding: 7px 18px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-horario-alternativo:hover {
+            border-color: #ff512f;
+            background: #ffe5d0;
+        }
+
     </style>
 </head>
 <body>
@@ -363,50 +395,56 @@
                 mesaSeleccionadaInput.value = '';
 
                 if (isModificationRestrictedFields || isPastReservation) return;
-
                 const fecha = fechaInput.value;
                 const hora = horaSelect.value;
                 const numComensales = numComensalesInput.value;
 
-                if (!fecha || !hora || !numComensales || parseInt(numComensales) < 1) return;
+                if (!fecha || !hora || !numComensales || parseInt(numComensales) < 1) {
+                    mesasBtnsContainer.innerHTML = '<p style="color:#666; padding:10px;">Por favor, complete todos los campos para ver la disponibilidad.</p>';
+                    return;
+                }
 
                 try {
                     const res = await fetch(`/api/mesas?restaurante_id=${restauranteId}&fecha=${fecha}&hora=${hora}&num_comensales=${numComensales}&reserva_id=<%= reserva.id %>`);
                     const data = await res.json();
 
-                    if (data.success && data.mesas.length > 0) {
+                    if (data.mesas && data.mesas.length > 0) {
                         renderMesasBtnsEdit(data.mesas);
+                    } else if (data.alternativas && Object.keys(data.alternativas).length > 0) {
+                        displayAlternativasEdit(data.alternativas);
                     } else {
-                        let messageHtml = `<p style="color:#e74c3c; padding:10px;">${data.message || 'No hay mesas disponibles.'}</p>`;
-                        if (data.sugerencias) {
-                            if (data.sugerencias.horas && data.sugerencias.horas.length > 0) {
-                                messageHtml += `
-                                    <div style="color:#2c3e50; padding:10px;">
-                                        Horarios alternativos disponibles para hoy:
-                                        <div style="margin-top:10px; display: flex; flex-wrap: wrap; gap: 8px;">
-                                            ${data.sugerencias.horas.map(h => `
-                                                <button type="button" class="mesa-form-btn-edit" onclick="seleccionarHorarioAlternativoEdit('${h}:00')">${h}</button>
-                                            `).join('')}
-                                        </div>
-                                    </div>`;
-                            } else if (data.sugerencias.proxima_fecha) {
-                                const fechaSugerida = new Date(data.sugerencias.proxima_fecha);
-                                fechaSugerida.setDate(fechaSugerida.getDate() + 1);
-                                const formattedDate = fechaSugerida.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                                messageHtml += `
-                                    <div style="color:#2c3e50; padding:10px;">
-                                        Sugerencia: <button type="button" class="mesa-form-btn-edit" onclick="seleccionarFechaAlternativaEdit('${data.sugerencias.proxima_fecha}')">
-                                            Probar el ${formattedDate}
-                                        </button>
-                                    </div>`;
-                            }
-                        }
-                        mesasBtnsContainer.innerHTML = messageHtml;
+                        mesasBtnsContainer.innerHTML = '<p style="color:#e74c3c; padding:10px;">No hay mesas disponibles para los criterios seleccionados y no se encontraron alternativas.</p>';
                     }
                 } catch (error) {
                     console.error('Error al cargar mesas:', error);
                     mesasBtnsContainer.innerHTML = '<p style="color:#e74c3c; padding:10px;">Error al cargar la disponibilidad.</p>';
                 }
+            }
+
+            function displayAlternativasEdit(alternativas) {
+                let html = `<p style="color: #e74c3c; font-weight: 500; margin-bottom: 15px;">No hay mesas disponibles para tu selección.</p>
+                            <p style="margin-top: 0; margin-bottom: 10px; font-weight: 500;">Aquí tienes algunas alternativas:</p>`;
+                
+                for (const fecha in alternativas) {
+                    const fechaObj = new Date(fecha + 'T00:00:00');
+                    const fechaFormateada = fechaObj.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' });
+                    
+                    html += `<div class="alternativa-horario"><h4>${fechaFormateada}</h4><div class="alternativas-horarios-btns">`;
+                    
+                    for (const hora in alternativas[fecha]) {
+                        html += `<button type="button" class="btn-horario-alternativo" data-fecha="${fecha}" data-hora="${hora}">${hora.substring(0, 5)}</button>`;
+                    }
+                    html += '</div></div>';
+                }
+                mesasBtnsContainer.innerHTML = html;
+
+                document.querySelectorAll('.btn-horario-alternativo').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        fechaInput.value = e.target.dataset.fecha;
+                        horaSelect.value = e.target.dataset.hora;
+                        cargarMesasDisponiblesEdit();
+                    });
+                });
             }
 
             function renderMesasBtnsEdit(mesas) {
@@ -415,15 +453,22 @@
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'mesa-form-btn-edit';
-                    btn.textContent = `Mesa #${mesa.numero} (${mesa.capacidad} sillas)`;
+                    btn.textContent = `Mesa ${mesa.numero_mesa} (${mesa.capacidad} personas)`;
                     btn.dataset.id = mesa.id;
                     btn.onclick = () => seleccionarMesaEdit(mesa.id);
+                    // Mantenemos la mesa original seleccionada si aparece en la nueva lista
                     if (mesa.id == originalMesaId) {
                         btn.classList.add('active');
                         mesaSeleccionadaInput.value = mesa.id;
                     }
                     mesasBtnsContainer.appendChild(btn);
                 });
+
+                // Si después de renderizar, ninguna mesa está seleccionada (porque la original ya no está disponible),
+                // y hay mesas en la lista, seleccionamos la primera por defecto.
+                if (!mesaSeleccionadaInput.value && mesas.length > 0) {
+                    seleccionarMesaEdit(mesas[0].id);
+                }
             }
 
             function seleccionarMesaEdit(mesaId) {
@@ -435,16 +480,6 @@
                 }
             }
             
-            window.seleccionarHorarioAlternativoEdit = function(hora) {
-                 horaSelect.value = hora;
-                 cargarMesasDisponiblesEdit();
-            }
-
-            window.seleccionarFechaAlternativaEdit = function(fecha) {
-                fechaInput.value = fecha;
-                cargarMesasDisponiblesEdit();
-            }
-
             if (!isPastReservation) {
                  fechaInput.addEventListener('change', cargarMesasDisponiblesEdit);
                  horaSelect.addEventListener('change', cargarMesasDisponiblesEdit);

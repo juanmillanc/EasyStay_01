@@ -188,12 +188,10 @@
                     <% restaurants.forEach(restaurant => { %>
                         <div class="restaurant-card">
                             <div style="position:relative;">
-                                <% if (restaurant.imagen_principal) { %>
-                                    <img src="<%= restaurant.imagen_principal %>" alt="<%= restaurant.nombre %>" class="restaurant-card-image">
+                                <% if (restaurant.imagen && restaurant.imagen !== '') { %>
+                                    <img src="<%= restaurant.imagen %>" alt="Imagen de <%= restaurant.nombre %>" style="width:100%;height:150px;object-fit:cover;border-radius:10px 10px 0 0;">
                                 <% } else { %>
-                                    <div class="restaurant-card-image default-img">
-                                        <i class="fas fa-utensils"></i>
-                                    </div>
+                                    <i class="fas fa-utensils" style="font-size: 4rem; color: #ccc; margin: 2rem auto; display: block;"></i>
                                 <% } %>
                                 <div class="status-badge <%= restaurant.estado %>"><%= restaurant.estado %></div>
                             </div>

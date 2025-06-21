@@ -127,7 +127,11 @@ router.get('/user-bookings/:userId', async (req, res) => {
 
         // Obtener reservas de restaurante del usuario
         const [restaurantBookings] = await pool.query(
-            'SELECT * FROM reservas_restaurante WHERE usuario_id = ? AND estado = \'activa\'',
+            `SELECT rr.*, r.nombre as restaurante_nombre, m.numero_mesa 
+             FROM reservas_restaurante rr 
+             JOIN restaurantes r ON rr.restaurante_id = r.id 
+             LEFT JOIN mesas m ON rr.mesa_id = m.id 
+             WHERE rr.usuario_id = ?`,
             [userId]
         );
 
@@ -353,17 +357,23 @@ router.get('/restaurants', async (req, res) => {
 router.get('/restaurants/edit/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        console.log('Buscando restaurante con ID:', id);
+        
         const [restaurantResult] = await pool.query('SELECT * FROM restaurantes WHERE id = ?', [id]);
+        console.log('Resultado de la consulta:', restaurantResult);
 
         if (restaurantResult.length === 0) {
             req.flash('error', 'Restaurante no encontrado.');
             return res.redirect('/admin/restaurants');
         }
 
+        const restaurant = restaurantResult[0];
+        console.log('Datos del restaurante encontrado:', restaurant);
+
         const [mesasResult] = await pool.query('SELECT * FROM mesas WHERE restaurante_id = ? ORDER BY numero_mesa ASC', [id]);
 
         res.render('admin/restaurants/edit', {
-            restaurant: restaurantResult[0],
+            restaurant: restaurant,
             mesas: mesasResult,
             user: req.session.user,
             success: req.flash('success'),
@@ -380,11 +390,37 @@ router.get('/restaurants/edit/:id', async (req, res) => {
 router.post('/restaurants/edit/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, descripcion, direccion, ciudad } = req.body;
-        await pool.query(
-            'UPDATE restaurantes SET nombre = ?, descripcion = ?, direccion = ?, ciudad = ? WHERE id = ?',
-            [nombre, descripcion, direccion, ciudad, id]
-        );
+        // Usar formidable o express-fileupload para manejar archivos
+        let imagenPath = null;
+        if (req.files && req.files.imagen && req.files.imagen.size > 0) {
+            const file = req.files.imagen;
+            const fileName = `${Date.now()}-${file.name}`;
+            const uploadPath = `public/uploads/restaurants/${fileName}`;
+            await file.mv(uploadPath);
+            imagenPath = `/uploads/restaurants/${fileName}`;
+        }
+        const {
+            nombre,
+            descripcion,
+            direccion,
+            ciudad,
+            categoria,
+            precio_promedio,
+            latitud,
+            longitud,
+            estado,
+            calificacion_promedio
+        } = req.body;
+        // Construir la consulta dinámicamente para no sobreescribir la imagen si no se sube una nueva
+        let query = 'UPDATE restaurantes SET nombre = ?, descripcion = ?, direccion = ?, ciudad = ?, categoria = ?, precio_promedio = ?, latitud = ?, longitud = ?, estado = ?, calificacion_promedio = ?';
+        let params = [nombre, descripcion, direccion, ciudad, categoria, precio_promedio, latitud, longitud, estado, calificacion_promedio];
+        if (imagenPath) {
+            query += ', imagen_principal = ?';
+            params.push(imagenPath);
+        }
+        query += ' WHERE id = ?';
+        params.push(id);
+        await pool.query(query, params);
         req.flash('success', 'Restaurante actualizado con éxito.');
         res.redirect(`/admin/restaurants/edit/${id}`);
     } catch (error) {
@@ -507,5 +543,20 @@ router.post('/hotels/toggle-status/:id', async (req, res) => {
 
 // Ruta para mostrar el formulario de edición de un hotel
 router.get('/hotels/:id/edit', hotelController.edit);
+
+// Cambiar el estado de una reserva de restaurante
+router.post('/reservas-restaurante/:id/estado', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nuevo_estado } = req.body;
+        await pool.query('UPDATE reservas_restaurante SET estado = ? WHERE id = ?', [nuevo_estado, id]);
+        req.flash('success', 'Estado de la reserva actualizado correctamente.');
+        res.redirect('back');
+    } catch (error) {
+        console.error('Error al actualizar el estado de la reserva de restaurante:', error);
+        req.flash('error', 'Error al actualizar el estado de la reserva.');
+        res.redirect('back');
+    }
+});
 
 module.exports = router; 

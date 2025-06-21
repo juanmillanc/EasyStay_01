@@ -18,6 +18,10 @@ CREATE TABLE IF NOT EXISTS mesas (
 CREATE INDEX idx_mesas_restaurante ON mesas(restaurante_id);
 CREATE INDEX idx_mesas_estado ON mesas(estado);
 
+-- Si la columna 'estado' no existe, agregarla
+ALTER TABLE mesas 
+ADD COLUMN IF NOT EXISTS estado ENUM('disponible', 'ocupada', 'reservada', 'mantenimiento') DEFAULT 'disponible';
+
 -- Comentario para el desarrollador:
 -- Después de ejecutar este script, no olvides aplicar los cambios en el modelo de datos de la aplicación
 -- y crear las rutas del backend para gestionar las mesas desde el panel de administrador. 

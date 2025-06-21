@@ -40,22 +40,74 @@
             color: #555;
         }
         .form-group input,
-        .form-group textarea {
+        .form-group textarea,
+        .form-group select {
             width: 100%;
             padding: 0.8rem;
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        .current-value {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin-top: 0.25rem;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .current-value strong {
+            color: #495057;
+        }
+        .image-preview {
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .image-preview img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .image-preview .no-image {
+            background-color: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 2rem;
+            color: #6c757d;
         }
         .btn-primary {
             background-color: #007bff;
             color: white;
             padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
         }
         .btn-secondary {
             background-color: #6c757d;
             color: white;
             padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
         }
         .mesas-list {
             list-style: none;
@@ -94,6 +146,32 @@
             margin-top: 2rem;
             text-decoration: none;
         }
+        .field-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .field-info .current-label {
+            font-size: 0.85rem;
+            color: #28a745;
+            font-weight: 500;
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -114,24 +192,111 @@
         <div class="edit-layout">
             <div class="card">
                 <h2>Datos del Restaurante</h2>
-                <form action="/admin/restaurants/edit/<%= restaurant.id %>" method="POST">
+                
+                <form action="/admin/restaurants/edit/<%= restaurant.id %>" method="POST" enctype="multipart/form-data">
                     <div class="form-group">
-                        <label for="nombre">Nombre</label>
+                        <div class="field-info">
+                            <label for="nombre">Nombre</label>
+                            <span class="current-label">Actual: <%= restaurant.nombre %></span>
+                        </div>
                         <input type="text" id="nombre" name="nombre" value="<%= restaurant.nombre %>" required>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="descripcion">Descripción</label>
-                        <textarea id="descripcion" name="descripcion" rows="4"><%= restaurant.descripcion %></textarea>
+                        <div class="field-info">
+                            <label for="descripcion">Descripción</label>
+                            <span class="current-label">Actual: <%= restaurant.descripcion ? restaurant.descripcion.substring(0, 30) + (restaurant.descripcion.length > 30 ? '...' : '') : 'Sin descripción' %></span>
+                        </div>
+                        <textarea id="descripcion" name="descripcion" rows="4" placeholder="Descripción del restaurante"><%= restaurant.descripcion %></textarea>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="direccion">Dirección</label>
+                        <div class="field-info">
+                            <label for="direccion">Dirección</label>
+                            <span class="current-label">Actual: <%= restaurant.direccion %></span>
+                        </div>
                         <input type="text" id="direccion" name="direccion" value="<%= restaurant.direccion %>" required>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="ciudad">Ciudad</label>
+                        <div class="field-info">
+                            <label for="ciudad">Ciudad</label>
+                            <span class="current-label">Actual: <%= restaurant.ciudad %></span>
+                        </div>
                         <input type="text" id="ciudad" name="ciudad" value="<%= restaurant.ciudad %>" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    
+                    <div class="form-group">
+                        <div class="field-info">
+                            <label for="categoria">Categoría</label>
+                            <span class="current-label">Actual: <%= typeof restaurant.categoria !== 'undefined' && restaurant.categoria !== null ? restaurant.categoria : 'Sin categoría' %></span>
+                        </div>
+                        <input type="text" id="categoria" name="categoria" value="<%= typeof restaurant.categoria !== 'undefined' && restaurant.categoria !== null ? restaurant.categoria : '' %>" placeholder="Ej: Italiana, Mexicana, etc.">
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="field-info">
+                            <label for="precio_promedio">Precio Promedio</label>
+                            <span class="current-label">Actual: <%= typeof restaurant.precio_promedio !== 'undefined' && restaurant.precio_promedio !== null ? '$' + restaurant.precio_promedio : 'Sin definir' %></span>
+                        </div>
+                        <input type="number" id="precio_promedio" name="precio_promedio" value="<%= typeof restaurant.precio_promedio !== 'undefined' && restaurant.precio_promedio !== null ? restaurant.precio_promedio : '' %>" step="0.01" placeholder="0.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="imagen">Imagen</label>
+                        <div class="image-preview">
+                            <% if (restaurant.imagen) { %>
+                                <img src="<%= restaurant.imagen %>" alt="Imagen actual del restaurante">
+                                <p><small>Imagen actual del restaurante</small></p>
+                            <% } else { %>
+                                <div class="no-image">
+                                    <i class="fas fa-image" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                                    <p>No hay imagen actual</p>
+                                </div>
+                            <% } %>
+                        </div>
+                        <input type="file" id="imagen" name="imagen" accept="image/*">
+                        <small>Deja vacío para mantener la imagen actual</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="field-info">
+                            <label for="latitud">Latitud</label>
+                            <span class="current-label">Actual: <%= typeof restaurant.latitud !== 'undefined' && restaurant.latitud !== null ? restaurant.latitud : 'Sin definir' %></span>
+                        </div>
+                        <input type="text" id="latitud" name="latitud" value="<%= typeof restaurant.latitud !== 'undefined' && restaurant.latitud !== null ? restaurant.latitud : '' %>" placeholder="Ej: -34.6037">
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="field-info">
+                            <label for="longitud">Longitud</label>
+                            <span class="current-label">Actual: <%= typeof restaurant.longitud !== 'undefined' && restaurant.longitud !== null ? restaurant.longitud : 'Sin definir' %></span>
+                        </div>
+                        <input type="text" id="longitud" name="longitud" value="<%= typeof restaurant.longitud !== 'undefined' && restaurant.longitud !== null ? restaurant.longitud : '' %>" placeholder="Ej: -58.3816">
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="field-info">
+                            <label for="estado">Estado</label>
+                            <span class="current-label">Actual: <%= restaurant.estado === 'activo' ? 'Activo' : restaurant.estado === 'inactivo' ? 'Inactivo' : restaurant.estado %></span>
+                        </div>
+                        <select id="estado" name="estado">
+                            <option value="activo" <%= restaurant.estado === 'activo' ? 'selected' : '' %>>Activo</option>
+                            <option value="inactivo" <%= restaurant.estado === 'inactivo' ? 'selected' : '' %>>Inactivo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="field-info">
+                            <label for="calificacion_promedio">Calificación Promedio</label>
+                            <span class="current-label">Actual: <%= typeof restaurant.calificacion_promedio !== 'undefined' && restaurant.calificacion_promedio !== null ? restaurant.calificacion_promedio + '/5' : 'Sin calificaciones' %></span>
+                        </div>
+                        <input type="number" id="calificacion_promedio" name="calificacion_promedio" value="<%= typeof restaurant.calificacion_promedio !== 'undefined' && restaurant.calificacion_promedio !== null ? restaurant.calificacion_promedio : '' %>" step="0.01" min="0" max="5" placeholder="0.00">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
                 </form>
             </div>
 

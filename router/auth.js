@@ -325,9 +325,23 @@ router.get('/restaurants/:id', async (req, res) => {
             return res.status(404).render('error', { message: 'Página no encontrada', error: { status: 404, stack: 'Restaurante no encontrado' } });
         }
         
+        // Obtener reseñas del restaurante
+        const [reviews] = await pool.query(
+            `SELECT rr.puntuacion, rr.comentario, rr.fecha_creacion, u.nombre, rr.estado
+             FROM resenas_restaurante rr
+             LEFT JOIN usuarios u ON rr.usuario_id = u.id
+             WHERE rr.restaurante_id = ?
+             ORDER BY rr.fecha_creacion DESC`,
+            [id]
+        );
+        console.log('ID del restaurante en la URL:', id);
+        const [debugResenas] = await pool.query('SELECT * FROM resenas_restaurante');
+        console.log('TODAS LAS RESEÑAS EN BD:', debugResenas);
+        console.log('RESEÑAS ENCONTRADAS:', reviews);
         res.render('restaurants/detail', { 
             restaurant: rows[0],
-            user: req.session.user
+            user: req.session.user,
+            reviews
         });
     } catch (error) {
         console.error('Error al cargar detalle del restaurante:', error);
@@ -483,6 +497,30 @@ router.post('/calificar-experiencia', isAuthenticated, async (req, res) => {
                 reserva: { id: reserva_id },
                 tipo,
                 error: 'El comentario es obligatorio'
+            });
+        }
+
+        // Verificar si el usuario ya calificó esta reserva
+        let yaCalifico = false;
+        if (tipo === 'hotel') {
+            const [resenasExistentes] = await pool.query(`
+                SELECT COUNT(*) as count FROM resenas_hotel 
+                WHERE reserva_id = ? AND usuario_id = ? AND estado = 'activa'
+            `, [reserva_id, req.session.user.id]);
+            yaCalifico = resenasExistentes[0].count > 0;
+        } else if (tipo === 'restaurante') {
+            const [resenasExistentes] = await pool.query(`
+                SELECT COUNT(*) as count FROM resenas_restaurante 
+                WHERE reserva_id = ? AND usuario_id = ? AND estado = 'activa'
+            `, [reserva_id, req.session.user.id]);
+            yaCalifico = resenasExistentes[0].count > 0;
+        }
+
+        if (yaCalifico) {
+            return res.render('calificar-experiencia', {
+                reserva: { id: reserva_id },
+                tipo,
+                error: 'Ya has calificado esta reserva. No puedes calificar la misma reserva más de una vez.'
             });
         }
 
@@ -2178,45 +2216,12 @@ function toDateInputValue(date) {
     return date.toISOString().split('T')[0];
 }
 
-// API para obtener mesas disponibles
-router.get('/api/mesas', async (req, res) => {
-    try {
-        const { restaurante_id, fecha, hora, num_comensales } = req.query;
-
-        if (!restaurante_id || !fecha || !hora || !num_comensales) {
-            return res.json({ success: false, message: 'Faltan parámetros requeridos.' });
-        }
-
-        // Mesas que están reservadas en esa fecha y hora
-        const [reservas] = await pool.query(
-            `SELECT mesa_id FROM reservas_restaurante WHERE restaurante_id = ? AND fecha = ? AND hora = ? AND estado = 'activa'`,
-            [restaurante_id, fecha, hora]
-        );
-        const mesasReservadasIds = reservas.map(r => r.mesa_id);
-
-        // Buscar todas las mesas del restaurante con capacidad suficiente que NO estén reservadas
-        let query = 'SELECT * FROM mesas WHERE restaurante_id = ? AND capacidad >= ?';
-        const queryParams = [restaurante_id, num_comensales];
-
-        if (mesasReservadasIds.length > 0) {
-            query += ' AND id NOT IN (?)';
-            queryParams.push(mesasReservadasIds);
-        }
-
-        const [mesasDisponibles] = await pool.query(query, queryParams);
-        
-        res.json({ success: true, mesas: mesasDisponibles });
-
-    } catch (error) {
-        console.error("Error en /api/mesas:", error);
-        res.status(500).json({ success: false, message: 'Error al obtener las mesas.' });
-    }
-});
+// El endpoint /api/mesas ha sido movido a router.js
 
 // API para crear una reserva de mesa
 router.post('/api/reservar-mesa', isAuthenticated, async (req, res) => {
     try {
-        const { restaurante_id, mesa_id, fecha, hora, num_comensales, observaciones } = req.body;
+        const { restaurante_id, mesa_id, fecha, hora, num_comensales, nombre_reclamo, observaciones } = req.body;
         const usuario_id = req.session.user.id;
 
         // Aquí iría la lógica de validación (ej: que la mesa no esté ya reservada)
@@ -2225,9 +2230,9 @@ router.post('/api/reservar-mesa', isAuthenticated, async (req, res) => {
 
         const [result] = await pool.query(
             `INSERT INTO reservas_restaurante 
-            (usuario_id, restaurante_id, mesa_id, fecha, hora, num_personas, notas, codigo_reserva, estado) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'activa')`,
-            [usuario_id, restaurante_id, mesa_id, fecha, hora, num_comensales, observaciones, codigo_reserva]
+            (usuario_id, restaurante_id, mesa_id, fecha, hora, num_personas, nombre_reclamo, notas, codigo_reserva, estado) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'activa')`,
+            [usuario_id, restaurante_id, mesa_id, fecha, hora, num_comensales, nombre_reclamo, observaciones, codigo_reserva]
         );
 
         res.json({ success: true, message: '¡Reserva realizada con éxito!', codigo: codigo_reserva, reservaId: result.insertId });
@@ -2243,7 +2248,7 @@ router.get('/restaurante/reserva/:id/edit', isAuthenticated, async (req, res) =>
     try {
         const { id } = req.params;
         const [reservaResult] = await pool.query(
-            `SELECT rr.*, r.nombre as nombre_restaurante
+            `SELECT rr.*, r.nombre as nombre_restaurante, rr.nombre_reclamo
              FROM reservas_restaurante rr 
              JOIN restaurantes r ON rr.restaurante_id = r.id 
              WHERE rr.id = ? AND rr.usuario_id = ?`,

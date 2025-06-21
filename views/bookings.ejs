@@ -263,6 +263,9 @@
                             <% if (r.comentarios) { %>
                                 <div><strong>Comentarios:</strong> <%= r.comentarios %></div>
                             <% } %>
+                            <% if (r.nombre_reclamo) { %>
+                                <div><strong>A nombre de:</strong> <%= r.nombre_reclamo %></div>
+                            <% } %>
                             <div class="reserva-actions">
                                 <a href="/hotel/reserva/edit/<%= r.id %>" class="btn btn-edit <%= !canEditOrCancel ? 'disabled-btn' : '' %>" <%= !canEditOrCancel ? 'onclick="return false;"' : '' %>>
                                     <i class="fas fa-edit"></i> Editar
@@ -312,7 +315,7 @@
                             <div><strong>Fecha:</strong> <%= new Date(r.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'numeric', year: 'numeric' }) %> - <strong>Hora:</strong> <%= r.hora %></div>
                             <div class="tiempo-restante" style="color: #007faf; font-weight: bold;"></div>
                             <% if (r.nombre_reclamo) { %>
-                                <div><strong>Encargado:</strong> <%= r.nombre_reclamo %></div>
+                                <div><strong>A nombre de:</strong> <%= r.nombre_reclamo %></div>
                             <% } %>
                             <div><strong>Mesa:</strong> #<%= r.numero_mesa || 'Asignada' %> <% if (r.mesa_capacidad) { %>(<%= r.mesa_capacidad %> sillas)<% } %></div>
                             <div>
@@ -334,14 +337,12 @@
                                         <i class="fas fa-ban"></i> Cancelar
                                     </button>
                                 <% } %>
-                                <% if (servicioCompletadoRestaurante) { %>
+                                <% if (r.estado.toLowerCase() === 'finalizada' && Number(r.ya_califico) === 0) { %>
                                     <a href="/calificar-experiencia/<%= r.id %>?tipo=restaurante" class="btn btn-calificar" style="background:#4CAF50;color:#fff;">
                                         <i class="fas fa-star"></i> Calificar
                                     </a>
-                                <% } else { %>
-                                    <button class="btn btn-calificar disabled-btn" style="background:#4CAF50;color:#fff;" disabled title="Solo puedes calificar una vez que la reserva haya sido consumada y el estado sea 'activa'.">
-                                        <i class="fas fa-star"></i> Calificar
-                                    </button>
+                                <% } else if (r.estado.toLowerCase() === 'finalizada' && Number(r.ya_califico) > 0) { %>
+                                    <span style="color:#4CAF50;font-weight:bold;">¡Ya calificaste esta reserva!</span>
                                 <% } %>
                             </div>
                         </li>

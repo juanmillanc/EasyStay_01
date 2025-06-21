@@ -73,6 +73,11 @@
 <body>
     <div class="form-container">
         <h2>Reservar en <%= restaurante.nombre %></h2>
+        <% if (restaurante.imagen && restaurante.imagen !== '') { %>
+          <img src="<%= restaurante.imagen %>" alt="Imagen de <%= restaurante.nombre %>" style="width:100%;max-width:400px;border-radius:12px;">
+        <% } else { %>
+          <i class="fas fa-utensils" style="font-size: 4rem; color: #ccc;"></i>
+        <% } %>
         <form action="/restaurante/abonar" method="POST">
           <input type="hidden" name="restaurante_id" value="<%= restaurante.id %>">
       

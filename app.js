@@ -34,10 +34,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Configuración de express-fileupload
-app.use(fileUpload({
-    limits: { fileSize: 50 * 1024 * 1024 }, // límite de 50MB
-    createParentPath: true
-}));
+app.use(fileUpload());
 
 // Configuración de rutas
 app.use('/', require('./router/auth')); // Rutas de autenticación y de usuario
