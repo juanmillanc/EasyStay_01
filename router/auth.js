@@ -813,32 +813,31 @@ router.get('/admin/hotels', isAuthenticated, isAdmin, async (req, res) => {
 });
 
 
-// Ruta para mostrar el formulario de editar perfil
-router.get('/editar-perfil', (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login');
-    }
-    pool.query(
-        'SELECT * FROM usuarios WHERE id = ?', 
-        [req.session.user.id],
-        (error, results) => {
-            if (error) throw error;
-            console.log("Datos usuario:", results[0]);
-            res.render('editar-perfil', {
-                user: req.session.user,
-                userDetails: results[0],
-                success: req.query.success,
-                passwordError: null,
-                passwordSuccess: null,
-                error: null
-            });
+// Ruta para mostrar el formulario de edición de perfil
+router.get('/editar-perfil', isAuthenticated, async (req, res) => {
+    try {
+        const [userDetails] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [req.session.user.id]);
+        
+        if (userDetails.length === 0) {
+            req.flash('error', 'No se pudo encontrar tu perfil.');
+            return res.redirect('/perfil');
         }
-    );
+
+        res.render('editar-perfil', {
+            user: req.session.user,
+            userDetails: userDetails[0],
+            error: req.flash('error'),
+            success: req.flash('success')
+        });
+    } catch (error) {
+        console.error('Error al cargar la página para editar perfil:', error);
+        req.flash('error', 'Error al cargar la página de edición.');
+        res.redirect('/perfil');
+    }
 });
 
-
-// Ruta para procesar la edición del perfil
-router.post('/editar-perfil', async (req, res) => {
+// Ruta para actualizar los datos del perfil
+router.post('/editar-perfil', isAuthenticated, async (req, res) => {
     if (!req.session.user) {
         return res.redirect('/login');
     }
@@ -854,7 +853,9 @@ router.post('/editar-perfil', async (req, res) => {
         // Actualizar datos en la sesión
         req.session.user.nombre = nombre;
         
-        res.redirect('/editar-perfil?success=Perfil actualizado correctamente');
+        // Redirigir al perfil con un mensaje de éxito
+        req.flash('success', '¡Perfil actualizado con éxito!');
+        return res.redirect('/perfil');
     } catch (error) {
         console.error('Error actualizando perfil:', error);
         // Obtener los datos actualizados del usuario para renderizar
@@ -941,14 +942,9 @@ router.post('/cambiar-contrasena', async (req, res) => {
             [req.session.user.id]
         );
 
-        res.render('editar-perfil', {
-            user: req.session.user,
-            userDetails: updatedUser[0],
-            success: 'Contraseña cambiada correctamente',
-            passwordError: null,
-            passwordSuccess: 'Contraseña cambiada correctamente',
-            error: null
-        });
+        // Redirigir de vuelta con un mensaje de éxito
+        req.flash('success', '¡Contraseña cambiada con éxito!');
+        return res.redirect('/perfil');
     } catch (error) {
         console.error('Error cambiando contraseña:', error);
         const [userDetails] = await pool.query(
@@ -1585,8 +1581,7 @@ router.post('/hotel/reserva/abonar/:id', isAuthenticated, async (req, res) => {
     const abonoCalculado = parseFloat((precioTotalReserva / 2).toFixed(2));
 
     // Actualizar estado a 'abonada'
-    // Nota: Asegúrate de que fecha_actualizacion existe en tu tabla reservas_hotel si usas CURRENT_TIMESTAMP
-    await pool.query('UPDATE reservas_hotel SET estado = ?, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = ?', ['abonada', reservaId]);
+    await pool.query('UPDATE reservas_hotel SET estado = ? WHERE id = ?', ['abonada', reservaId]);
 
     // Enviar correo de confirmación de abono
     const mailOptions = {
@@ -1723,9 +1718,8 @@ router.post('/hotel/reserva/cancelar/:id', isAuthenticated, async (req, res) => 
         }
 
         // 4. Actualizar estado de la reserva a 'cancelada'
-        // Nota: Asegúrate de que fecha_actualizacion existe en tu tabla reservas_hotel si usas CURRENT_TIMESTAMP
         await connection.query(
-            'UPDATE reservas_hotel SET estado = ?, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE reservas_hotel SET estado = ? WHERE id = ?',
             ['cancelada', reservaId]
         );
 
@@ -1990,11 +1984,7 @@ router.post('/admin/informar', isAuthenticated, isAdmin, async (req, res) => {
                 
                 <div class="footer">
                     <p>© ${new Date().getFullYear()} EasyStay. Todos los derechos reservados.</p>
-                    <p>
-                        <a href="https://easystay.com" style="color: #ff8c00; text-decoration: none;">Visite nuestro sitio</a> | 
-                        <a href="https://easystay.com/privacidad" style="color: #ff8c00; text-decoration: none;">Política de privacidad</a>
-                    </p>
-                    <p><small>Este es un mensaje automático, por favor no responda directamente.</small></p>
+                    <p>Este es un mensaje automático, por favor no respondas directamente.</p>
                 </div>
             </div>
         </body>
@@ -2112,7 +2102,7 @@ router.post('/hotel/reserva/confirmar-estadia/:id', isAuthenticated, async (req,
 
         // 5. Actualizar estado de la reserva a 'finalizada'
         await connection.query(
-            'UPDATE reservas_hotel SET estado = ?, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE reservas_hotel SET estado = ? WHERE id = ?',
             ['finalizada', reservaId]
         );
 
@@ -2446,6 +2436,41 @@ router.get('/hotel-detalle/:id', async (req, res) => {
     } catch (error) {
         console.error('Error al cargar detalle del hotel:', error);
         res.status(500).render('error', { message: 'Error al cargar la página del hotel', user: req.session.user });
+    }
+});
+
+// Ruta para ver el perfil de usuario
+router.get('/perfil', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        
+        // Obtener la información del usuario desde la base de datos para asegurar que esté actualizada
+        const [users] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [userId]);
+        
+        if (users.length === 0) {
+            req.flash('error', 'Usuario no encontrado.');
+            return res.redirect('/login');
+        }
+
+        const user = users[0];
+        
+        // Obtener información de puntos del usuario
+        const puntos = await puntosController.getPuntosUsuario(userId);
+
+        // Renderizar la vista del perfil con los datos
+        res.render('perfil', {
+            user: user,
+            puntos: puntos,
+            error: req.flash('error'),
+            success: req.flash('success')
+        });
+
+    } catch (error) {
+        console.error('Error al cargar el perfil:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar su perfil.',
+            user: req.session.user 
+        });
     }
 });
 
